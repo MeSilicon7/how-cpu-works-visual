@@ -65,7 +65,7 @@ export default function Home() {
     <div className="min-h-screen">
       <header className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
         <ChipLogo className="h-7 w-7" />
-        <span className="font-display text-lg font-semibold">How a Computer Works</span>
+        <span className="font-display text-base font-semibold whitespace-nowrap sm:text-lg">How a Computer Works</span>
         <div className="ml-auto flex items-center gap-1">
           <a
             href="#contents"
