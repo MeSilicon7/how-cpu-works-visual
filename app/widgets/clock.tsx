@@ -50,10 +50,10 @@ export function ClockCounter() {
         <line x1={0} x2={W} y1={72} y2={72} stroke="var(--color-line)" strokeDasharray="3 5" />
         <path d={pts.join(" ")} fill="none" stroke="var(--color-amber)" strokeWidth={3} className="glow-amber" />
         <circle cx={W} cy={high ? 18 : 72} r={6} fill="var(--color-amber)" />
-        <text x={4} y={14} className="fill-dim font-mono text-[10px]">
+        <text x={4} y={14} className="fill-dim font-mono text-[11px]">
           1
         </text>
-        <text x={4} y={86} className="fill-dim font-mono text-[10px]">
+        <text x={4} y={86} className="fill-dim font-mono text-[11px]">
           0
         </text>
       </svg>
@@ -226,7 +226,7 @@ export function SettleDemo() {
                           ? "var(--color-pink)"
                           : "var(--color-on)"
                         : wrong
-                          ? "rgb(255 92 138 / 0.25)"
+                          ? "var(--color-pink-tint)"
                           : "var(--color-panel-3)"
                     }
                     opacity={v ? 0.85 : 1}
@@ -242,12 +242,12 @@ export function SettleDemo() {
             x={x(k * STAGE_PS)}
             y={BITS * 22 + 24}
             textAnchor="middle"
-            className="fill-dim font-mono text-[9px]"
+            className="fill-dim font-mono text-[11px]"
           >
             {k * STAGE_PS}
           </text>
         ))}
-        <text x={W - 10} y={BITS * 22 + 40} textAnchor="end" className="fill-dim font-mono text-[10px]">
+        <text x={W - 10} y={BITS * 22 + 40} textAnchor="end" className="fill-dim font-mono text-[11px]">
           time after inputs change (ps)
         </text>
         {/* settle line */}
@@ -273,7 +273,7 @@ export function SettleDemo() {
           x={x(periodPs) + (x(periodPs) > W - 90 ? -6 : 6)}
           y={10}
           textAnchor={x(periodPs) > W - 90 ? "end" : "start"}
-          className="fill-amber font-mono text-[10px] font-bold"
+          className="fill-amber font-mono text-[11px] font-bold"
         >
           clock tick
         </text>

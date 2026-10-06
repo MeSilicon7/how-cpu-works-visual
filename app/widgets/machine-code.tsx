@@ -25,7 +25,7 @@ export function LayersView() {
   const [g, setG] = useState<Grp>("add");
   const sel = asmLines.find((l) => l.g === g)!;
   const hl = (x: Grp) =>
-    cx("rounded px-0.5 transition cursor-pointer", x === g ? "bg-amber/25 text-amber" : "hover:bg-panel-3");
+    cx("rounded px-0.5 transition cursor-pointer", x === g ? "bg-amber-tint text-amber" : "hover:bg-panel-3");
 
   const W = 320;
   const wave = (() => {
@@ -177,7 +177,7 @@ export function TinyCompiler() {
                 )}
               >
                 {t.value}
-                <span className="ml-1 text-[0.6rem] text-dim">{t.type === "num" ? "number" : "op"}</span>
+                <span className="ml-1 text-[0.6875rem] text-dim">{t.type === "num" ? "number" : "op"}</span>
               </span>
             ))}
           </div>
@@ -274,7 +274,7 @@ export function TinyCompiler() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link
                   to={`/cpu?ram=${ramToHex(asm.ram)}`}
-                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg shadow-[0_0_16px_-2px_var(--color-on)] hover:bg-on-2"
+                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg halo-on hover:bg-on-2"
                 >
                   Run it on the CPU →
                 </Link>
@@ -390,7 +390,7 @@ export function AssemblerEditor() {
                 <Pill tone="on">{res.used.size} / 16 bytes used</Pill>
                 <Link
                   to={`/cpu?ram=${ramToHex(res.ram)}`}
-                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg shadow-[0_0_16px_-2px_var(--color-on)] hover:bg-on-2"
+                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg halo-on hover:bg-on-2"
                 >
                   Run it on the CPU →
                 </Link>

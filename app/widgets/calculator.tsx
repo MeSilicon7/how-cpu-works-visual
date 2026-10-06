@@ -70,7 +70,7 @@ export function KeyMatrix({ initial = "2" }: { initial?: string }) {
           x={42}
           y={135}
           textAnchor="middle"
-          className="fill-mute font-mono text-[10px]"
+          className="fill-mute font-mono text-[11px]"
           transform="rotate(-90 42 135)"
         >
           keyboard chip
@@ -84,7 +84,7 @@ export function KeyMatrix({ initial = "2" }: { initial?: string }) {
               <text
                 x={80}
                 y={y - 6}
-                className="font-mono text-[9px]"
+                className="font-mono text-[11px]"
                 fill={on ? "var(--color-on)" : "var(--color-dim)"}
               >
                 row {r}
@@ -103,7 +103,7 @@ export function KeyMatrix({ initial = "2" }: { initial?: string }) {
                 x={x}
                 y={285}
                 textAnchor="middle"
-                className="font-mono text-[9px]"
+                className="font-mono text-[11px]"
                 fill={on ? "var(--color-on)" : "var(--color-dim)"}
               >
                 col {c}
@@ -125,8 +125,8 @@ export function KeyMatrix({ initial = "2" }: { initial?: string }) {
                   width={44}
                   height={34}
                   rx={7}
-                  fill={isDown ? "rgb(255 181 71 / 0.25)" : "var(--color-panel-3)"}
-                  stroke={isDown ? "var(--color-amber)" : "var(--color-line-2)"}
+                  fill={isDown ? "var(--color-amber-tint)" : "var(--color-panel-2)"}
+                  stroke={isDown ? "var(--color-amber)" : "var(--color-off)"}
                   strokeWidth={1.5}
                 />
                 <text
@@ -199,7 +199,7 @@ export function UsbReport({ keyChar }: { keyChar: string }) {
             key={i}
             className={cx(
               "rounded-md border px-2 py-1",
-              i === 2 ? "border-amber bg-amber/15 text-amber" : "border-line-2 text-dim",
+              i === 2 ? "border-amber bg-amber-tint text-amber" : "border-line-2 text-dim",
             )}
             title={i === 0 ? "modifier keys (Shift, Ctrl…)" : i === 1 ? "reserved" : `key slot ${i - 1}`}
           >
@@ -532,7 +532,7 @@ export function GlyphFramebuffer({ text, highlightFrom }: { text: string; highli
       subtitle="The font says which pixels make up each character. The app writes those pixels' colours into a region of RAM called the framebuffer. Click any pixel."
       wide
     >
-      <div className="scroll-thin overflow-x-auto">
+      <div className="scroll-thin surface-screen overflow-x-auto rounded-md p-1.5">
         <svg viewBox={`0 0 ${w * cell} ${h * cell}`} className="mx-auto w-full max-w-3xl" style={{ minWidth: w * 8 }}>
           {grid.map((row, y) =>
             row.map((v, x) => {
@@ -546,7 +546,7 @@ export function GlyphFramebuffer({ text, highlightFrom }: { text: string; highli
                   width={cell - 2}
                   height={cell - 2}
                   rx={2}
-                  fill={v ? (isNew ? "var(--color-on)" : "#dfe8f1") : "#111a24"}
+                  fill={v ? (isNew ? "var(--color-on)" : "var(--color-screen-ink)") : "var(--color-screen-2)"}
                   stroke={isSel ? "var(--color-amber)" : "none"}
                   strokeWidth={2}
                   className="cursor-pointer"
@@ -598,7 +598,7 @@ export function ScanOut({ text }: { text: string }) {
       wide
     >
       <div className="grid items-center gap-5 md:grid-cols-[1fr_auto]">
-        <div className="scroll-thin overflow-x-auto">
+        <div className="scroll-thin surface-screen overflow-x-auto rounded-md p-1.5">
           <svg viewBox={`0 0 ${w * cell} ${h * cell}`} className="w-full" style={{ minWidth: w * 8 }}>
             {grid.map((row, y) =>
               row.map((v, x) => (
@@ -609,7 +609,9 @@ export function ScanOut({ text }: { text: string }) {
                   width={cell - 2}
                   height={cell - 2}
                   rx={2}
-                  fill={v ? (y <= scanRow ? "#dfe8f1" : "#2a3644") : "#0d141c"}
+                  fill={
+                    v ? (y <= scanRow ? "var(--color-screen-ink)" : "var(--color-screen-dim)") : "var(--color-screen-2)"
+                  }
                   opacity={y === scanRow ? 1 : 0.95}
                 />
               )),
@@ -626,14 +628,14 @@ export function ScanOut({ text }: { text: string }) {
         </div>
         <div className="flex flex-col items-center gap-2">
           <div className="text-xs text-mute">one white pixel, up close</div>
-          <div className="flex gap-1 rounded-lg border border-line-2 bg-black p-2">
-            {["#ff3b3b", "#3dff6e", "#3b7bff"].map((c) => (
-              <div key={c} className="h-16 w-4 rounded-sm" style={{ background: c, boxShadow: `0 0 12px ${c}` }} />
+          <div className="surface-screen flex gap-1 rounded-lg border border-bezel p-2">
+            {["var(--color-sub-r)", "var(--color-sub-g)", "var(--color-sub-b)"].map((c) => (
+              <div key={c} className="h-16 w-4 rounded-sm" style={{ background: c }} />
             ))}
           </div>
-          <div className="text-center font-mono text-[0.65rem] text-dim">
+          <div className="text-center font-mono text-[0.6875rem] text-dim">
             R 255 · G 255 · B 255
-            <br />3 tiny lights per pixel
+            <br />3 tiny parts per pixel
           </div>
         </div>
       </div>
@@ -691,7 +693,7 @@ export function TimeBudget() {
           <g key={e}>
             <line x1={x(10 ** e)} x2={x(10 ** e)} y1={top - 4} y2={H - 2} stroke="var(--color-line)" />
             {(e === -9 || e === -6 || e === -3) && (
-              <text x={x(10 ** e)} y={12} textAnchor="middle" className="fill-dim font-mono text-[10px]">
+              <text x={x(10 ** e)} y={12} textAnchor="middle" className="fill-dim font-mono text-[11px]">
                 {e === -9 ? "1 ns" : e === -6 ? "1 µs" : "1 ms"}
               </text>
             )}
@@ -717,7 +719,7 @@ export function TimeBudget() {
                 fill={isAdd ? "var(--color-on)" : "var(--color-amber)"}
                 opacity={0.85}
               />
-              <text x={x1 + 6} y={y + 13} className="fill-mute font-mono text-[10px]">
+              <text x={x1 + 6} y={y + 13} className="fill-mute font-mono text-[11px]">
                 {fmtS(b.s)}
               </text>
             </g>

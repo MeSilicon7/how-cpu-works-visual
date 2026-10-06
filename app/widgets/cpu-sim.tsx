@@ -42,9 +42,9 @@ function Box({
       ref={boxRef}
       data-unit={unit}
       className={cx(
-        "relative rounded-xl border bg-bg/70 px-3 py-2 transition-all duration-300",
-        role === "src" && "border-cyan shadow-[0_0_18px_-4px_var(--color-cyan)]",
-        role === "dst" && "border-on shadow-[0_0_18px_-4px_var(--color-on)]",
+        "relative rounded-md border bg-panel px-3 py-2 transition-colors duration-300",
+        role === "src" && "border-cyan halo-cyan",
+        role === "dst" && "border-on halo-on",
         !role && "border-line-2",
         className,
       )}
@@ -71,7 +71,7 @@ function BitsView({ value, width, split, dim }: { value: number; width: number; 
             key={i}
             className={cx(
               "flex h-6 w-5 items-center justify-center rounded text-xs font-bold",
-              on ? (dim ? "bg-on/10 text-on/70" : "bg-on/20 text-on") : "bg-panel-2 text-dim",
+              on ? (dim ? "bg-on/10 text-on" : "bg-on-tint text-on") : "bg-panel-2 text-dim",
               split !== undefined && k === split && "ml-1.5",
             )}
           >
@@ -84,7 +84,7 @@ function BitsView({ value, width, split, dim }: { value: number; width: number; 
 }
 
 const phaseOrder = [
-  { key: "fetch", label: "Fetch", color: "text-cyan border-cyan bg-cyan/10" },
+  { key: "fetch", label: "Fetch", color: "text-cyan border-cyan bg-cyan-tint" },
   { key: "decode", label: "Decode", color: "text-amber border-amber bg-amber/10" },
   { key: "execute", label: "Execute", color: "text-on border-on bg-on/10" },
 ] as const;
@@ -217,7 +217,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
         />
       </div>
       <div className="mt-3 grid gap-3 md:grid-cols-[auto_1fr]">
-        <pre className="scroll-thin overflow-x-auto rounded-xl border border-line bg-bg/70 px-3 py-2 font-mono text-xs leading-relaxed text-on-2">
+        <pre className="scroll-thin overflow-x-auto rounded-md border border-line bg-panel-2 px-3 py-2 font-mono text-xs leading-relaxed text-ink">
           {prog.code}
         </pre>
         <p className="self-center text-sm text-mute">{prog.explain}</p>
@@ -243,7 +243,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
           </span>
         </div>
         <div className="mt-2 font-semibold text-ink">{s.last.title}</div>
-        <p className="mt-0.5 min-h-[3em] text-sm leading-relaxed text-ink/80">{s.last.note}</p>
+        <p className="mt-0.5 min-h-[3em] text-sm leading-relaxed text-body">{s.last.note}</p>
       </div>
 
       {/* controls */}
@@ -290,7 +290,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
             unit="ram"
             title="RAM · 16 bytes"
             role={role("ram")}
-            badge={<span className="text-[0.65rem] text-dim">click bits to edit</span>}
+            badge={<span className="text-[0.6875rem] text-dim">click bits to edit</span>}
           >
             <div className="scroll-thin overflow-x-auto">
               <table className="w-full font-mono text-xs tabular-nums">
@@ -305,9 +305,9 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                         ref={reg(`ram-${addr}`)}
                         className={cx(
                           "transition-colors",
-                          isMar && "bg-violet/15",
-                          isMar && role("ram") === "src" && "bg-cyan/20",
-                          isMar && role("ram") === "dst" && "bg-on/20",
+                          isMar && "bg-violet-tint",
+                          isMar && role("ram") === "src" && "bg-cyan-tint",
+                          isMar && role("ram") === "dst" && "bg-on-tint",
                         )}
                       >
                         <td className="w-6 py-[1px] pl-1 text-right text-pink">{isPc ? "▶" : ""}</td>
@@ -325,11 +325,11 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                                   onClick={() => toggleBit(addr, bit)}
                                   disabled={running}
                                   className={cx(
-                                    "h-[18px] w-[14px] rounded-[3px] text-[0.65rem] leading-none font-bold transition hover:ring-1 hover:ring-dim",
+                                    "h-[18px] w-[14px] rounded-[3px] text-[0.6875rem] leading-none font-bold transition hover:ring-1 hover:ring-dim",
                                     on
                                       ? isData
-                                        ? "bg-amber/20 text-amber"
-                                        : "bg-on/20 text-on"
+                                        ? "bg-amber-tint text-amber"
+                                        : "bg-on-tint text-on"
                                       : "bg-panel-2 text-dim",
                                     k === 4 && "ml-1",
                                   )}
@@ -353,7 +353,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                 </tbody>
               </table>
             </div>
-            <div className="mt-1.5 flex flex-wrap gap-3 text-[0.65rem] text-dim">
+            <div className="mt-1.5 flex flex-wrap gap-3 text-[0.6875rem] text-dim">
               <span>
                 <span className="text-pink">▶</span> program counter
               </span>
@@ -372,11 +372,11 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
           ref={busRef}
           className="relative hidden flex-col items-center rounded-xl border border-line-2 bg-bg/60 py-2 lg:flex"
         >
-          <span className="font-mono text-[0.65rem] tracking-widest text-dim">BUS</span>
+          <span className="font-mono text-[0.6875rem] tracking-widest text-dim">BUS</span>
           <div
             className={cx(
               "my-2 w-2 flex-1 rounded-full transition-all",
-              s.last.bus !== null ? "bg-cyan/60 shadow-[0_0_14px_var(--color-cyan)]" : "bg-line-2",
+              s.last.bus !== null ? "bg-cyan halo-cyan" : "bg-line-2",
             )}
           />
           <div className="flex flex-col gap-[2px] font-mono">
@@ -386,8 +386,8 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                 <span
                   key={k}
                   className={cx(
-                    "flex h-4 w-6 items-center justify-center rounded text-[0.6rem] font-bold",
-                    on ? "bg-cyan/30 text-cyan" : "bg-panel-2 text-dim",
+                    "flex h-4 w-6 items-center justify-center rounded text-[0.6875rem] font-bold",
+                    on ? "bg-cyan-tint text-cyan" : "bg-panel-2 text-dim",
                   )}
                 >
                   {s.last.bus === null ? "·" : on ? 1 : 0}
@@ -398,7 +398,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
           <div
             className={cx(
               "my-2 w-2 flex-1 rounded-full transition-all",
-              s.last.bus !== null ? "bg-cyan/60 shadow-[0_0_14px_var(--color-cyan)]" : "bg-line-2",
+              s.last.bus !== null ? "bg-cyan halo-cyan" : "bg-line-2",
             )}
           />
         </div>
@@ -410,7 +410,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
               <BitsView value={s.ir} width={8} split={4} />
               <span className="font-mono text-sm text-ink">{s.ticks ? disassemble(s.ir) : "—"}</span>
             </div>
-            <div className="mt-1 flex gap-6 font-mono text-[0.65rem] text-dim">
+            <div className="mt-1 flex gap-6 font-mono text-[0.6875rem] text-dim">
               <span>opcode = {binStr(s.ir >> 4, 4)}</span>
               <span>operand = {s.ir & 15}</span>
             </div>
@@ -421,8 +421,8 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                 <span
                   key={l}
                   className={cx(
-                    "rounded px-1.5 py-0.5 font-mono text-[0.6rem]",
-                    i === doneT ? "bg-amber text-bg" : i < doneT ? "bg-amber/15 text-amber" : "bg-panel-2 text-dim",
+                    "rounded px-1.5 py-0.5 font-mono text-[0.6875rem]",
+                    i === doneT ? "bg-amber text-bg" : i < doneT ? "bg-amber-tint text-amber" : "bg-panel-2 text-dim",
                   )}
                 >
                   {l}
@@ -437,10 +437,8 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                     key={sig}
                     title={signalInfo[sig]}
                     className={cx(
-                      "rounded border px-1.5 py-0.5 font-mono text-[0.65rem] font-bold transition",
-                      on
-                        ? "border-amber bg-amber/20 text-amber shadow-[0_0_10px_-2px_var(--color-amber)]"
-                        : "border-line-2 text-dim",
+                      "rounded border px-1.5 py-0.5 font-mono text-[0.6875rem] font-bold transition",
+                      on ? "border-amber bg-amber-tint text-amber halo-amber" : "border-line-2 text-dim",
                     )}
                   >
                     {sig}
@@ -494,7 +492,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
               <div
                 className={cx(
                   "min-w-[3ch] font-mono text-4xl font-bold tabular-nums",
-                  s.out === null ? "text-dim" : "text-on drop-shadow-[0_0_12px_var(--color-on)]",
+                  s.out === null ? "text-dim" : "text-on drop-halo-on",
                 )}
               >
                 {s.out ?? "–"}
@@ -509,7 +507,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
         {flight && (
           <motion.div
             key={flight.key}
-            className="pointer-events-none absolute top-0 left-0 z-10 rounded-md border border-cyan bg-bg px-1.5 py-0.5 font-mono text-xs font-bold text-cyan shadow-[0_0_16px_var(--color-cyan)]"
+            className="pointer-events-none absolute top-0 left-0 z-10 rounded-md border border-cyan bg-bg px-1.5 py-0.5 font-mono text-xs font-bold text-cyan halo-cyan"
             initial={{ x: flight.xs[0], y: flight.ys[0], opacity: 0 }}
             animate={{ x: flight.xs, y: flight.ys, opacity: [0, 1, 1, 0.9] }}
             transition={{ duration: flightDur, ease: "easeInOut" }}
@@ -548,10 +546,10 @@ export function InstructionDecoder() {
                 "h-12 w-10 rounded-lg border font-mono text-xl font-bold transition",
                 k < 4
                   ? on
-                    ? "border-amber bg-amber/20 text-amber"
+                    ? "border-amber bg-amber-tint text-amber"
                     : "border-amber/30 bg-bg text-dim"
                   : on
-                    ? "border-cyan bg-cyan/20 text-cyan"
+                    ? "border-cyan bg-cyan-tint text-cyan"
                     : "border-cyan/30 bg-bg text-dim",
                 k === 4 && "ml-3",
               )}
@@ -584,7 +582,7 @@ export function InstructionDecoder() {
               )}
             >
               <span className="text-dim">{binStr(o.code, 4)}</span> {o.name}
-              <div className="truncate text-[0.65rem] text-dim">{o.short}</div>
+              <div className="truncate text-[0.6875rem] text-dim">{o.short}</div>
             </button>
           ))}
       </div>

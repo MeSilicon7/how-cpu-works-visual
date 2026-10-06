@@ -27,10 +27,7 @@ export function CombosWidget() {
                 return (
                   <span
                     key={i}
-                    className={cx(
-                      "h-3 w-3 rounded-full",
-                      bit ? "bg-on shadow-[0_0_6px_var(--color-on)]" : "border border-line-2 bg-bg",
-                    )}
+                    className={cx("h-3 w-3 rounded-full", bit ? "bg-on halo-on" : "border border-line-2 bg-bg")}
                   />
                 );
               })}
@@ -292,7 +289,7 @@ export function TwosComplementWheel() {
                   x={cx0 + Math.cos(a) * (R + 24)}
                   y={cy0 + Math.sin(a) * (R + 24) + 4}
                   textAnchor="middle"
-                  className="fill-mute font-mono text-[10px]"
+                  className="fill-mute font-mono text-[11px]"
                 >
                   {k}
                 </text>
@@ -411,9 +408,9 @@ export function FloatWidget() {
       </div>
       <div className="mt-4 overflow-x-auto font-mono text-sm sm:text-base">
         <div className="flex w-max gap-1">
-          <span className="rounded bg-pink/15 px-1.5 py-1 text-pink">{s}</span>
-          <span className="rounded bg-amber/15 px-1.5 py-1 text-amber">{binStr(e, 8)}</span>
-          <span className="rounded bg-cyan/15 px-1.5 py-1 text-cyan">{binStr(m, 23)}</span>
+          <span className="rounded bg-pink-tint px-1.5 py-1 text-pink">{s}</span>
+          <span className="rounded bg-amber-tint px-1.5 py-1 text-amber">{binStr(e, 8)}</span>
+          <span className="rounded bg-cyan-tint px-1.5 py-1 text-cyan">{binStr(m, 23)}</span>
         </div>
         <div className="mt-1 flex w-max gap-1 text-[0.7rem] text-dim">
           <span className="px-1.5">sign</span>

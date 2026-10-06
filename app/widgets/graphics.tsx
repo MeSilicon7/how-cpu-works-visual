@@ -108,7 +108,7 @@ export function RgbMixer() {
     >
       <div className="grid items-center gap-5 md:grid-cols-[240px_1fr]">
         <svg viewBox="0 0 240 220" className="mx-auto w-full max-w-[240px]" style={{ isolation: "isolate" }}>
-          <rect width={240} height={220} rx={16} fill="#000" />
+          <rect width={240} height={220} rx={12} fill="var(--color-screen)" />
           <circle cx={92} cy={86} r={62} fill={`rgb(${r},0,0)`} style={{ mixBlendMode: "screen" }} />
           <circle cx={148} cy={86} r={62} fill={`rgb(0,${g},0)`} style={{ mixBlendMode: "screen" }} />
           <circle cx={120} cy={136} r={62} fill={`rgb(0,0,${b})`} style={{ mixBlendMode: "screen" }} />
@@ -202,7 +202,7 @@ export function FramebufferPaint() {
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <div>
           <div
-            className="grid touch-none gap-[2px] rounded-xl border border-line-2 bg-black p-1.5 select-none"
+            className="surface-screen grid touch-none gap-[2px] rounded-md border border-bezel p-1.5 select-none"
             style={{ gridTemplateColumns: `repeat(${FB_W}, minmax(0, 1fr))` }}
             onPointerUp={() => (painting.current = false)}
             onPointerLeave={() => (painting.current = false)}
@@ -265,7 +265,7 @@ export function FramebufferPaint() {
                     key={k}
                     className={cx(
                       "rounded px-0.5 text-center",
-                      isSel ? ["bg-red/20 text-red", "bg-on/20 text-on", "bg-cyan/20 text-cyan"][ch] : "text-dim",
+                      isSel ? ["bg-red-tint text-red", "bg-on-tint text-on", "bg-cyan-tint text-cyan"][ch] : "text-dim",
                     )}
                     title={`byte ${rowStart + k}: pixel ${px} ${["red", "green", "blue"][ch]}`}
                   >
@@ -353,13 +353,13 @@ export function TriangleRaster() {
   return (
     <Widget
       title="Turning a triangle into pixels"
-      subtitle="Drag the three corners. For every pixel, the GPU asks “is my centre inside all three edges?” using one multiply-and-subtract per edge."
+      subtitle="Drag the three corners. For every pixel, the GPU asks “is my centre inside all three edges?” using a couple of multiplications and a subtraction per edge."
       wide
     >
       <svg
         ref={svgRef}
         viewBox={`0 0 ${GW * CELL} ${GH * CELL}`}
-        className="w-full touch-none rounded-xl border border-line-2 bg-black select-none"
+        className="surface-screen w-full touch-none rounded-md border border-bezel select-none"
         onPointerMove={(e) => {
           const g = toGrid(e);
           if (drag.current !== null) {
@@ -381,7 +381,7 @@ export function TriangleRaster() {
             width={CELL - 2}
             height={CELL - 2}
             rx={2}
-            fill={c.inside ? (smooth ? `rgb(${c.rgb.join(",")})` : "var(--color-on)") : "#0e151d"}
+            fill={c.inside ? (smooth ? `rgb(${c.rgb.join(",")})` : "var(--color-on)") : "var(--color-screen-2)"}
             opacity={c.inside ? 0.9 : 1}
           />
         ))}
@@ -399,8 +399,8 @@ export function TriangleRaster() {
         <polygon
           points={verts.map((v) => `${v.x * CELL},${v.y * CELL}`).join(" ")}
           fill="none"
-          stroke="#fff"
-          strokeOpacity={0.7}
+          stroke="var(--color-screen-ink)"
+          strokeOpacity={0.8}
           strokeWidth={1.5}
         />
         {verts.map((v, i) => (
@@ -410,7 +410,7 @@ export function TriangleRaster() {
               cy={v.y * CELL}
               r={11}
               fill={`rgb(${colors[i].join(",")})`}
-              stroke="#000"
+              stroke="var(--color-screen)"
               strokeWidth={3}
               className="cursor-grab"
               onPointerDown={(e) => {
@@ -424,7 +424,7 @@ export function TriangleRaster() {
               y={v.y * CELL + 4}
               textAnchor="middle"
               className="pointer-events-none font-mono text-[11px] font-bold"
-              fill="#000"
+              fill="var(--color-screen)"
             >
               {"ABC"[i]}
             </text>
@@ -523,7 +523,7 @@ export function Projection3D() {
       <div className="grid items-center gap-4 lg:grid-cols-[1fr_1fr]">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="w-full rounded-xl border border-line-2 bg-black"
+          className="w-full rounded-md border border-line bg-panel-2/40"
           role="img"
           aria-label="Rotating cube"
         >
@@ -538,7 +538,7 @@ export function Projection3D() {
                 y2={pv[b][1]}
                 stroke="var(--color-cyan)"
                 strokeWidth={2.5 - depth * 0.6}
-                strokeOpacity={0.55 - depth * 0.25}
+                strokeOpacity={0.8 - depth * 0.2}
                 strokeLinecap="round"
               />
             );

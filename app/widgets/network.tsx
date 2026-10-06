@@ -254,23 +254,22 @@ export function SignalMedia() {
           width={W - 20}
           height={26}
           rx={13}
-          fill="rgb(76 201 255 / 0.08)"
-          stroke="var(--color-line-2)"
+          fill="var(--color-cyan-tint)"
+          stroke="var(--color-off)"
         />
-        {bits.map((b, i) => {
-          const x = 20 + i * bw + ((t * 60) % bw);
-          return b ? (
+        {bits.map((b, i) =>
+          b ? (
             <ellipse
               key={i}
-              cx={x + bw / 2 - bw / 2}
+              cx={20 + (i + 0.5) * bw}
               cy={65}
               rx={bw * 0.32}
               ry={9}
-              fill="#e8fbff"
-              style={{ filter: "drop-shadow(0 0 10px #4cc9ff)" }}
+              fill="var(--color-cyan)"
+              className="glow-cyan"
             />
-          ) : null;
-        })}
+          ) : null,
+        )}
       </>
     );
   } else {
@@ -336,7 +335,7 @@ export function SignalMedia() {
         {medium === "copper" &&
           "On a copper cable, bits are voltage levels, just like inside the chip. Two twisted wires carry opposite signals, so noise cancels (like USB)."}
         {medium === "fiber" &&
-          "In an optical fibre, a laser flashes on and off billions of times per second. The light bounces along a glass thread thinner than a hair, for up to ~100 km before it needs boosting."}
+          "In an optical fibre, a laser flashes on and off billions of times per second. The light bounces along a glass thread about as thick as a hair (the core that carries the light is ten times thinner), for up to ~100 km before it needs boosting."}
       </p>
       <DataTable
         className="mt-2"
@@ -555,7 +554,7 @@ export function InternetJourney() {
                 x={n.x}
                 y={n.y + (n.kind === "router" ? 28 : 34)}
                 textAnchor="middle"
-                className="fill-mute text-[10px]"
+                className="fill-mute text-[11px]"
               >
                 {n.label}
               </text>
@@ -595,13 +594,13 @@ export function InternetJourney() {
                   height={18}
                   rx={4}
                   fill={f.retry ? "var(--color-amber)" : "var(--color-cyan)"}
-                  style={{ filter: "drop-shadow(0 0 6px var(--color-cyan))" }}
+                  className="glow-cyan"
                 />
                 <text
                   x={p.x}
                   y={p.y + 4}
                   textAnchor="middle"
-                  className="font-mono text-[10px] font-bold"
+                  className="font-mono text-[11px] font-bold"
                   fill="var(--color-bg)"
                 >
                   #{f.seq + 1}
@@ -618,7 +617,7 @@ export function InternetJourney() {
               <div
                 key={i}
                 className={cx(
-                  "rounded-lg border p-2 text-center font-mono text-[0.65rem]",
+                  "rounded-lg border p-2 text-center font-mono text-[0.6875rem]",
                   got.has(i) ? "border-on/60 bg-on/10 text-on" : "border-dashed border-line-2 text-dim",
                 )}
               >
