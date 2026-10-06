@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { tex, TeX } from "~/components/tex";
 import { Callout, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { MosfetWidget, NmosPmosWidget, NoiseDemo, SizeRuler } from "~/widgets/transistor";
+import { LogicLevels, MosfetWidget, NmosPmosWidget, NoiseDemo, SizeRuler } from "~/widgets/transistor";
 
 export const meta = () => chapterMeta("transistor");
 
@@ -20,34 +20,26 @@ export default function Transistor() {
         photos, playing video, sending messages) is built by wiring transistors together in clever patterns.
       </p>
 
-      <h2>Electricity in 60 seconds</h2>
-      <p>You only need three words. Think of water in a pipe:</p>
+      <h2>A quick electricity recap</h2>
+      <p>
+        We need three words from <Link to="/electricity">Electricity Basics</Link>. In the water-pipe picture:
+      </p>
       <ul>
         <li>
-          <strong>Voltage (V)</strong> is the <em>push</em>, like water pressure. Measured in volts.
+          <strong>Voltage (V)</strong>, in volts, is the <em>push</em>, like water pressure.
         </li>
         <li>
-          <strong>Current (I)</strong> is how much electric charge flows past each second, like litres per second.
-          Measured in amperes (amps).
+          <strong>Current (I)</strong>, in amperes, is how much charge flows past each second, like litres per second.
         </li>
         <li>
-          <strong>Resistance (R)</strong> is how hard the path is to push through, like a narrow pipe. Measured in ohms
-          (Ω).
+          <strong>Resistance (R)</strong>, in ohms (Ω), is how hard the path is, like a narrow pipe. Ohm's law links
+          the three: <TeX>{"V = I \\times R"}</TeX>.
         </li>
       </ul>
-      <p>They're linked by one famous rule, Ohm's law:</p>
-      <TeX block>{tex`V = I \times R \quad\Longleftrightarrow\quad I = \frac{V}{R}`}</TeX>
-      <Callout kind="math" title="Worked example">
-        <p>
-          Push <TeX>{"1\\text{ V}"}</TeX> through a <TeX>{"10{,}000\\ \\Omega"}</TeX> resistor:
-        </p>
-        <TeX block>{tex`I = \frac{1\text{ V}}{10{,}000\ \Omega} = 0.0001\text{ A} = 0.1\text{ mA}`}</TeX>
-        <p>
-          Make the resistance enormous (an <em>open</em> switch) and the current drops to almost zero. Make it tiny (a{" "}
-          <em>closed</em> switch) and current flows freely. A transistor is a resistor that can jump between “huge” and
-          “tiny” on command.
-        </p>
-      </Callout>
+      <p>
+        A switch is a resistance that jumps between “huge” (open: almost no current) and “tiny” (closed: current flows
+        freely). A transistor is exactly that kind of switch, but it is flipped by a voltage instead of a finger.
+      </p>
 
       <h2>Why only 0 and 1?</h2>
       <p>
@@ -57,9 +49,43 @@ export default function Transistor() {
       </p>
       <NoiseDemo />
       <p>
-        With only two levels, a signal can be pushed around a lot and still be read correctly. Every time it passes
-        through a gate, it gets “cleaned up” back to a perfect 0 or 1. That robustness is the reason computers use{" "}
-        <strong>binary</strong>: base 2, with only the digits 0 and 1. (The next chapter is all about binary.)
+        With only two levels, a signal can be pushed around a lot and still be read correctly. That robustness is the
+        reason computers use <strong>binary</strong>: base 2, with only the digits 0 and 1. (The next chapter is all
+        about binary.)
+      </p>
+
+      <h3>Logic levels: the written rules</h3>
+      <p>
+        “Above or below the middle” is a good start, but engineers write the rule down more carefully, as{" "}
+        <strong>logic levels</strong>: exact voltages that every chip promises to respect. Here are the standard numbers
+        for chips that run on 3.3 V, which are common on circuit boards:
+      </p>
+      <ul>
+        <li>
+          <strong>Inputs:</strong> 0.8 V or less is read as <code>0</code>. 2.0 V or more is read as <code>1</code>.
+          Anything in between is <em>undefined</em>: the chip might read it either way, so nobody is allowed to send it.
+        </li>
+        <li>
+          <strong>Outputs:</strong> a <code>0</code> is always 0.4 V or less. A <code>1</code> is always 2.4 V or
+          more.
+        </li>
+      </ul>
+      <p>
+        Notice the gap between the two rules. Even a weak 1 leaves at 2.4 V, but the next chip only needs 2.0 V to
+        read a 1. So noise can pull the wire down by 0.4 V and nothing goes wrong. The same gap protects a 0. This gap
+        is called the <strong>noise margin</strong>.
+      </p>
+      <Callout kind="math" title="The two noise margins">
+        <TeX block>{tex`\text{for a 1: } 2.4\text{ V} - 2.0\text{ V} = 0.4\text{ V} \qquad \text{for a 0: } 0.8\text{ V} - 0.4\text{ V} = 0.4\text{ V}`}</TeX>
+        <p>Any noise smaller than 0.4 V can never change what the next chip reads.</p>
+      </Callout>
+      <LogicLevels />
+      <p>
+        The second half of the trick: <strong>every gate makes a fresh signal</strong>. When a gate receives a tired
+        2.1 V, it does not pass 2.1 V along. Its output is connected straight to its own supply or to ground, so it
+        sends out nearly 3.3 V or nearly 0 V again. The noise is wiped clean at every step instead of adding up. That is
+        why a chain of a billion gates still works. Inside a modern processor the supply is only about 1 V, so all these
+        numbers are smaller, but the rules work the same way.
       </p>
 
       <h2>Silicon: a material we can control</h2>
@@ -209,8 +235,8 @@ export default function Transistor() {
           {tex`\frac{20{,}000{,}000{,}000 \text{ s}}{60 \times 60 \times 24 \times 365 \text{ s/year}} = \frac{2\times10^{10}}{31{,}536{,}000} \approx 634 \text{ years}`}
         </TeX>
         <p>
-          A factory builds all of them at once, on a chip smaller than your fingernail, by printing patterns with light,
-          a bit like photography.
+          Nobody places them one at a time. A factory prints all of them at once, layer by layer, using light.{" "}
+          <Link to="/chip-making">Making a Chip</Link> shows how.
         </p>
       </Callout>
 
@@ -230,8 +256,9 @@ export default function Transistor() {
             (0).
           </>,
           <>
-            Computers use <strong>two levels</strong> because they survive noise. The next chapter shows how to count
-            with them.
+            Computers use <strong>two levels</strong> because they survive noise. There is a safety gap between what an
+            output sends and what an input needs (0.4 V for 3.3 V chips), and every gate sends out a fresh, clean signal. The next chapter shows
+            how to count with them.
           </>,
           <>
             Chips use nMOS + pMOS pairs (<strong>CMOS</strong>), so almost no power is wasted while nothing is

@@ -4,6 +4,7 @@ import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { hexToRam } from "~/lib/cpu";
 import { chapterMeta } from "~/lib/meta";
+import { HoldOrLoad, TriStateFigure, WhoIsTalking } from "~/widgets/bus";
 import { CpuSim, InstructionDecoder } from "~/widgets/cpu-sim";
 
 export const meta = () => chapterMeta("cpu");
@@ -97,6 +98,84 @@ export default function Cpu() {
         <code>RO</code> + <code>AI</code>.
       </p>
 
+      <h2>Sharing one road: the bus</h2>
+      <p>
+        Why do all the parts share one set of wires? Because private roads are expensive. Imagine 8 parts, each with
+        its own 8-wire road to every other part. That's <TeX>{"8 \\times 7 \\div 2 = 28"}</TeX> roads, and{" "}
+        <TeX>{"28 \\times 8 = 224"}</TeX> wires. A shared <strong>bus</strong> needs just 8 wires, one per bit, and
+        every part is connected to all of them.
+      </p>
+      <p>
+        But sharing has a rule: <strong>only one part may talk at a time</strong>. To see why, remember what an output
+        really is. From the <Link to="/transistor">transistor chapter</Link>: every gate output has a switch to the
+        power supply (+) and a switch to ground (0 V). To send a 1, it closes the top switch. To send a 0, it closes the
+        bottom one. Now connect two outputs to the same wire. If one says 1 and the other says 0, there is a path
+        straight from + through both switches to ground. That's a <strong>short circuit</strong>: a big current flows,
+        the chip heats up, and the wire ends up at a voltage that is neither a clean 0 nor a clean 1.
+      </p>
+
+      <h3>The third state: Z</h3>
+      <p>
+        The fix is a special output called a <strong>tri-state buffer</strong> (“three-state”). Besides 0 and 1, it
+        has a third state, written <strong>Z</strong>: it opens <em>both</em> switches and lets go of the wire, as if
+        it were unplugged. An extra input called <strong>enable</strong> decides. Enable = 1: the buffer copies its
+        input to the wire. Enable = 0: Z, disconnected.
+      </p>
+      <TriStateFigure />
+      <DataTable
+        head={["enable", "input", "top switch (to +)", "bottom switch (to 0 V)", "wire"]}
+        rows={[
+          ["0", "0 or 1", "open", "open", <strong key="z">Z (let go)</strong>],
+          ["1", "0", "open", "closed", "0"],
+          ["1", "1", "closed", "open", "1"],
+        ]}
+      />
+      <p>
+        Every part that can talk to the bus sits behind 8 of these buffers, one per bus wire, and all 8 share one enable
+        wire. Those enable wires are exactly the control signals whose names end in O (for “out”):{" "}
+        <code>CO</code> (program counter), <code>RO</code> (RAM), <code>IO</code> (instruction register),{" "}
+        <code>AO</code> (register A) and <code>EO</code> (the ALU). That's <TeX>{"5 \\times 8 = 40"}</TeX> buffers.
+        (The stack pointer in <Link to="/functions">Functions &amp; the Stack</Link> adds one more talker.) The
+        control unit's table is written so that <strong>at most one O signal is on in any tick</strong>. Try breaking
+        that rule yourself:
+      </p>
+      <WhoIsTalking />
+
+      <h3>How a register ignores the bus</h3>
+      <p>
+        Talking is solved. What about listening? Every register's inputs are wired to the bus all the time, yet when
+        RAM puts a byte on the bus, only the register whose <code>…I</code> signal is on (<code>AI</code>,{" "}
+        <code>BI</code>, <code>II</code>…) takes it. How does register A <em>ignore</em> a byte that's right there on
+        its input wires?
+      </p>
+      <p>
+        With the <Link to="/alu">multiplexer</Link> from the ALU chapter. A flip-flop from{" "}
+        <Link to="/memory">Memory</Link> stores whatever is on its D input at every clock tick, no matter what. So we
+        put a 2-way switch in front of D. When <strong>LOAD</strong> (that's <code>AI</code> for register A) is 1, the
+        switch passes the bus. When it's 0, the switch feeds the flip-flop's own output Q back in, so each tick stores
+        the same value again. The register “holds” by copying itself.
+      </p>
+      <HoldOrLoad />
+      <Callout kind="math" title="The load switch, in Boolean algebra">
+        <p>
+          The multiplexer's rule, with Q (the old value), the bus bit and LOAD:
+        </p>
+        <TeX block>{tex`D = Q \cdot \overline{\text{LOAD}} + \text{bus} \cdot \text{LOAD}`}</TeX>
+        <p>Say the register holds Q = 0 and the bus carries a 1.</p>
+        <TeX block>{tex`\text{LOAD} = 0:\quad D = 0 \cdot 1 + 1 \cdot 0 = 0 \;\Rightarrow\; \text{after the tick, } Q = 0 \text{ (bus ignored)}`}</TeX>
+        <TeX block>{tex`\text{LOAD} = 1:\quad D = 0 \cdot 0 + 1 \cdot 1 = 1 \;\Rightarrow\; \text{after the tick, } Q = 1 \text{ (loaded)}`}</TeX>
+        <p>
+          An 8-bit register is 8 of these side by side, all sharing one LOAD wire. The program counter is the same idea
+          with a 3-way choice: keep Q, take Q + 1 from a small adder (count up, that's <code>CE</code>), or take the bus
+          (a jump, that's <code>J</code>).
+        </p>
+      </Callout>
+      <p>
+        Tri-state buses were everywhere in early computers, and they are still used on the pins between chips. Inside
+        a modern chip, designers mostly replace them with big multiplexers: a mux picks one source with select bits, so
+        two sources can never fight. The rule is the same either way: <em>one talker per wire, per tick</em>.
+      </p>
+
       <h2>Run it yourself</h2>
       {customRam && (
         <Callout kind="fact" title="Your program is loaded">
@@ -107,6 +186,19 @@ export default function Cpu() {
         </Callout>
       )}
       <CpuSim customRam={customRam} />
+      <Callout kind="fact" title="Who put the program in memory?">
+        <p>
+          Here, clicking a program copies its 16 bytes into RAM. Early home computers like the Altair 8800 (1975) had
+          a row of switches on the front: you set 8 switches to one byte, pressed <em>Deposit</em>, and repeated that
+          for every byte of the program.
+        </p>
+        <p>
+          Your computer does it with a program. When you press the power button, the CPU starts at a fixed address in a
+          small memory chip that keeps its bytes without power. That first program copies the next one from the SSD
+          into RAM and jumps to it, and that one loads the next, until the operating system is running. You'll see each
+          step in <Link to="/operating-system">The Operating System</Link>, in the section on booting.
+        </p>
+      </Callout>
       <p>
         Start with <strong>2 + 3</strong> and press <em>Step</em> slowly. The answer appears on the display at tick 15,
         and the clock stops at tick 19: 4 instructions, each with 2 fetch ticks, 1 decode tick and 1–3 execute ticks.
@@ -228,11 +320,46 @@ export default function Cpu() {
 
       <GoDeeper title="Multiple cores and the operating system">
         <p>
-          A modern chip has several complete CPUs (<strong>cores</strong>), each with its own registers, ALUs and
-          control unit, sharing the RAM. The <strong>operating system</strong> (Windows, macOS, Android, Linux) is
-          itself a program. A timer interrupts each core hundreds of times per second, and the OS saves the current
-          program's registers, loads another program's, and jumps into it. Switching this fast makes 300 programs look
-          like they're all running at once on 8 cores.
+          A modern chip holds several complete CPUs called <strong>cores</strong>, each with its own registers, ALU and
+          control unit, all sharing the same RAM. How 300 programs take turns on 8 cores without getting in each
+          other's way is the job of the operating system, which has its own chapter:{" "}
+          <Link to="/operating-system">The Operating System</Link>.
+        </p>
+      </GoDeeper>
+
+      <GoDeeper title="Is SAP-8 really the same kind of machine as your phone?">
+        <p>
+          In one exact sense, yes. In 1936 Alan Turing showed that a very simple machine can carry out{" "}
+          <em>any</em> step-by-step calculation that any other machine can, as long as it can (1) read and write
+          memory and (2) choose what to do next based on what it read. Such a machine is called{" "}
+          <strong>universal</strong> (or “Turing-complete”). SAP-8 has both: <code>LDA</code> and <code>STA</code>{" "}
+          read and write memory, and <code>JZ</code> and <code>JC</code> choose. With enough memory, it could run
+          anything your phone runs, only far, far more slowly.
+        </p>
+        <p>
+          The proof is on this page. An <strong>emulator</strong> is a program that pretends to be a different CPU,
+          one instruction at a time. The SAP-8 you just stepped through <em>is</em> an emulator: a JavaScript program
+          running on your own computer's CPU, pretending to be another CPU. People run 1980s game consoles inside a web
+          browser in the same way.
+        </p>
+        <p>
+          “Enough memory” is the catch. SAP-8's RAM is 16 bytes = 128 bits, and each bit is 0 or 1, so the whole RAM
+          can be in
+        </p>
+        <TeX block>{tex`2^{128} \approx 3.4 \times 10^{38} \text{ different states.}`}</TeX>
+        <p>
+          That's a huge number, but it is finite. A phone with 8 GB has about <TeX>{"6.4 \\times 10^{10}"}</TeX> bits,
+          so it has far more states, but also a finite number. Strictly, every real computer is universal only until
+          its memory runs out. Yours just runs out much later.
+        </p>
+        <p>
+          Even a universal machine can't answer every question. The famous one is: “Will this program ever stop, or
+          loop forever?” Suppose someone wrote a perfect checker program, <code>stops(P)</code>, that always answers
+          correctly. Now write a troublemaker program T that asks the checker about <em>itself</em> and then does the
+          opposite: if the checker says “T stops”, T loops forever; if it says “T loops forever”, T stops at once.
+          Whatever the checker answers about T, it is wrong. So a perfect checker cannot exist. Turing proved this too.
+          It's called the <strong>halting problem</strong>, and it's why no program can find every bug in other
+          programs.
         </p>
       </GoDeeper>
 
@@ -242,6 +369,10 @@ export default function Cpu() {
           <>
             The CPU loops <strong>fetch → decode → execute</strong> forever. Each step takes one or more clock ticks,
             and in each tick at most one value moves over the bus.
+          </>,
+          <>
+            The parts share one <strong>bus</strong>. Tri-state buffers let exactly one part talk (two talkers make a
+            short circuit), and a load switch in front of each register decides who listens.
           </>,
           <>The control unit turns opcode + step number into control signals. It's just a lookup table.</>,
           <>

@@ -14,7 +14,8 @@ import {
   type GateKind,
 } from "~/components/circuit";
 import { TeX } from "~/components/tex";
-import { BitButton, DataTable, Segmented, Widget } from "~/components/ui";
+import { BitButton, cx, DataTable, Segmented, Widget } from "~/components/ui";
+import { binStr } from "~/lib/bits";
 import { MosSymbol } from "./transistor";
 
 /* ------------------------------------------------------------------ */
@@ -506,6 +507,351 @@ export function NandUniversal() {
           <div className="text-center text-xs text-mute">NOT both inputs, then NAND</div>
         </div>
       </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Decoders: a gate that recognises one pattern                         */
+/* ------------------------------------------------------------------ */
+
+const LANE_X = [44, 116, 188, 260];
+const LANE_BIT = [7, 6, 5, 4];
+
+/** A NOT gate pointing down: flat top edge at y, bubble below the tip. */
+function DownNot({ x, y, out }: { x: number; y: number; out: boolean }) {
+  return (
+    <g
+      stroke={out ? "var(--color-on)" : "var(--color-dim)"}
+      fill={out ? "var(--color-on-tint)" : "var(--color-panel)"}
+      strokeWidth={1.75}
+      className={out ? "glow-on" : undefined}
+      style={{ transition: "stroke .2s, fill .2s" }}
+    >
+      <path d={`M${x - 16} ${y} H${x + 16} L${x} ${y + 28} Z`} />
+      <circle cx={x} cy={y + 33} r={5} />
+    </g>
+  );
+}
+
+const fourBits = (v: number) => [3, 2, 1, 0].map((i) => (v >> i) & 1);
+
+export function PatternDetector() {
+  const [target, setTarget] = useState(0b0100);
+  const [input, setInput] = useState(0b0110);
+  const tb = fourBits(target);
+  const ib = fourBits(input);
+  // What enters the AND gate on each lane: the bit itself, or its opposite after a NOT.
+  const fed = ib.map((b, k) => (tb[k] ? b : 1 - b));
+  const out = fed.every(Boolean);
+  const wrong = LANE_BIT.filter((_, k) => !fed[k]).map((b) => `b${b}`);
+
+  const term = tb.map((b, k) => (b ? `b_${LANE_BIT[k]}` : `\\overline{b_${LANE_BIT[k]}}`)).join(" \\cdot ");
+  const values = fed.join(" \\cdot ");
+
+  return (
+    <Widget
+      title="A pattern detector"
+      subtitle="An AND gate outputs 1 only when all its inputs are 1. Put a NOT on every wire where the pattern has a 0, and the AND gate fires for that one pattern and no other."
+    >
+      <div className="grid items-start gap-6 md:grid-cols-[minmax(0,300px)_1fr]">
+        <svg viewBox="0 0 304 392" className="mx-auto w-full max-w-[320px]" role="img" aria-label="Four input bits, NOT gates where the pattern has a 0, and a four-input AND gate">
+          {LANE_X.map((x, k) => {
+            const inOn = !!ib[k];
+            const fedOn = !!fed[k];
+            const hasNot = !tb[k];
+            return (
+              <g key={k}>
+                {hasNot ? (
+                  <>
+                    <Wire d={`M${x} 61 V108`} on={inOn} />
+                    <DownNot x={x} y={108} out={fedOn} />
+                    <Wire d={`M${x} 146 V240`} on={fedOn} />
+                  </>
+                ) : (
+                  <Wire d={`M${x} 61 V240`} on={inOn} />
+                )}
+                <SignalTag x={x} y={196} on={fedOn} />
+                <InputPin
+                  x={x}
+                  y={46}
+                  on={inOn}
+                  label={`b${LANE_BIT[k]}`}
+                  onToggle={() => setInput((v) => v ^ (1 << (3 - k)))}
+                />
+              </g>
+            );
+          })}
+          <path
+            d="M16 240 H288 V264 A136 58 0 0 1 16 264 Z"
+            stroke={out ? "var(--color-on)" : "var(--color-dim)"}
+            fill={out ? "var(--color-on-tint)" : "var(--color-panel)"}
+            strokeWidth={1.75}
+            className={out ? "glow-on" : undefined}
+          />
+          <text x={152} y={274} textAnchor="middle" className={out ? "fill-on font-mono text-[15px] font-bold" : "fill-mute font-mono text-[15px] font-bold"}>
+            AND
+          </text>
+          <text x={152} y={294} textAnchor="middle" className="fill-mute font-sans text-[12px]">
+            1 only if all four are 1
+          </text>
+          <Wire d="M152 322 V352" on={out} />
+          <circle
+            cx={152}
+            cy={368}
+            r={15}
+            fill={out ? "var(--color-on)" : "var(--color-panel)"}
+            stroke={out ? "var(--color-on)" : "var(--color-off)"}
+            strokeWidth={2}
+            className={out ? "glow-on" : undefined}
+          />
+          <text x={152} y={373} textAnchor="middle" className={out ? "font-mono text-[14px] font-bold" : "font-mono text-[14px]"} fill={out ? "var(--color-bg)" : "var(--color-dim)"}>
+            {out ? 1 : 0}
+          </text>
+          <text x={176} y={373} className={out ? "fill-on font-sans text-[13px] font-semibold" : "fill-mute font-sans text-[13px]"}>
+            {out ? "found it!" : "no match"}
+          </text>
+        </svg>
+
+        <div className="min-w-0 space-y-5">
+          <div>
+            <div className="label-caps text-dim">1 · The pattern it is wired to find</div>
+            <div className="mt-2 flex items-start gap-1.5">
+              {tb.map((b, k) => (
+                <BitButton
+                  key={k}
+                  size="sm"
+                  color="violet"
+                  on={!!b}
+                  label={`b${LANE_BIT[k]}`}
+                  title={`Rewire: look for a ${b ? 0 : 1} in b${LANE_BIT[k]}`}
+                  onClick={() => setTarget((t) => t ^ (1 << (3 - k)))}
+                />
+              ))}
+              <span className="ml-2 pt-0.5 font-mono text-lg text-violet tabular-nums">{binStr(target, 4)}</span>
+            </div>
+            <p className="mt-1.5 font-serif text-[0.9375rem] text-mute">
+              Each 0 in the pattern puts a NOT gate on that wire. Click to rewire.
+            </p>
+          </div>
+
+          <div>
+            <div className="label-caps text-dim">2 · Click the input bits in the drawing</div>
+            <div className="mt-2 overflow-x-auto text-[1.05rem]">
+              <TeX>{`\\text{out} = ${term}`}</TeX>
+            </div>
+            <div className="mt-1 overflow-x-auto text-[1.05rem]">
+              <TeX>{`\\phantom{\\text{out}} = ${values} = ${out ? 1 : 0}`}</TeX>
+            </div>
+          </div>
+
+          <div
+            className={cx(
+              "rounded-md border px-3 py-2 font-sans text-sm",
+              out ? "border-on bg-on-tint text-on" : "border-line-2 bg-panel-2 text-body",
+            )}
+          >
+            {out ? (
+              <>
+                <strong>✓ Match.</strong> Every wire into the AND gate is 1, so the output is 1. The circuit has
+                recognised <span className="font-mono">{binStr(target, 4)}</span>.
+              </>
+            ) : (
+              <>
+                <strong>✗ No match.</strong> {wrong.join(" and ")} {wrong.length > 1 ? "are" : "is"} not what the
+                pattern wants, so {wrong.length > 1 ? "those wires carry" : "that wire carries"} a 0 into the AND gate.
+                One 0 is enough to keep the output at 0.
+              </>
+            )}
+          </div>
+
+          <div>
+            <div className="label-caps text-dim">All 16 possible inputs</div>
+            <div className="mt-2 grid grid-cols-4 gap-1 sm:grid-cols-8">
+              {Array.from({ length: 16 }, (_, p) => {
+                const fires = p === target;
+                const current = p === input;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setInput(p)}
+                    aria-pressed={current}
+                    title={`Set the input to ${binStr(p, 4)}`}
+                    className={cx(
+                      "rounded-md border px-1 py-1 text-center font-mono text-xs tabular-nums transition-colors",
+                      fires ? "bg-on-tint text-on" : "bg-panel text-dim hover:bg-panel-2 hover:text-ink",
+                      current ? "border-ink ring-1 ring-ink" : fires ? "border-on" : "border-line",
+                    )}
+                  >
+                    <div className={fires ? "font-bold" : undefined}>{binStr(p, 4)}</div>
+                    <div className={fires ? "font-bold" : undefined}>→ {fires ? 1 : 0}</div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 font-serif text-[0.9375rem] text-mute">
+              Exactly one of the 16 patterns makes the output 1. The outlined box is the input you have now.
+            </p>
+          </div>
+        </div>
+      </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* A 2-to-4 decoder: one output wire for each pattern                   */
+/* ------------------------------------------------------------------ */
+
+/** Input pin with larger lettering, for diagrams that shrink on phones. */
+function BigPin({ x, y, on, label, onToggle }: { x: number; y: number; on: boolean; label: string; onToggle: () => void }) {
+  return (
+    <g
+      onClick={onToggle}
+      className="cursor-pointer"
+      role="button"
+      aria-label={`Toggle ${label}`}
+      aria-pressed={on}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+    >
+      <rect
+        x={x - 16}
+        y={y - 16}
+        width={32}
+        height={32}
+        rx={6}
+        fill={on ? "var(--color-on-tint)" : "var(--color-panel)"}
+        stroke={on ? "var(--color-on)" : "var(--color-off)"}
+        strokeWidth={2}
+        className={on ? "glow-on" : undefined}
+      />
+      <text x={x} y={y + 5} textAnchor="middle" className={on ? "font-mono text-[15px] font-bold" : "font-mono text-[15px]"} fill={on ? "var(--color-on)" : "var(--color-dim)"}>
+        {on ? 1 : 0}
+      </text>
+      <text x={x} y={y - 23} textAnchor="middle" className="fill-mute font-mono text-[13px] font-semibold">
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export function TwoToFourDecoder() {
+  const [a1, setA1] = useState(true);
+  const [a0, setA0] = useState(false);
+  const t1 = () => setA1((v) => !v);
+  const t0 = () => setA0((v) => !v);
+  const RAIL_END = 372;
+  const rails = [
+    { key: "A1", y: 44, on: a1, label: "A1", x0: 50 },
+    { key: "nA1", y: 92, on: !a1, label: "not A1", x0: 128 },
+    { key: "A0", y: 150, on: a0, label: "A0", x0: 50 },
+    { key: "nA0", y: 198, on: !a0, label: "not A0", x0: 128 },
+  ];
+  const railY = Object.fromEntries(rails.map((r) => [r.key, r.y])) as Record<string, number>;
+  const railOn = Object.fromEntries(rails.map((r) => [r.key, r.on])) as Record<string, boolean>;
+  const gates = [0, 1, 2, 3].map((k) => {
+    const hi = (k >> 1) & 1;
+    const lo = k & 1;
+    const cx0 = 196 + k * 52;
+    const left = hi ? "A1" : "nA1";
+    const right = lo ? "A0" : "nA0";
+    return { k, hi, lo, cx: cx0, left, right, out: railOn[left] && railOn[right] };
+  });
+  const GY = 236; // top of the AND gates
+  const selected = (a1 ? 2 : 0) + (a0 ? 1 : 0);
+
+  return (
+    <Widget
+      title="A 2-to-4 decoder: one wire for each pattern"
+      subtitle="Two input bits make 4 patterns. Give each pattern its own detector, and exactly one of the 4 output wires is on at any moment."
+    >
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <BitButton on={a1} onClick={t1} label="A1" />
+        <BitButton on={a0} onClick={t0} label="A0" />
+        <span className="font-mono text-ink tabular-nums">
+          = {a1 ? 1 : 0}
+          {a0 ? 1 : 0} → only output {selected} is on
+        </span>
+      </div>
+      <div className="scroll-thin overflow-x-auto">
+        <svg viewBox="0 0 384 360" className="mx-auto w-full max-w-[460px] min-w-[300px]" role="img" aria-label="A 2-to-4 decoder built from two NOT gates and four AND gates">
+          {/* rails */}
+          {rails.map((r) => (
+            <Wire key={r.key} d={`M${r.x0} ${r.y} H${RAIL_END}`} on={r.on} />
+          ))}
+          {/* NOT branches */}
+          <Wire d="M78 44 V92 H86" on={a1} />
+          <Wire d="M78 150 V198 H86" on={a0} />
+          <Junction x={78} y={44} on={a1} />
+          <Junction x={78} y={150} on={a0} />
+          <Gate kind="NOT" x={86} y={77} out={!a1} label={false} scale={0.75} />
+          <Gate kind="NOT" x={86} y={183} out={!a0} label={false} scale={0.75} />
+          {rails.map((r) => (
+            <text
+              key={r.key}
+              x={r.key.startsWith("n") ? 132 : 100}
+              y={r.y - 7}
+              className={r.on ? "fill-on font-mono text-[13px] font-semibold" : "fill-mute font-mono text-[13px]"}
+            >
+              {r.label}
+            </text>
+          ))}
+          {/* taps and AND gates */}
+          {gates.map((g) => {
+            const lx = g.cx - 9;
+            const rx = g.cx + 9;
+            return (
+              <g key={g.k}>
+                <Wire d={`M${lx} ${railY[g.left]} V${GY}`} on={railOn[g.left]} />
+                <Wire d={`M${rx} ${railY[g.right]} V${GY}`} on={railOn[g.right]} />
+                <Junction x={lx} y={railY[g.left]} on={railOn[g.left]} />
+                <Junction x={rx} y={railY[g.right]} on={railOn[g.right]} />
+                <path
+                  d={`M${g.cx - 18} ${GY} H${g.cx + 18} V${GY + 16} A18 18 0 0 1 ${g.cx - 18} ${GY + 16} Z`}
+                  stroke={g.out ? "var(--color-on)" : "var(--color-dim)"}
+                  fill={g.out ? "var(--color-on-tint)" : "var(--color-panel)"}
+                  strokeWidth={1.75}
+                  className={g.out ? "glow-on" : undefined}
+                />
+                <Wire d={`M${g.cx} ${GY + 34} V${GY + 50}`} on={g.out} />
+                <circle
+                  cx={g.cx}
+                  cy={GY + 64}
+                  r={13}
+                  fill={g.out ? "var(--color-on)" : "var(--color-panel)"}
+                  stroke={g.out ? "var(--color-on)" : "var(--color-off)"}
+                  strokeWidth={2}
+                  className={g.out ? "glow-on" : undefined}
+                />
+                <text x={g.cx} y={GY + 69} textAnchor="middle" className={g.out ? "font-mono text-[13px] font-bold" : "font-mono text-[13px]"} fill={g.out ? "var(--color-bg)" : "var(--color-dim)"}>
+                  {g.out ? 1 : 0}
+                </text>
+                <text x={g.cx} y={GY + 98} textAnchor="middle" className={g.out ? "fill-on font-mono text-[13px] font-bold" : "fill-mute font-mono text-[13px]"}>
+                  {g.hi}
+                  {g.lo}
+                </text>
+                <text x={g.cx} y={GY + 116} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+                  out {g.k}
+                </text>
+              </g>
+            );
+          })}
+          <BigPin x={30} y={44} on={a1} label="A1" onToggle={t1} />
+          <BigPin x={30} y={150} on={a0} label="A0" onToggle={t0} />
+        </svg>
+      </div>
+      <p className="mt-3 font-serif text-[0.9375rem] text-mute">
+        Each AND gate takes one wire from the A1 pair and one from the A0 pair. A dot means “connected”; wires that
+        cross without a dot are not connected. Output 0 looks for <span className="font-mono">00</span> (not A1 and not
+        A0), output 3 looks for <span className="font-mono">11</span> (A1 and A0).
+      </p>
     </Widget>
   );
 }

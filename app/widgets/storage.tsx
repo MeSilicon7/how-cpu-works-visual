@@ -1,7 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useId, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { TeX } from "~/components/tex";
-import { Btn, cx, DataTable, Pill, Segmented, Slider, Stat, Widget } from "~/components/ui";
+import { BitButton, Btn, cx, DataTable, Pill, Segmented, Slider, Stat, Widget } from "~/components/ui";
 import { useAnimationTime } from "~/lib/hooks";
 
 /* ------------------------------------------------------------------ */
@@ -841,6 +841,412 @@ export function FileBlocks() {
         <span className="text-ink">fragmentation</span>. Notice that “delete” only erases the table entry. The old bytes
         stay on the disk until something overwrites them, which is why deleted files can sometimes be recovered.
       </p>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Cosmic ray: a Hamming(7,4) code drawn as three overlapping circles  */
+/* ------------------------------------------------------------------ */
+
+// Positions 1–7. Check bits sit at 1, 2 and 4; data bits at 3, 5, 6 and 7.
+// Check c watches every position whose number contains c (as a sum of 1, 2, 4).
+// Position 0 is the optional "overall" parity bit of the 8-bit (ECC) version.
+const H_POS = [1, 2, 3, 4, 5, 6, 7];
+const H_DATA = [3, 5, 6, 7];
+const H_CHECKS = [1, 2, 4];
+const hWatched = (check: number) => H_POS.filter((p) => p & check);
+
+const H_W = 380;
+const H_H = 335;
+const H_R = 95;
+const H_CIRCLES = [
+  { check: 1, x: 140, y: 124, lx: 66, ly: 34, anchor: "end" as const },
+  { check: 2, x: 240, y: 124, lx: 314, ly: 34, anchor: "start" as const },
+  { check: 4, x: 190, y: 210.6, lx: 272, ly: 300, anchor: "start" as const },
+];
+// Centre of each bit's cell: chosen so each cell sits inside exactly the circles that watch it.
+const H_CELL: Record<number, [number, number]> = {
+  0: [52, 286],
+  1: [99.1, 100.4],
+  2: [280.9, 100.4],
+  3: [190, 87.4],
+  4: [190, 257.9],
+  5: [130.7, 187.1],
+  6: [249.3, 187.1],
+  7: [190, 152.9],
+};
+
+function hammingEncode(data: number[]): number[] {
+  const w = Array<number>(8).fill(0);
+  H_DATA.forEach((p, i) => (w[p] = data[i]));
+  for (const c of H_CHECKS) w[c] = hWatched(c).reduce((s, p) => (p === c ? s : s ^ w[p]), 0);
+  w[0] = H_POS.reduce((s, p) => s ^ w[p], 0);
+  return w;
+}
+
+type HVerdict = "none" | "fix" | "fixOverall" | "detect";
+
+export function HammingVenn() {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const [data, setData] = useState([1, 0, 1, 1]);
+  const [flips, setFlips] = useState<boolean[]>(() => Array(8).fill(false));
+  const [ecc, setEcc] = useState(false);
+
+  const stored = hammingEncode(data);
+  const shown = ecc ? [0, ...H_POS] : H_POS;
+  const got = stored.map((b, i) => b ^ (flips[i] ? 1 : 0));
+  const nFlips = shown.filter((p) => flips[p]).length;
+
+  const ones = (c: number) => hWatched(c).reduce((s, p) => s + got[p], 0);
+  const fails = H_CHECKS.filter((c) => ones(c) % 2 === 1);
+  const syndrome = fails.reduce((s, c) => s + c, 0);
+  const allOnes = shown.reduce((s, p) => s + got[p], 0);
+  const overallOdd = allOnes % 2 === 1;
+
+  let verdict: HVerdict = "none";
+  if (!ecc) verdict = syndrome ? "fix" : "none";
+  else if (syndrome === 0) verdict = overallOdd ? "fixOverall" : "none";
+  else verdict = overallOdd ? "fix" : "detect";
+
+  const fixed = [...got];
+  if (verdict === "fix") fixed[syndrome] ^= 1;
+  if (verdict === "fixOverall") fixed[0] ^= 1;
+  const out = H_DATA.map((p) => fixed[p]);
+  const dataOk = verdict !== "detect" && out.every((b, i) => b === data[i]);
+
+  const flip = (p: number) => setFlips((f) => f.map((v, i) => (i === p ? !v : v)));
+  const clear = () => setFlips(Array(8).fill(false));
+  const zapRandom = () => {
+    const p = shown[Math.floor(Math.random() * shown.length)];
+    flip(p);
+  };
+  const setDataBit = (i: number) => {
+    setData((d) => d.map((v, j) => (j === i ? 1 - v : v)));
+    clear();
+  };
+
+  // The region the failing circles point at: inside every failing circle, outside every passing one.
+  let region: ReactNode = <rect x={0} y={0} width={H_W} height={H_H} fill="var(--color-highlight)" />;
+  for (const c of H_CIRCLES)
+    if (syndrome & c.check) region = <g clipPath={`url(#${uid}-c${c.check})`}>{region}</g>;
+  const blamed = verdict === "fix" || verdict === "detect" ? syndrome : verdict === "fixOverall" ? 0 : -1;
+
+  const listOf = (xs: number[]) =>
+    xs.length === 1 ? `${xs[0]}` : `${xs.slice(0, -1).join(", ")} and ${xs[xs.length - 1]}`;
+  const who = fails.length === 1 ? `Only check ${fails[0]} complains` : `Checks ${listOf(fails)} complain`;
+  const sum =
+    fails.length > 1 ? (
+      <>
+        : {fails.join(" + ")} = <strong className="text-ink">{syndrome}</strong>
+      </>
+    ) : null;
+  const where =
+    fails.length === 3
+      ? "The only spot inside all three circles"
+      : fails.length === 2
+        ? "The only spot inside both of those circles and outside the third"
+        : "The only spot inside that circle and outside the other two";
+  let story: ReactNode;
+  if (nFlips === 0) story = "Every circle holds an even number of 1s. No check complains, so there is nothing to fix.";
+  else if (verdict === "none")
+    story = `No check complains, but ${nFlips} bits are wrong: the flips hid each other. The chip hands over wrong data and nobody notices.`;
+  else if (verdict === "fixOverall")
+    story = "Only the overall bit flipped. The three circles are happy, so the data is fine.";
+  else if (verdict === "detect")
+    story = (
+      <>
+        The circles point at bit {syndrome}, but the overall bit says an <em>even</em> number of bits changed, so at
+        least two flipped. The chip can't tell which ones, so it reports an error instead of using wrong data.
+      </>
+    );
+  else if (dataOk)
+    story = (
+      <>
+        {who}
+        {sum}. {where} is bit {syndrome}, so the chip flips it back.
+      </>
+    );
+  else
+    story = (
+      <>
+        {who}
+        {sum}. {where} is bit {syndrome}
+        {flips[syndrome]
+          ? ". The chip flips it back, but other flipped bits stay wrong."
+          : ", but that bit was fine! The chip “fixes” it and hands over wrong data."}{" "}
+        {!ecc && "Hamming(7,4) can fix one flip, but two fool it. Try the 8-bit version."}
+      </>
+    );
+
+  return (
+    <Widget
+      title="Cosmic ray: find and fix a flipped bit"
+      subtitle="Four data bits (squares) are stored with three check bits (round). Each circle is one check, and it wants an even number of 1s inside it. Click any bit to flip it, the way a cosmic ray might."
+    >
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <div>
+          <div className="label-caps mb-1.5 text-dim">Data to store</div>
+          <div className="flex gap-3">
+            {H_DATA.map((p, i) => (
+              <BitButton
+                key={p}
+                size="sm"
+                on={data[i] === 1}
+                onClick={() => setDataBit(i)}
+                label={`bit ${p}`}
+                title={`Data bit stored at position ${p}`}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2 pb-5">
+          <Btn onClick={zapRandom}>↯ Random cosmic ray</Btn>
+          <Btn onClick={clear} disabled={nFlips === 0}>
+            Undo flips
+          </Btn>
+        </div>
+      </div>
+      <Segmented
+        className="mt-1"
+        size="sm"
+        value={ecc ? "ecc" : "h74"}
+        onChange={(v) => {
+          setEcc(v === "ecc");
+          clear();
+        }}
+        options={[
+          { value: "h74", label: "7 bits: fixes 1 flip" },
+          { value: "ecc", label: "8 bits: also detects 2 (like ECC RAM)" },
+        ]}
+      />
+
+      <div className="mt-4 grid items-start gap-5 @2xl:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
+        <div>
+          <svg
+            viewBox={`0 0 ${H_W} ${H_H}`}
+            className="mx-auto w-full max-w-[26rem]"
+            role="group"
+            aria-label="Three overlapping check circles with seven bits inside them"
+          >
+            <defs>
+              {H_CIRCLES.map((c) => (
+                <clipPath key={c.check} id={`${uid}-c${c.check}`}>
+                  <circle cx={c.x} cy={c.y} r={H_R} />
+                </clipPath>
+              ))}
+              <mask id={`${uid}-m`} maskUnits="userSpaceOnUse" x={0} y={0} width={H_W} height={H_H}>
+                <rect x={0} y={0} width={H_W} height={H_H} fill="white" />
+                {H_CIRCLES.filter((c) => !(syndrome & c.check)).map((c) => (
+                  <circle key={c.check} cx={c.x} cy={c.y} r={H_R} fill="black" />
+                ))}
+              </mask>
+            </defs>
+
+            {syndrome > 0 && <g mask={`url(#${uid}-m)`}>{region}</g>}
+
+            {H_CIRCLES.map((c) => {
+              const bad = fails.includes(c.check);
+              return (
+                <g key={c.check}>
+                  <circle
+                    cx={c.x}
+                    cy={c.y}
+                    r={H_R}
+                    fill={bad ? "var(--color-pink)" : "none"}
+                    fillOpacity={bad ? 0.06 : 0}
+                    stroke={bad ? "var(--color-pink)" : "var(--color-mute)"}
+                    strokeWidth={bad ? 2.5 : 1.25}
+                    strokeDasharray={bad ? "8 5" : undefined}
+                  />
+                  <text
+                    x={c.lx}
+                    y={c.ly}
+                    textAnchor={c.anchor}
+                    className={cx("font-sans text-[13px] font-bold", bad ? "fill-pink" : "fill-ink")}
+                  >
+                    check {c.check}
+                  </text>
+                  <text
+                    x={c.lx}
+                    y={c.ly + 16}
+                    textAnchor={c.anchor}
+                    className={cx("font-sans text-[12px]", bad ? "fill-pink font-semibold" : "fill-mute")}
+                  >
+                    {bad ? "odd ✗" : "even ✓"}
+                  </text>
+                </g>
+              );
+            })}
+
+            {ecc && (
+              <text x={H_CELL[0][0]} y={H_CELL[0][1] + 40} textAnchor="middle" className="fill-mute font-sans text-[12px]">
+                overall
+              </text>
+            )}
+
+            {shown.map((p) => {
+              const [x, y] = H_CELL[p];
+              const isData = H_DATA.includes(p);
+              const v = got[p];
+              const zapped = flips[p];
+              const isBlamed = blamed === p;
+              const shape = (pad: number, props: Record<string, unknown>) =>
+                isData || p === 0 ? (
+                  <rect x={x - 16 - pad} y={y - 21 - pad} width={32 + 2 * pad} height={42 + 2 * pad} rx={5 + pad} {...props} />
+                ) : (
+                  <circle cx={x} cy={y} r={22 + pad} {...props} />
+                );
+              return (
+                <g
+                  key={p}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={zapped}
+                  aria-label={`${p === 0 ? "Overall parity bit" : isData ? `Data bit ${p}` : `Check bit ${p}`}, now ${v}${zapped ? ", flipped" : ""}. Flip it.`}
+                  className="cursor-pointer"
+                  onClick={() => flip(p)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      flip(p);
+                    }
+                  }}
+                >
+                  <rect x={x - 25} y={y - 28} width={50} height={56} rx={8} fill="transparent" />
+                  {zapped &&
+                    shape(4.5, {
+                      fill: "none",
+                      stroke: "var(--color-pink)",
+                      strokeWidth: 1.5,
+                      strokeDasharray: "3 3",
+                    })}
+                  {shape(0, {
+                    fill: zapped ? "var(--color-pink-tint)" : "var(--color-panel)",
+                    stroke: zapped ? "var(--color-pink)" : isBlamed ? "var(--color-amber)" : "var(--color-line-2)",
+                    strokeWidth: zapped || isBlamed ? 2 : 1.25,
+                  })}
+                  <text x={x} y={y - 6} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+                    {p === 0 ? "all" : p}
+                  </text>
+                  <text
+                    x={x}
+                    y={y + 14}
+                    textAnchor="middle"
+                    className={cx(
+                      "font-mono text-[18px] tabular-nums",
+                      zapped ? "fill-pink font-bold" : v ? "fill-on font-bold" : "fill-dim",
+                    )}
+                  >
+                    {v}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+          <p className="mt-1 text-center font-sans text-xs text-mute">
+            Small number = the bit's position. Shaded = where the complaining circles point.
+          </p>
+        </div>
+
+        <div className="space-y-3 font-sans text-sm">
+          <div>
+            <div className="label-caps mb-1.5 text-dim">Read back from memory</div>
+            <div className="flex flex-wrap gap-1">
+              {shown.map((p) => (
+                <div
+                  key={p}
+                  className={cx(
+                    "flex w-8 flex-col items-center rounded border py-0.5",
+                    flips[p] ? "border-pink bg-pink-tint" : "border-line bg-panel",
+                  )}
+                >
+                  <span className="text-[0.6875rem] text-dim">{p === 0 ? "all" : p}</span>
+                  <span
+                    className={cx(
+                      "font-mono text-base tabular-nums",
+                      flips[p] ? "font-bold text-pink" : got[p] ? "font-bold text-on" : "text-dim",
+                    )}
+                  >
+                    {got[p]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <table className="w-full border-y border-line-2 text-left">
+            <tbody>
+              {H_CHECKS.map((c) => {
+                const n = ones(c);
+                const bad = n % 2 === 1;
+                return (
+                  <tr key={c} className="border-b border-line last:border-0">
+                    <td className="py-1 pr-2 font-semibold whitespace-nowrap text-ink">check {c}</td>
+                    <td className="py-1 pr-2 font-mono text-xs whitespace-nowrap text-mute">
+                      {hWatched(c).join(" ")}
+                    </td>
+                    <td className="py-1 pr-2 whitespace-nowrap text-mute">
+                      {n} one{n === 1 ? "" : "s"}
+                    </td>
+                    <td className={cx("py-1 text-right whitespace-nowrap", bad ? "font-semibold text-pink" : "text-mute")}>
+                      {bad ? "odd ✗" : "even ✓"}
+                    </td>
+                  </tr>
+                );
+              })}
+              {ecc && (
+                <tr>
+                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-ink">overall</td>
+                  <td className="py-1 pr-2 font-mono text-xs whitespace-nowrap text-mute">all 8</td>
+                  <td className="py-1 pr-2 whitespace-nowrap text-mute">{allOnes} ones</td>
+                  <td
+                    className={cx(
+                      "py-1 text-right whitespace-nowrap",
+                      overallOdd ? "font-semibold text-pink" : "text-mute",
+                    )}
+                  >
+                    {overallOdd ? "odd ✗" : "even ✓"}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <p className="font-serif text-[0.9375rem] leading-snug text-body">{story}</p>
+
+          <div
+            className={cx(
+              "rounded-md border px-3 py-2",
+              verdict === "detect"
+                ? "border-amber bg-amber-tint"
+                : dataOk
+                  ? "border-line-2 bg-panel-2"
+                  : "border-pink bg-pink-tint halo-pink",
+            )}
+          >
+            <div className="label-caps text-dim">Data handed to the CPU</div>
+            {verdict === "detect" ? (
+              <div className="mt-0.5 font-semibold text-amber">None: “memory error” reported ⚠</div>
+            ) : (
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2">
+                <span className="font-mono text-lg tracking-[0.15em] tabular-nums">
+                  {out.map((b, i) => (
+                    <span key={i} className={b ? "font-bold text-on" : "text-dim"}>
+                      {b}
+                    </span>
+                  ))}
+                </span>
+                {dataOk ? (
+                  <span className="font-semibold text-ink">✓ same as stored</span>
+                ) : (
+                  <span className="font-semibold text-pink">✗ wrong (stored {data.join("")})</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </Widget>
   );
 }
