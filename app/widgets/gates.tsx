@@ -147,7 +147,7 @@ export function SwitchGates() {
   return (
     <Widget
       title="Logic with plain switches"
-      subtitle="Click the switches (or the buttons). 1 = switch closed, lamp on = output 1."
+      subtitle="Click the switches (or the buttons). 1 = button pressed, lamp on = output 1."
     >
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <Segmented

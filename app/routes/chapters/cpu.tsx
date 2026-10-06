@@ -161,8 +161,8 @@ export default function Cpu() {
         Our CPU has no multiply instruction. Pick the <strong>3 × 4</strong> program above. It keeps adding 3 to a total
         and subtracting 1 from a counter, and when <code>SUB</code> produces 0 the Z flag turns on and <code>JZ</code>{" "}
         exits the loop. That's how every <code>while</code> loop and every <code>if</code> you'll ever write actually
-        runs. <strong>Fibonacci</strong> uses the carry flag instead: it stops when the next number no longer fits in 8
-        bits.
+        runs. <strong>Fibonacci</strong> uses the carry flag instead: it stops as soon as x + y no longer fits in 8
+        bits, so the last number it shows is 144.
       </p>
 
       <h2>The control unit is just another truth table</h2>
@@ -187,7 +187,7 @@ export default function Cpu() {
           ["memory", "16 bytes", "16 GB+ (a billion times more)"],
           ["instructions", "11", "1,000+"],
           ["clock", "a few ticks per second here", "~5 billion ticks per second"],
-          ["instructions per tick", "about 1/4", "4–8 (several at once)"],
+          ["instructions per tick", "about 1/5 (one instruction every 4–6 ticks)", "4–8 (several at once)"],
           ["cores", "1", "8–24 complete CPUs on one chip"],
         ]}
       />
@@ -197,7 +197,7 @@ export default function Cpu() {
           block
         >{tex`\text{time} = \text{instructions} \times \frac{\text{ticks}}{\text{instruction}} \times \frac{\text{seconds}}{\text{tick}}`}</TeX>
         <p>
-          SAP-8 needs about 4–5 ticks per instruction. A modern core at 5 GHz finishing 4 instructions per tick does
+          SAP-8 needs 4–6 ticks per instruction. A modern core at 5 GHz finishing 4 instructions per tick does
         </p>
         <TeX
           block
@@ -240,8 +240,8 @@ export default function Cpu() {
         items={[
           <>A program is just bytes in memory: opcode bits + operand bits.</>,
           <>
-            The CPU loops <strong>fetch → decode → execute</strong> forever. Each step is one clock tick that moves one
-            value over the bus.
+            The CPU loops <strong>fetch → decode → execute</strong> forever. Each step takes one or more clock ticks,
+            and in each tick at most one value moves over the bus.
           </>,
           <>The control unit turns opcode + step number into control signals. It's just a lookup table.</>,
           <>

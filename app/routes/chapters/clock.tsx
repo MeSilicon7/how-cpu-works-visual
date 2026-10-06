@@ -19,7 +19,7 @@ export default function Clock() {
       <Callout kind="analogy">
         <p>
           Think of a rowing team. Each rower is strong on their own, but the boat only flies if they all pull{" "}
-          <em>at the same moment</em>. The clock is the coxswain calling “stroke… stroke… stroke…”. Between calls,
+          <em>at the same moment</em>. The clock is the coxswain, the person at the back of the boat who calls “stroke… stroke… stroke…”. Between calls,
           everyone gets ready. On the call, everyone moves together.
         </p>
       </Callout>
@@ -51,7 +51,7 @@ export default function Clock() {
         >{tex`d = c \times T = 3 \times 10^8\ \tfrac{\text{m}}{\text{s}} \times 3.33 \times 10^{-10}\ \text{s} = 0.1\ \text{m} = 10\ \text{cm}`}</TeX>
         <p>
           Electrical signals in chip wires move slower than light, so in one tick a signal can only cross a few
-          centimetres. That's one reason chips must be small: a signal that needs two ticks just to cross the chip would
+          millimetres. That's one reason chips must be small: a signal that needs two ticks just to cross the chip would
           slow everything down.
         </p>
       </Callout>

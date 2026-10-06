@@ -43,13 +43,14 @@ export default function Network() {
       <Callout kind="math" title="Why can't the eavesdropper just work it out?">
         <p>
           Going forward is easy: <TeX>{"5^{6} \\bmod 23"}</TeX> takes a few multiplications. Going backwards (“which
-          power of 5 gives 8?”) has no known shortcut; you basically have to try them all. With a 23 that's instant.
+          power of 5 gives 8?”) has no known fast method; for huge numbers every known trick is still
+          impossibly slow. With a 23 that's instant.
           Real systems use numbers hundreds of digits long (or elliptic curves), where trying them all would take longer
           than the age of the universe.
         </p>
         <TeX
           block
-        >{tex`\text{a 256-bit key: } 2^{256} \approx 1.2 \times 10^{77} \text{ possibilities} \qquad \text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years}`}</TeX>
+        >{tex`\text{guessing a 256-bit AES key: } 2^{256} \approx 1.2 \times 10^{77} \text{ possibilities} \qquad \text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years}`}</TeX>
       </Callout>
       <p>
         The actual scrambling uses a cipher like AES: rounds of XOR, substitutions and shifts, exactly the bitwise

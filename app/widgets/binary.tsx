@@ -339,7 +339,7 @@ export function NegateWidget() {
   const neg = (flipped + 1) & 255;
   return (
     <Widget title="Make a number negative: flip every bit, then add 1">
-      <Slider label="x" min={0} max={127} value={x} onChange={setX} />
+      <Slider label="x" min={1} max={127} value={x} onChange={setX} />
       <DataTable
         className="mt-3"
         align="left"

@@ -26,8 +26,8 @@ export default function Graphics() {
 
       <h2>Colour is three numbers</h2>
       <p>
-        Your eyes have three kinds of colour sensors (cone cells), most sensitive to red, green and blue. So a screen
-        only needs three lights per pixel to fool them into seeing any colour. Each light's brightness is stored as one
+        Your eyes have three kinds of colour sensors (cone cells), most sensitive to reddish, greenish and bluish light. So
+        a screen only needs three lights per pixel to fool them into seeing most colours. Each light's brightness is stored as one
         byte, 0 to 255:
       </p>
       <RgbMixer />
@@ -140,7 +140,8 @@ export default function Graphics() {
           <strong>Write</strong> the colours into the framebuffer.
         </li>
         <li>
-          <strong>Display</strong>: the screen controller sends the framebuffer to the panel, 60–240 times a second.
+          <strong>Display</strong>: the GPU's display controller reads the framebuffer and sends the pixel colours over
+          the cable to the screen, 60–240 times a second.
         </li>
       </ol>
 
@@ -157,7 +158,7 @@ export default function Graphics() {
       <GoDeeper title="How does a pixel actually make light?">
         <ul>
           <li>
-            <strong>LCD</strong>: a white backlight shines through liquid crystals. A voltage twists each crystal, which
+            <strong>LCD</strong>: a white backlight shines through liquid crystals. A voltage turns (re-aligns) each crystal, which
             changes how much light passes through a polarising filter, then through a red, green or blue colour filter.
           </li>
           <li>

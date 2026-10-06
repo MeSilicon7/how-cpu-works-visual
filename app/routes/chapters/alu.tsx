@@ -61,7 +61,8 @@ export default function Alu() {
           <TeX>{"Z = \\overline{r_7 + r_6 + \\cdots + r_0}"}</TeX>.
         </li>
         <li>
-          <strong>C (carry)</strong> is 1 if the answer didn't fit (the adder's last carry-out).
+          <strong>C (carry)</strong> is the adder's last carry-out. After an add it means “the answer didn't fit in
+          8 bits”; after a subtract our CPU uses it to mean “had to borrow” (the answer went below 0).
         </li>
         <li>
           <strong>N (negative)</strong> is a copy of the top bit, which is the sign in two's complement.

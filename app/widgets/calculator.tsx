@@ -496,8 +496,8 @@ export function NumberToText({ n }: { n: number }) {
         </div>
       </div>
       <p className="mt-3 text-sm text-mute">
-        Same trick as Step 4, run backwards. That's the same division-by-repeated-remainders method as decimal → binary,
-        only with 10 instead of 2.
+        Same trick as Step 4, run backwards. That's the same method as decimal → binary (divide again and again, keep each
+        remainder), only with 10 instead of 2.
       </p>
     </Widget>
   );

@@ -92,8 +92,9 @@ export default function Calculator() {
 
       <h2>3. Interrupt: the CPU drops everything</h2>
       <p>
-        Your CPU is busy doing a hundred other things. It doesn't constantly check the keyboard. Instead, the USB
-        controller raises an <strong>interrupt</strong>: a wire straight into the CPU's control unit. Between two
+        Your CPU is busy doing a hundred other things. It doesn't check the keyboard itself. A separate chip, the USB
+        controller, asks the keyboard about 1,000 times per second, and when a new key arrives it raises an{" "}
+        <strong>interrupt</strong>: a wire straight into the CPU's control unit. Between two
         instructions, the CPU notices, saves its work, and jumps to a small piece of the operating system.
       </p>
       <SoftwareStack />
@@ -139,9 +140,10 @@ export default function Calculator() {
 
       <h2>8. Memory becomes light</h2>
       <p>
-        The screen doesn't know anything about calculators. Its controller simply copies the framebuffer to the panel,
-        over and over, 60 or more times per second. Each pixel is three tiny lights (red, green, blue), and the three
-        numbers set how bright each one glows. We'll dig into that in <Link to="/graphics">Graphics</Link>.
+        The screen doesn't know anything about calculators. The GPU's display controller reads the framebuffer 60 or more times
+        per second and sends every pixel's red, green and blue numbers down the cable. The monitor just receives those
+        colours and sets each pixel. Each pixel has three tiny parts (red, green, blue): little lights on an OLED
+        screen, or coloured shutters over a white backlight on an LCD. We'll dig into that in <Link to="/graphics">Graphics</Link>.
       </p>
       <ScanOut text={text} />
 
@@ -162,7 +164,7 @@ export default function Calculator() {
           <>A keypress is a switch closing in a row/column grid, found by scanning.</>,
           <>The key travels as a code over USB, then an interrupt hands it to the OS and the app.</>,
           <>Characters ≠ numbers: the app converts with “− 48” on the way in and “+ 48” on the way out.</>,
-          <>The maths is one ADD instruction: full adders rippling in a fraction of a nanosecond.</>,
+          <>The maths is one ADD instruction: a fast adder (with carry-lookahead) finishes in a fraction of a nanosecond.</>,
           <>A font turns characters into pixels; the framebuffer holds them; the display turns numbers into light.</>,
         ]}
       />

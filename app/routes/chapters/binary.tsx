@@ -88,17 +88,18 @@ export default function Binary() {
       <h2>Text is numbers too</h2>
       <p>
         Computers can't store a letter directly. Everyone just agrees on a numbered list of characters. The classic list
-        is <strong>ASCII</strong> (1963): <code>A</code> = 65, <code>B</code> = 66, … <code>a</code> = 97,{" "}
+        is <strong>ASCII</strong> (first version 1963; lowercase letters were added in 1967): <code>A</code> = 65, <code>B</code> = 66, … <code>a</code> = 97,{" "}
         <code>0</code> (the digit character) = 48, space = 32. Today we use <strong>Unicode</strong>, which extends the
         list to over 150,000 characters: every language, plus emoji. <strong>UTF-8</strong> is the rule for packing
-        those numbers into bytes: common letters take 1 byte, emoji take 4.
+        those numbers into bytes: English letters, digits and punctuation (the old ASCII ones) take 1 byte; letters like é or
+        Ж take 2; most Asian scripts such as हिन्दी or 中文 take 3; emoji take 4.
       </p>
       <TextToBytes />
       <Callout kind="math" title="A neat pattern">
         <p>
           <code>A</code> = 65 = <code>0100 0001</code> and <code>a</code> = 97 = <code>0110 0001</code>. They differ by{" "}
-          <TeX>{"97 - 65 = 32 = 2^5"}</TeX>, exactly one bit. Converting between upper and lower case is just flipping
-          bit 5!
+          <TeX>{"97 - 65 = 32 = 2^5"}</TeX>, exactly one bit: the only difference is the 32s place, called <em>bit 5</em> because we count positions from 0
+          on the right. Converting between upper and lower case is just flipping that one bit!
         </p>
         <p>
           And the <em>character</em> <code>7</code> is code 55, not the number 7. To get the number, a program subtracts
@@ -117,7 +118,7 @@ export default function Binary() {
           [
             <>1 kilobyte (KB)</>,
             <>
-              ≈ 1,000 bytes <span className="whitespace-nowrap">(really 1,024 = 2¹⁰)</span>
+              1,000 bytes <span className="whitespace-nowrap">(a kibibyte, KiB, is 1,024 = 2¹⁰)</span>
             </>,
             "a short email",
           ],
@@ -166,8 +167,8 @@ export default function Binary() {
         <FloatWidget />
         <p>
           Since <TeX>{"0.1 = \\tfrac{1}{10}"}</TeX> and 10 isn't a power of 2, 0.1 in binary repeats forever (
-          <code>0.000110011001100…</code>), so it gets rounded. Add two rounded numbers and the tiny errors show up. In
-          most programming languages, <code>0.1 + 0.2</code> gives <code>0.30000000000000004</code>. Not a bug, just
+          <code>0.000110011001100…</code>), so it gets rounded. Add two rounded numbers and the tiny errors show up. Most languages use 64-bit floats
+          by default (52 fraction bits, exponent − 1023), and with those <code>0.1 + 0.2</code> gives <code>0.30000000000000004</code>. Not a bug, just
           binary.
         </p>
       </GoDeeper>

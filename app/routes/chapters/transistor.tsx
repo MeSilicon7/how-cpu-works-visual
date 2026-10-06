@@ -71,7 +71,7 @@ export default function Transistor() {
       <ul>
         <li>
           Add <strong>phosphorus</strong> → each phosphorus atom brings one <em>extra</em> electron that is free to
-          move. This is <strong>n-type</strong> silicon (n for negative).
+          move. This is <strong>n-type</strong> silicon (n for the extra negative electrons; the crystal as a whole stays neutral).
         </li>
         <li>
           Add <strong>boron</strong> → each boron atom leaves a <em>missing</em> electron, a “hole”. This is{" "}
@@ -152,8 +152,8 @@ export default function Transistor() {
       </p>
       <NmosPmosWidget />
       <p>
-        Notice something clever. For either input, <em>exactly one</em> of the two transistors is on. There's never a
-        direct path from supply to ground, so almost no current is wasted while the circuit sits still. That's why your
+        Notice something clever. For either input, <em>exactly one</em> of the two transistors is on. While the input is steady,
+        there is no direct path from supply to ground, so almost no current is wasted while the circuit sits still. That's why your
         phone can hold billions of transistors without melting. We'll use this circuit again in{" "}
         <Link to="/logic-gates">Logic Gates</Link>, where it becomes the <strong>NOT gate</strong>.
       </p>
@@ -218,8 +218,8 @@ export default function Transistor() {
         <p>
           The first transistor was built at Bell Labs in <strong>1947</strong>, about the size of your thumb. Before
           that, computers used glass vacuum tubes: ENIAC (1945) had about 17,500 of them, filled a room, and used 150
-          kilowatts. The MOSFET came in 1959, and since then engineers have shrunk it roughly in half every couple of
-          years. Your phone does more than a billion times more work than ENIAC.
+          kilowatts. The MOSFET came in 1959, and since then the number of transistors on a chip has doubled roughly
+          every two years (each transistor takes about half the area). Your phone does more than a billion times more work than ENIAC.
         </p>
       </Callout>
 
