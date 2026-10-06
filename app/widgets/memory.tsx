@@ -300,7 +300,7 @@ export function RamGrid() {
         <div className="scroll-thin overflow-x-auto">
           <table className="w-full font-mono text-xs tabular-nums sm:text-sm">
             <thead>
-              <tr className="text-[0.65rem] text-dim">
+              <tr className="text-[0.6875rem] text-dim">
                 <th className="px-1 text-left font-normal">addr</th>
                 <th className="px-1 text-left font-normal">word line</th>
                 <th className="px-1 text-left font-normal">8 flip-flops</th>
@@ -317,8 +317,8 @@ export function RamGrid() {
                     className={cx(
                       "transition-colors",
                       sel && "bg-violet/10",
-                      sel && flash === "write" && "bg-cyan/25",
-                      sel && flash === "read" && "bg-on/25",
+                      sel && flash === "write" && "bg-cyan-tint",
+                      sel && flash === "read" && "bg-on-tint",
                     )}
                   >
                     <td className={cx("px-1 py-[2px]", sel ? "text-violet" : "text-dim")}>
@@ -328,7 +328,7 @@ export function RamGrid() {
                       <span
                         className={cx(
                           "inline-block h-2 w-14 rounded-full align-middle transition",
-                          sel ? "bg-violet shadow-[0_0_8px_var(--color-violet)]" : "bg-line-2",
+                          sel ? "bg-violet halo-violet" : "bg-line-2",
                         )}
                       />
                     </td>
@@ -340,8 +340,8 @@ export function RamGrid() {
                             <span
                               key={b}
                               className={cx(
-                                "flex h-[18px] w-[16px] items-center justify-center rounded-[3px] text-[0.65rem] font-bold",
-                                on ? (sel ? "bg-on/30 text-on" : "bg-on/15 text-on/80") : "bg-panel-2 text-dim",
+                                "flex h-[18px] w-[16px] items-center justify-center rounded-[3px] text-[0.6875rem] font-bold",
+                                on ? (sel ? "bg-on-tint text-on" : "bg-on-tint text-on") : "bg-panel-2 text-dim",
                                 b === 3 && "ml-1",
                               )}
                             >

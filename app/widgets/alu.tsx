@@ -132,9 +132,7 @@ export function AluWidget() {
               onClick={() => setOp(o.op)}
               className={cx(
                 "rounded-xl border p-2.5 text-left transition",
-                active
-                  ? "border-on bg-on/10 shadow-[0_0_20px_-6px_var(--color-on)]"
-                  : "border-line-2 bg-bg/60 opacity-60 hover:opacity-100",
+                active ? "border-on bg-on/10 halo-on" : "border-line-2 bg-bg/60 opacity-60 hover:opacity-100",
               )}
             >
               <div className="flex items-baseline justify-between">

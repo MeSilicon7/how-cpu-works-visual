@@ -103,7 +103,7 @@ export function HierarchyChart() {
             />
           ))}
           {ticks.map((t) => (
-            <text key={t.e} x={x(10 ** t.e)} y={14} textAnchor="middle" className="fill-dim font-mono text-[10px]">
+            <text key={t.e} x={x(10 ** t.e)} y={14} textAnchor="middle" className="fill-dim font-mono text-[11px]">
               {t.label}
             </text>
           ))}
@@ -230,10 +230,7 @@ export function DramLeak() {
                   flashing ? "border-on" : "border-line-2",
                 )}
               >
-                <div
-                  className="absolute bottom-0 left-0 w-full bg-cyan/70"
-                  style={{ height: `${q * 100}%`, boxShadow: "0 0 14px var(--color-cyan)" }}
-                />
+                <div className="absolute bottom-0 left-0 w-full bg-cyan/70" style={{ height: `${q * 100}%` }} />
                 <div className="absolute top-1/2 left-0 w-full border-t border-dashed border-amber" />
               </div>
               <div className="font-mono text-xs text-dim">wrote {st.written[i]}</div>
@@ -330,17 +327,41 @@ export function FlashCell() {
       <div className="mt-4 grid items-center gap-4 md:grid-cols-[1.3fr_1fr]">
         <svg viewBox="0 0 420 250" className="w-full" role="img" aria-label="Flash memory cell cross-section">
           {/* substrate and wells */}
-          <rect x={20} y={160} width={380} height={80} rx={8} fill="#1a1530" stroke="#3b2f63" />
-          <path d="M40 160 h90 v26 q0 16 -16 16 h-58 q-16 0 -16 -16 z" fill="#0d2a3d" stroke="#1f5f86" />
-          <path d="M290 160 h90 v26 q0 16 -16 16 h-58 q-16 0 -16 -16 z" fill="#0d2a3d" stroke="#1f5f86" />
-          <text x={85} y={226} textAnchor="middle" className="fill-cyan font-mono text-[10px]">
+          <rect
+            x={20}
+            y={160}
+            width={380}
+            height={80}
+            rx={8}
+            fill="var(--color-si-p)"
+            stroke="var(--color-si-p-edge)"
+          />
+          <path
+            d="M40 160 h90 v26 q0 16 -16 16 h-58 q-16 0 -16 -16 z"
+            fill="var(--color-si-n)"
+            stroke="var(--color-si-n-edge)"
+          />
+          <path
+            d="M290 160 h90 v26 q0 16 -16 16 h-58 q-16 0 -16 -16 z"
+            fill="var(--color-si-n)"
+            stroke="var(--color-si-n-edge)"
+          />
+          <text x={85} y={226} textAnchor="middle" className="fill-cyan font-mono text-[11px]">
             source
           </text>
-          <text x={335} y={226} textAnchor="middle" className="fill-cyan font-mono text-[10px]">
+          <text x={335} y={226} textAnchor="middle" className="fill-cyan font-mono text-[11px]">
             drain
           </text>
           {/* tunnel oxide */}
-          <rect x={120} y={150} width={180} height={10} fill="#41505f" />
+          <rect
+            x={120}
+            y={150}
+            width={180}
+            height={10}
+            fill="var(--color-oxide)"
+            stroke="var(--color-off)"
+            strokeWidth={0.75}
+          />
           {/* floating gate */}
           <rect
             x={128}
@@ -348,18 +369,26 @@ export function FlashCell() {
             width={164}
             height={38}
             rx={4}
-            fill="#2a2140"
+            fill="var(--color-float)"
             stroke="var(--color-violet)"
             strokeWidth={1.5}
           />
-          <text x={298} y={128} className="fill-violet font-mono text-[9px]">
+          <text x={298} y={128} className="fill-violet font-mono text-[11px]">
             ← floating gate
           </text>
-          <text x={298} y={140} className="fill-violet font-mono text-[9px]">
+          <text x={298} y={140} className="fill-violet font-mono text-[11px]">
             (sealed in glass)
           </text>
           {/* inter-gate oxide */}
-          <rect x={120} y={92} width={180} height={10} fill="#41505f" />
+          <rect
+            x={120}
+            y={92}
+            width={180}
+            height={10}
+            fill="var(--color-oxide)"
+            stroke="var(--color-off)"
+            strokeWidth={0.75}
+          />
           {/* control gate */}
           <rect
             x={128}
@@ -367,11 +396,14 @@ export function FlashCell() {
             width={164}
             height={36}
             rx={4}
-            fill={moving ? "rgb(255 181 71 / 0.85)" : "#4a5868"}
-            stroke="var(--color-amber)"
-            strokeOpacity={moving ? 1 : 0.3}
+            style={{
+              fill: moving
+                ? "color-mix(in oklab, var(--color-amber) 75%, var(--color-si-gate))"
+                : "var(--color-si-gate)",
+            }}
+            stroke={moving ? "var(--color-amber)" : "var(--color-off)"}
           />
-          <text x={210} y={50} textAnchor="middle" className="fill-mute font-mono text-[10px]">
+          <text x={210} y={50} textAnchor="middle" className="fill-mute font-mono text-[11px]">
             control gate {moving && a.to > a.from ? "(+20 V: program!)" : moving ? "(erase)" : ""}
           </text>
           {/* electrons */}
@@ -386,7 +418,7 @@ export function FlashCell() {
               const yy = a.to > a.from ? 175 - Math.abs(p) * 50 : 125 + Math.abs(p) * 50;
               return <circle key={`m${i}`} cx={170 + i * 25} cy={yy} r={3.5} fill="var(--color-cyan)" opacity={0.9} />;
             })}
-          <text x={210} y={180} textAnchor="middle" className="fill-dim font-mono text-[9px]">
+          <text x={210} y={180} textAnchor="middle" className="fill-dim font-mono text-[11px]">
             channel
           </text>
         </svg>
@@ -437,9 +469,9 @@ export function FlashCell() {
                 <g key={bits}>
                   <path
                     d={`M${cx0 - 30} 60 Q${cx0} ${on ? 4 : 20} ${cx0 + 30} 60`}
-                    fill={on ? "rgb(76 201 255 / 0.25)" : "rgb(167 139 250 / 0.12)"}
+                    fill={on ? "var(--color-cyan-tint)" : "var(--color-violet-tint)"}
                     stroke={on ? "var(--color-cyan)" : "var(--color-violet)"}
-                    strokeOpacity={on ? 1 : 0.5}
+                    strokeDasharray={on ? undefined : "3 3"}
                   />
                   <text
                     x={cx0}
@@ -577,7 +609,7 @@ export function HddPlatter() {
     >
       <div className="grid items-center gap-4 md:grid-cols-[auto_1fr]">
         <svg viewBox="0 0 360 320" className="mx-auto w-full max-w-[360px]" role="img" aria-label="Hard drive platter">
-          <circle cx={cx0} cy={cy0} r={rOut + 6} fill="#151c26" stroke="var(--color-line-2)" />
+          <circle cx={cx0} cy={cy0} r={rOut + 6} fill="var(--color-platter)" stroke="var(--color-off)" />
           <g transform={`rotate(${angle} ${cx0} ${cy0})`}>
             {Array.from({ length: TRACKS }, (_, tr) =>
               Array.from({ length: SECTORS }, (_, k) => {
@@ -592,21 +624,29 @@ export function HddPlatter() {
                           ? "var(--color-on)"
                           : "var(--color-amber)"
                         : (tr + k) % 2
-                          ? "#243042"
-                          : "#1d2735"
+                          ? "var(--color-platter-2)"
+                          : "var(--color-platter)"
                     }
-                    className="cursor-pointer hover:brightness-150"
+                    className="cursor-pointer hover:stroke-[var(--color-ink)] hover:[stroke-width:1.5]"
                     onClick={() => request(tr, k)}
                   />
                 );
               }),
             )}
           </g>
-          <circle cx={cx0} cy={cy0} r={rIn - 6} fill="#2b3644" stroke="var(--color-line-2)" />
+          <circle cx={cx0} cy={cy0} r={rIn - 6} fill="var(--color-metal)" stroke="var(--color-off)" />
           <circle cx={cx0} cy={cy0} r={6} fill="var(--color-dim)" />
           {/* arm */}
-          <line x1={cx0 + headR} y1={cy0} x2={330} y2={300} stroke="#8796a8" strokeWidth={6} strokeLinecap="round" />
-          <circle cx={330} cy={300} r={12} fill="#5b6b7d" />
+          <line
+            x1={cx0 + headR}
+            y1={cy0}
+            x2={330}
+            y2={300}
+            stroke="var(--color-metal-2)"
+            strokeWidth={6}
+            strokeLinecap="round"
+          />
+          <circle cx={330} cy={300} r={12} fill="var(--color-metal)" />
           <rect
             x={cx0 + headR - 5}
             y={cy0 - 7}
@@ -643,7 +683,7 @@ export function HddPlatter() {
                   phase === ph ? "border-amber bg-amber/10" : "border-line bg-bg/50",
                 )}
               >
-                <div className="text-[0.65rem] tracking-wider text-dim uppercase">{label}</div>
+                <div className="text-[0.6875rem] tracking-wider text-dim uppercase">{label}</div>
                 <div className="font-mono text-sm text-ink">{ms === undefined ? "—" : `${ms.toFixed(2)} ms`}</div>
               </div>
             ))}
@@ -683,7 +723,7 @@ const fileColors = [
   "var(--color-pink)",
   "var(--color-on)",
   "var(--color-violet)",
-  "#ff8a4c",
+  "var(--color-red)",
 ];
 
 interface FsFile {
@@ -739,7 +779,7 @@ export function FileBlocks() {
               onMouseEnter={() => f && setHover(f.name)}
               onMouseLeave={() => setHover(null)}
               className={cx(
-                "flex aspect-square items-center justify-center rounded-md border font-mono text-[0.6rem] transition",
+                "flex aspect-square items-center justify-center rounded-md border font-mono text-[0.6875rem] transition",
                 isTable ? "border-ink bg-ink/20 text-ink" : f ? "text-bg" : "border-line-2 text-dim",
                 f && hover && hover !== f.name && "opacity-30",
               )}
@@ -752,7 +792,7 @@ export function FileBlocks() {
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto]">
         <div className="overflow-x-auto rounded-xl border border-line bg-bg/60 p-3">
-          <div className="mb-1 text-[0.65rem] font-semibold tracking-wider text-mute uppercase">
+          <div className="mb-1 text-[0.6875rem] font-semibold tracking-wider text-mute uppercase">
             The table (block 0)
           </div>
           <table className="w-full font-mono text-xs">

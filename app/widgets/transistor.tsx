@@ -80,7 +80,7 @@ export function NoiseDemo() {
           return (
             <g key={k}>
               <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--color-line)" strokeDasharray="3 5" />
-              <text x={pad.l - 6} y={y(v) + 4} textAnchor="end" className="fill-dim font-mono text-[10px]">
+              <text x={pad.l - 6} y={y(v) + 4} textAnchor="end" className="fill-dim font-mono text-[11px]">
                 {v.toFixed(levels === 2 ? 0 : 2)}V
               </text>
             </g>
@@ -192,12 +192,11 @@ export function MosfetWidget() {
             <line x1={278} y1={26} x2={278} y2={54} stroke="var(--color-ink)" strokeWidth={3} />
             <line x1={288} y1={32} x2={288} y2={48} stroke="var(--color-ink)" strokeWidth={5} />
             <line x1={250} y1={40} x2={258} y2={40} stroke="var(--color-off)" strokeWidth={3} />
-            <text x={270} y={20} textAnchor="middle" className="fill-mute font-mono text-[10px]">
+            <text x={270} y={20} textAnchor="middle" className="fill-mute font-mono text-[11px]">
               battery
             </text>
           </g>
-          <Lamp x={400} y={40} on={on} r={16} />
-          {current > 0 && <circle cx={400} cy={40} r={16 + 22 * current} fill="url(#lamp-glow)" />}
+          <Lamp x={400} y={40} on={on} r={16} intensity={current} />
 
           {/* gate lead */}
           <line
@@ -223,18 +222,30 @@ export function MosfetWidget() {
           </text>
 
           {/* substrate */}
-          <rect x={60} y={200} width={520} height={128} rx={8} fill="#1a1530" stroke="#3b2f63" />
+          <rect
+            x={60}
+            y={200}
+            width={520}
+            height={128}
+            rx={8}
+            fill="var(--color-si-p)"
+            stroke="var(--color-si-p-edge)"
+          />
           {holes.map((h, i) => (
-            <circle key={i} cx={h.x} cy={h.y} r={3} fill="none" stroke="#8b7bd8" strokeOpacity={0.6} />
+            <circle key={i} cx={h.x} cy={h.y} r={3} fill="none" stroke="var(--color-si-hole)" strokeWidth={1.2} />
           ))}
-          <text x={320} y={318} textAnchor="middle" className="fill-violet font-mono text-[11px]" opacity={0.85}>
+          <text x={320} y={318} textAnchor="middle" className="fill-violet font-mono text-[11px]">
             p-type silicon: almost no free electrons, so it blocks current
           </text>
 
           {/* source / drain wells */}
           {[90, 420].map((x, k) => (
             <g key={x}>
-              <path d={`M${x} 200 h130 v40 q0 22 -22 22 h-86 q-22 0 -22 -22 z`} fill="#0d2a3d" stroke="#1f5f86" />
+              <path
+                d={`M${x} 200 h130 v40 q0 22 -22 22 h-86 q-22 0 -22 -22 z`}
+                fill="var(--color-si-n)"
+                stroke="var(--color-si-n-edge)"
+              />
               {srcElectrons.map((e, i) => (
                 <circle key={i} cx={x + 10 + e.dx} cy={208 + e.dy} r={3} fill="var(--color-cyan)" />
               ))}
@@ -244,29 +255,50 @@ export function MosfetWidget() {
             </g>
           ))}
           {/* metal contacts */}
-          <rect x={125} y={182} width={60} height={18} rx={3} fill="#5b6b7d" />
-          <rect x={455} y={182} width={60} height={18} rx={3} fill="#5b6b7d" />
+          <rect x={125} y={182} width={60} height={18} rx={3} fill="var(--color-metal)" />
+          <rect x={455} y={182} width={60} height={18} rx={3} fill="var(--color-metal)" />
 
           {/* oxide + gate */}
-          <rect x={205} y={186} width={230} height={14} fill="#41505f" />
+          <rect
+            x={205}
+            y={186}
+            width={230}
+            height={14}
+            fill="var(--color-oxide)"
+            stroke="var(--color-off)"
+            strokeWidth={0.75}
+          />
+          <rect x={205} y={186} width={230} height={14} fill="url(#hatch)" opacity={0.6} />
           <rect
             x={212}
             y={160}
             width={216}
             height={26}
             rx={4}
-            fill={vg > 0 ? `rgb(255 181 71 / ${0.25 + 0.6 * (vg / VMAX)})` : "#4a5868"}
-            stroke="var(--color-amber)"
-            strokeOpacity={vg > 0 ? 0.9 : 0.2}
+            style={{
+              fill:
+                vg > 0
+                  ? `color-mix(in oklab, var(--color-amber) ${Math.round(20 + 55 * (vg / VMAX))}%, var(--color-si-gate))`
+                  : "var(--color-si-gate)",
+            }}
+            stroke={vg > 0 ? "var(--color-amber)" : "var(--color-off)"}
             className={vg > 0.05 ? "glow-amber" : undefined}
           />
           {Array.from({ length: Math.round((vg / VMAX) * 10) }, (_, i) => (
-            <text key={i} x={226 + i * 20} y={178} className="fill-bg font-mono text-[13px] font-bold">
+            <text
+              key={i}
+              x={226 + i * 20}
+              y={178}
+              className="fill-bg font-mono text-[13px] font-bold"
+              stroke="var(--color-amber)"
+              strokeWidth={0.75}
+              paintOrder="stroke"
+            >
               +
             </text>
           ))}
-          <text x={320} y={156} textAnchor="middle" className="fill-mute font-mono text-[10px]">
-            GATE (metal) on a glass-thin insulator
+          <text x={320} y={156} textAnchor="middle" className="fill-mute font-mono text-[11px]">
+            GATE (metal) on thin glass
           </text>
 
           {/* channel electrons */}
@@ -302,7 +334,7 @@ export function MosfetWidget() {
             />
           )}
           {on && (
-            <text x={320} y={244} textAnchor="middle" className="fill-cyan font-mono text-[10px]">
+            <text x={320} y={244} textAnchor="middle" className="fill-cyan font-mono text-[11px]">
               electrons flow →
             </text>
           )}
@@ -324,7 +356,7 @@ export function MosfetWidget() {
             onChange={setVg}
             format={(v) => `${v.toFixed(2)} V`}
           />
-          <div className="relative mt-1 h-3 font-mono text-[10px] text-amber">
+          <div className="relative mt-1 h-3 font-mono text-[11px] text-amber">
             <span className="absolute -translate-x-1/2" style={{ left: `${(VTH / VMAX) * 100}%` }}>
               ▲ {VTH} V
             </span>
@@ -407,11 +439,11 @@ export function MosSymbol({
         stroke={ch}
         strokeWidth={3}
         strokeDasharray={conducting ? undefined : "5 4"}
-        style={{ filter: conducting ? "drop-shadow(0 0 4px var(--color-on))" : undefined }}
+        className={conducting ? "glow-on" : undefined}
       />
       <path d={`M${x - 6} ${y - 14} H${x + 12} V${y - 32}`} fill="none" stroke={ch} strokeWidth={2.5} />
       <path d={`M${x - 6} ${y + 14} H${x + 12} V${y + 32}`} fill="none" stroke={ch} strokeWidth={2.5} />
-      <text x={x + 20} y={y + 4} className="fill-dim font-mono text-[10px]">
+      <text x={x + 20} y={y + 4} className="fill-dim font-mono text-[11px]">
         {type}MOS
       </text>
     </g>
@@ -444,7 +476,7 @@ export function NmosPmosWidget() {
               <div className="mb-1 text-sm font-semibold text-ink">{type}MOS</div>
               <svg viewBox="0 0 160 110" className="w-full">
                 <MosSymbol x={86} y={55} type={type} conducting={conducting} gateOn={input} />
-                <text x={20} y={50} className="fill-mute font-mono text-[10px]">
+                <text x={20} y={50} className="fill-mute font-mono text-[11px]">
                   in={input ? 1 : 0}
                 </text>
               </svg>
@@ -468,7 +500,7 @@ function CmosInverter({ input }: { input: boolean }) {
         CMOS inverter <span className="font-normal text-mute">(a NOT gate)</span>
       </div>
       <svg viewBox="0 0 210 222" className="w-full">
-        <text x={110} y={14} textAnchor="middle" className="fill-on font-mono text-[10px]">
+        <text x={110} y={14} textAnchor="middle" className="fill-on font-mono text-[11px]">
           supply = 1
         </text>
         <line x1={80} y1={20} x2={140} y2={20} stroke="var(--color-on)" strokeWidth={3} />
@@ -478,12 +510,12 @@ function CmosInverter({ input }: { input: boolean }) {
         <MosSymbol x={98} y={170} type="n" conducting={input} gateOn={input} />
         <Wire d="M110 202 V206" on={false} flow={false} />
         <line x1={84} y1={206} x2={136} y2={206} stroke="var(--color-dim)" strokeWidth={3} />
-        <text x={110} y={220} textAnchor="middle" className="fill-dim font-mono text-[10px]">
+        <text x={110} y={220} textAnchor="middle" className="fill-dim font-mono text-[11px]">
           ground = 0
         </text>
         {/* input wire joining both gates */}
         <Wire d="M52 72 V170 M20 121 H52" on={input} flow={false} />
-        <text x={14} y={113} className="fill-mute font-mono text-[10px]">
+        <text x={14} y={113} className="fill-mute font-mono text-[11px]">
           in
         </text>
         {/* output */}
@@ -496,7 +528,7 @@ function CmosInverter({ input }: { input: boolean }) {
           stroke={out ? "var(--color-on)" : "var(--color-dim)"}
           strokeWidth={2}
         />
-        <text x={178} y={142} textAnchor="middle" className="fill-mute font-mono text-[10px]">
+        <text x={178} y={142} textAnchor="middle" className="fill-mute font-mono text-[11px]">
           out={out ? 1 : 0}
         </text>
       </svg>
@@ -554,7 +586,7 @@ export function SizeRuler() {
                 x={px}
                 y={132}
                 textAnchor={i === 0 ? "start" : i === hi - lo ? "end" : "middle"}
-                className="fill-dim font-mono text-[10px]"
+                className="fill-dim font-mono text-[11px]"
               >
                 {label}
               </text>
@@ -572,7 +604,7 @@ export function SizeRuler() {
                 x={px}
                 y={18 + row * 26}
                 textAnchor={px < 90 ? "start" : px > W - 90 ? "end" : "middle"}
-                className="font-mono text-[10px]"
+                className="font-mono text-[11px]"
                 fill={s.tone}
                 fontWeight={i === sel ? 700 : 400}
               >

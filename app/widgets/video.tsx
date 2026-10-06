@@ -379,7 +379,7 @@ export function Wave1D() {
                   <line x1={0} x2={80} y1={30} y2={30} stroke="var(--color-line)" />
                   <path d={pts} fill="none" stroke={used ? "var(--color-amber)" : "var(--color-dim)"} strokeWidth={2} />
                 </svg>
-                <div className="text-center font-mono text-[0.65rem] text-mute">wave {j}</div>
+                <div className="text-center font-mono text-[0.6875rem] text-mute">wave {j}</div>
                 <div className={cx("text-center font-mono text-xs", Math.abs(c) < 8 ? "text-dim" : "text-ink")}>
                   × {c.toFixed(0)}
                 </div>
@@ -409,6 +409,7 @@ function Matrix8({
   dimZero,
   onHover,
   hl,
+  dataCells,
 }: {
   values: number[];
   color: (v: number, i: number) => string;
@@ -417,6 +418,8 @@ function Matrix8({
   dimZero?: boolean;
   onHover?: (i: number | null) => void;
   hl?: number | null;
+  /** Cells show real pixel brightness, so pick ink by luminance. */
+  dataCells?: boolean;
 }) {
   return (
     <div>
@@ -429,13 +432,14 @@ function Matrix8({
               key={i}
               onMouseEnter={() => onHover?.(i)}
               className={cx(
-                "flex aspect-square items-center justify-center rounded-[3px] font-mono text-[0.55rem] leading-none tabular-nums sm:text-[0.6rem]",
-                zero ? "text-dim/60" : "text-white",
+                "flex aspect-square items-center justify-center rounded-[3px] font-mono text-[0.6875rem] leading-none tracking-tighter tabular-nums",
+                zero ? "text-dim" : dataCells ? undefined : "heat-label text-ink",
                 hl === i && "ring-2 ring-amber",
               )}
               style={{
                 background: zero ? "var(--color-panel-2)" : color(v, i),
-                textShadow: "0 0 3px rgb(0 0 0 / 0.9)",
+                // Cells painted with real pixel brightness pick dark or light ink for contrast.
+                color: dataCells && !zero ? (v >= 128 ? "#1f1d1a" : "#efe9dc") : undefined,
               }}
             >
               {fmtV(v)}
@@ -462,7 +466,8 @@ function basisImg(u: number, v: number): Img {
 
 const coefColor = (v: number) => {
   const a = Math.min(1, Math.abs(v) / 120);
-  return v >= 0 ? `rgb(76 201 255 / ${0.15 + a * 0.85})` : `rgb(255 92 138 / ${0.15 + a * 0.85})`;
+  const pct = Math.round((0.15 + a * 0.7) * 100);
+  return `color-mix(in oklab, var(--color-${v >= 0 ? "cyan" : "pink"}) ${pct}%, var(--color-panel-2))`;
 };
 const grey = (v: number) => {
   const g = Math.max(0, Math.min(255, v));
@@ -498,7 +503,7 @@ export function DctExplorer() {
       subtitle="This runs an actual compressor on the picture: split into 8×8 blocks → DCT → divide by a quality table and round → most numbers become 0. Click any block to look inside."
       wide
     >
-      <div className="grid gap-4 lg:grid-cols-[1.25fr_1fr]">
+      <div className="grid gap-5">
         <div>
           <div className="relative overflow-hidden rounded-xl border border-line-2">
             <PixelCanvas
@@ -507,7 +512,7 @@ export function DctExplorer() {
               ariaLabel="Picture split into 8 by 8 blocks"
             />
             <div
-              className="pointer-events-none absolute border-2 border-amber shadow-[0_0_10px_var(--color-amber)]"
+              className="pointer-events-none absolute border-2 border-amber halo-amber"
               style={{
                 left: `${((blk.bx * 8) / VW) * 100}%`,
                 top: `${((blk.by * 8) / VH) * 100}%`,
@@ -541,8 +546,8 @@ export function DctExplorer() {
             <Stat label="Ratio" value={`${(comp.raw / comp.bytes).toFixed(0)} : 1`} tone="amber" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Matrix8 title="1 · pixels (brightness)" values={pixels} color={grey} />
+        <div className="grid grid-cols-2 gap-x-4 gap-y-5 @3xl:grid-cols-4">
+          <Matrix8 title="1 · pixels (brightness)" values={pixels} color={grey} dataCells />
           <Matrix8 title="2 · DCT: wave amounts" values={coef} color={coefColor} onHover={setHover} hl={hover} />
           <Matrix8
             title={`3 · ÷ table, round (${nonzero} left)`}
@@ -552,7 +557,7 @@ export function DctExplorer() {
             onHover={setHover}
             hl={hover}
           />
-          <Matrix8 title="4 · rebuilt pixels" values={rec} color={grey} />
+          <Matrix8 title="4 · rebuilt pixels" values={rec} color={grey} dataCells />
         </div>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-[auto_1fr]">
@@ -561,7 +566,7 @@ export function DctExplorer() {
             {hoverImg ? (
               <PixelCanvas img={hoverImg} ariaLabel="DCT basis pattern" />
             ) : (
-              <div className="flex aspect-square items-center justify-center text-[0.6rem] text-dim">hover</div>
+              <div className="flex aspect-square items-center justify-center text-[0.6875rem] text-dim">hover</div>
             )}
           </div>
           <div className="w-40 text-xs text-mute">
@@ -583,7 +588,7 @@ export function DctExplorer() {
           <div className="scroll-thin mt-1.5 flex flex-wrap gap-1 font-mono text-[0.7rem]">
             {rle.map((p, i) =>
               p === "EOB" ? (
-                <span key={i} className="rounded bg-amber/20 px-1.5 py-0.5 text-amber">
+                <span key={i} className="rounded bg-amber-tint px-1.5 py-0.5 text-amber">
                   END: the last {trailing} are all 0
                 </span>
               ) : (

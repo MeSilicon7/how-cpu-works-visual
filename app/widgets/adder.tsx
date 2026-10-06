@@ -86,7 +86,7 @@ export function LongAddition({ bits = 8 }: { bits?: number }) {
             <div className="flex h-8 w-7 sm:w-9" />
             {cells(
               (i) => steps[i].a,
-              (i) => cx(col === i + 1 && "rounded-t-md bg-amber/15", steps[i].a ? "text-ink" : "text-dim"),
+              (i) => cx(col === i + 1 && "rounded-t-md bg-amber-tint", steps[i].a ? "text-ink" : "text-dim"),
             )}
           </div>
           <div className="flex items-center">
@@ -94,7 +94,7 @@ export function LongAddition({ bits = 8 }: { bits?: number }) {
             <div className="flex h-8 w-7 items-center justify-center text-dim sm:w-9">+</div>
             {cells(
               (i) => steps[i].b,
-              (i) => cx(col === i + 1 && "bg-amber/15", steps[i].b ? "text-ink" : "text-dim"),
+              (i) => cx(col === i + 1 && "bg-amber-tint", steps[i].b ? "text-ink" : "text-dim"),
             )}
           </div>
           <div className="ml-20 h-px bg-line-2" />
@@ -105,7 +105,7 @@ export function LongAddition({ bits = 8 }: { bits?: number }) {
             </div>
             {cells(
               (i) => (col > i ? steps[i].s : ""),
-              (i) => cx(col === i + 1 && "rounded-b-md bg-amber/15", "font-bold text-on"),
+              (i) => cx(col === i + 1 && "rounded-b-md bg-amber-tint", "font-bold text-on"),
             )}
           </div>
         </div>
@@ -346,11 +346,11 @@ export function RippleAdder() {
         <div className="flex w-max min-w-full items-stretch justify-center gap-0">
           {/* final carry out */}
           <div className="flex w-14 flex-col items-center justify-center">
-            <div className="font-mono text-[0.65rem] text-dim">overflow</div>
+            <div className="font-mono text-[0.6875rem] text-dim">overflow</div>
             <div
               className={cx(
                 "mt-1 flex h-9 w-9 items-center justify-center rounded-lg border font-mono font-bold",
-                done && stages[N - 1].cout ? "border-pink bg-pink/20 text-pink" : "border-line-2 text-dim",
+                done && stages[N - 1].cout ? "border-pink bg-pink-tint text-pink" : "border-line-2 text-dim",
               )}
             >
               {done ? stages[N - 1].cout : "?"}
@@ -365,7 +365,7 @@ export function RippleAdder() {
               <div key={i} className="flex items-center">
                 {/* carry arrow from this stage to the left */}
                 <div className="flex w-10 flex-col items-center">
-                  <span className={cx("font-mono text-[0.65rem]", ready && st.cout ? "text-pink" : "text-dim")}>
+                  <span className={cx("font-mono text-[0.6875rem]", ready && st.cout ? "text-pink" : "text-dim")}>
                     {ready ? `c=${st.cout}` : "c=?"}
                   </span>
                   <span className={cx("font-mono text-lg leading-none", ready && st.cout ? "text-pink" : "text-dim")}>
@@ -376,7 +376,7 @@ export function RippleAdder() {
                   className={cx(
                     "flex w-24 flex-col items-center rounded-xl border px-2 py-2 transition-all",
                     active
-                      ? "border-amber bg-amber/10 shadow-[0_0_20px_-6px_var(--color-amber)]"
+                      ? "border-amber bg-amber/10 halo-amber"
                       : ready
                         ? "border-on/50 bg-on/5"
                         : "border-line-2 bg-bg/60",
@@ -387,7 +387,9 @@ export function RippleAdder() {
                     <span className="text-dim">+</span>
                     <span className={st.b ? "text-violet" : "text-dim"}>{st.b}</span>
                   </div>
-                  <div className="my-1 font-mono text-[0.65rem] tracking-wider text-mute uppercase">full adder {i}</div>
+                  <div className="my-1 font-mono text-[0.6875rem] tracking-wider text-mute uppercase">
+                    full adder {i}
+                  </div>
                   <div className={cx("font-mono text-xs", ready ? "text-ink" : "text-dim")}>
                     {active ? "computing…" : ready ? `${st.a}+${st.b}+${st.cin}` : "waiting"}
                   </div>
@@ -396,14 +398,14 @@ export function RippleAdder() {
                       "mt-1.5 flex h-8 w-8 items-center justify-center rounded-lg border font-mono font-bold",
                       ready
                         ? st.s
-                          ? "border-on bg-on/20 text-on"
+                          ? "border-on bg-on-tint text-on"
                           : "border-line-2 text-ink"
                         : "border-line-2 text-dim",
                     )}
                   >
                     {ready ? st.s : "?"}
                   </div>
-                  <div className="mt-0.5 font-mono text-[0.6rem] text-dim">
+                  <div className="mt-0.5 font-mono text-[0.6875rem] text-dim">
                     S{i} ({2 ** i}s)
                   </div>
                 </div>
@@ -411,7 +413,7 @@ export function RippleAdder() {
             );
           })}
           <div className="flex w-12 flex-col items-center justify-center">
-            <span className="font-mono text-[0.65rem] text-dim">c=0</span>
+            <span className="font-mono text-[0.6875rem] text-dim">c=0</span>
             <span className="font-mono text-lg leading-none text-dim">←</span>
           </div>
         </div>

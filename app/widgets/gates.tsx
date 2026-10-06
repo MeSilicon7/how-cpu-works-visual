@@ -469,7 +469,7 @@ export function NandUniversal() {
             <Wire d="M10 40 H30 V30 H50 M30 40 V50 H50" on={a} />
             <Gate kind="NAND" x={50} y={20} out={n1} />
             <Wire d="M110 40 H150" on={n1} />
-            <text x={10} y={30} className="fill-mute font-mono text-[10px]">
+            <text x={10} y={30} className="fill-mute font-mono text-[11px]">
               A
             </text>
           </svg>
