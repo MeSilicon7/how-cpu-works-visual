@@ -208,6 +208,23 @@ export default function Home() {
               </ol>
             </div>
           ))}
+          <div>
+            <p className="label-caps text-dim">Back matter</p>
+            <Link
+              to="/glossary"
+              className="group mt-2 grid grid-cols-[2.5rem_1fr] items-baseline gap-x-2 border-y border-line py-3 hover:bg-panel"
+            >
+              <span className="text-right font-display text-xl font-semibold text-dim">A–Z</span>
+              <span className="min-w-0 pl-2">
+                <span className="font-serif text-lg font-semibold text-ink decoration-1 underline-offset-4 group-hover:underline">
+                  Glossary
+                </span>
+                <span className="block font-serif text-mute italic">
+                  Every technical word in the book, in one or two plain sentences
+                </span>
+              </span>
+            </Link>
+          </div>
         </div>
       </section>
 

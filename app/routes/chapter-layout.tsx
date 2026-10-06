@@ -370,6 +370,10 @@ function TocRail({ currentIdx, sections, active }: { currentIdx: number; section
         Contents
       </Link>
       <ChapterList currentIdx={currentIdx} sections={sections} active={active} />
+      <p className="label-caps mt-5 mb-1.5 text-[0.6875rem] text-dim">Back matter</p>
+      <Link to="/glossary" className="block py-1 pl-[2.6rem] text-mute hover:bg-panel-2 hover:text-ink">
+        Glossary
+      </Link>
     </nav>
   );
 }
@@ -436,6 +440,14 @@ function ChapterMenu({
           <ThemeSwitchRow />
         </div>
         <ChapterList currentIdx={currentIdx} sections={sections} active={active} onNavigate={onClose} big />
+        <p className="label-caps mt-5 mb-1.5 text-[0.6875rem] text-dim">Back matter</p>
+        <Link
+          to="/glossary"
+          onClick={onClose}
+          className="block py-2 pl-[2.6rem] text-mute hover:bg-panel-2 hover:text-ink"
+        >
+          Glossary
+        </Link>
       </div>
     </div>
   );
