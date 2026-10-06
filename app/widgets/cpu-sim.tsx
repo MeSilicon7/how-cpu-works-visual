@@ -6,11 +6,13 @@ import { binStr } from "~/lib/bits";
 import {
   allSignals,
   disassemble,
+  findProgram,
   initCpu,
   microStep,
   opByCode,
   programs,
   signalInfo,
+  stackSignals,
   stepInstruction,
   type CpuState,
   type Program,
@@ -85,7 +87,11 @@ function BitsView({ value, width, split, dim }: { value: number; width: number; 
 
 const phaseOrder = [
   { key: "fetch", label: "Fetch", color: "text-cyan border-cyan bg-cyan-tint" },
-  { key: "decode", label: "Decode", color: "text-amber border-amber bg-amber/10" },
+  {
+    key: "decode",
+    label: "Decode",
+    color: "text-amber border-amber bg-amber/10",
+  },
   { key: "execute", label: "Execute", color: "text-on border-on bg-on/10" },
 ] as const;
 
@@ -96,25 +102,42 @@ interface Flight {
   ys: number[];
 }
 
-export function CpuSim({ customRam }: { customRam?: number[] | null }) {
-  const allPrograms: Program[] = useMemo(
-    () =>
-      customRam
-        ? [
-            {
-              id: "custom",
-              name: "Your program",
-              code: "(assembled in the Machine Code chapter)",
-              explain: "This is the program you wrote. Step through it and see if it does what you expected!",
-              ram: customRam,
-              data: [],
-            },
-            ...programs,
-          ]
-        : programs,
-    [customRam],
+export function CpuSim({
+  customRam,
+  programIds,
+  initial,
+  title = "SAP-8: a complete computer you can step through",
+  subtitle = "Each press of Step is one tick of the clock. Watch the highlighted parts: cyan puts a value on the bus, green takes it in.",
+}: {
+  customRam?: number[] | null;
+  /** Which programs to offer, in order (default: the CPU chapter's set). */
+  programIds?: string[];
+  /** The program loaded first. */
+  initial?: string;
+  title?: string;
+  subtitle?: string;
+}) {
+  const idsKey = programIds?.join(",");
+  const allPrograms: Program[] = useMemo(() => {
+    const base = programIds ? programIds.map((id) => findProgram(id)).filter((p): p is Program => !!p) : programs;
+    return customRam
+      ? [
+          {
+            id: "custom",
+            name: "Your program",
+            code: "(assembled in the Machine Code chapter)",
+            explain: "This is the program you wrote. Step through it and see if it does what you expected!",
+            ram: customRam,
+            data: [],
+          },
+          ...base,
+        ]
+      : base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customRam, idsKey]);
+  const [progId, setProgId] = useState(() =>
+    initial && allPrograms.some((p) => p.id === initial) ? initial : allPrograms[0].id,
   );
-  const [progId, setProgId] = useState(allPrograms[0].id);
   const prog = allPrograms.find((p) => p.id === progId) ?? allPrograms[0];
   const [hist, setHist] = useState<CpuState[]>(() => [initCpu(prog.ram)]);
   const s = hist[hist.length - 1];
@@ -185,7 +208,12 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
     const bus = busRef.current?.getBoundingClientRect();
     if (bus && bus.width > 0) {
       const mx = bus.left + bus.width / 2 - grid.left;
-      setFlight({ key: s.ticks, value: l.bus, xs: [ax, mx, mx, bx], ys: [ay, ay, by, by] });
+      setFlight({
+        key: s.ticks,
+        value: l.bus,
+        xs: [ax, mx, mx, bx],
+        ys: [ay, ay, by, by],
+      });
     } else {
       setFlight({ key: s.ticks, value: l.bus, xs: [ax, bx], ys: [ay, by] });
     }
@@ -197,17 +225,16 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
   const sub = s.last.signals.includes("SU") || op?.name === "SUB";
   const aluRaw = sub ? s.a - s.b : s.a + s.b;
   const flightDur = Math.min(0.7, 0.9 / speed);
+  // The stack pointer only appears where a chapter uses the stack (or a program moves SP).
+  const showStack = allPrograms.some((p) => p.stack) || s.sp !== 15;
+  const signals = showStack ? allSignals : allSignals.filter((sig) => !stackSignals.includes(sig));
 
   // Highlight the micro-step position in the current instruction
   const stepLabels = ["fetch 1", "fetch 2", "decode", "exec 1", "exec 2", "exec 3"];
   const doneT = s.last.t;
 
   return (
-    <Widget
-      title="SAP-8: a complete computer you can step through"
-      subtitle="Each press of Step is one tick of the clock. Watch the highlighted parts: cyan puts a value on the bus, green takes it in."
-      wide
-    >
+    <Widget title={title} subtitle={subtitle} wide>
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
           size="sm"
@@ -276,7 +303,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
       <div ref={gridRef} className="relative mt-4 grid gap-3 lg:grid-cols-[1fr_56px_1fr]">
         {/* LEFT: PC, MAR, RAM */}
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className={cx("grid grid-cols-2 gap-3", showStack && "sm:grid-cols-3")}>
             <Box unit="pc" title="Program counter" role={role("pc")} boxRef={reg("pc")}>
               <BitsView value={s.pc} width={4} />
               <div className="mt-1 font-mono text-xs text-mute">next address: {s.pc}</div>
@@ -285,6 +312,12 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
               <BitsView value={s.mar} width={4} />
               <div className="mt-1 font-mono text-xs text-mute">pointing at: {s.mar}</div>
             </Box>
+            {showStack && (
+              <Box unit="sp" title="Stack pointer" role={role("sp")} boxRef={reg("sp")}>
+                <BitsView value={s.sp} width={4} />
+                <div className="mt-1 font-mono text-xs text-mute">next free: {s.sp}</div>
+              </Box>
+            )}
           </div>
           <Box
             unit="ram"
@@ -298,7 +331,8 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                   {s.ram.map((byte, addr) => {
                     const isMar = addr === s.mar;
                     const isPc = addr === s.pc;
-                    const isData = prog.data.includes(addr);
+                    const onStack = showStack && addr > s.sp;
+                    const isData = prog.data.includes(addr) || onStack;
                     return (
                       <tr
                         key={addr}
@@ -310,7 +344,19 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                           isMar && role("ram") === "dst" && "bg-on-tint",
                         )}
                       >
-                        <td className="w-6 py-[1px] pl-1 text-right text-pink">{isPc ? "▶" : ""}</td>
+                        <td
+                          className={cx(
+                            "w-6 py-[1px] pl-1 text-right text-pink",
+                            onStack && "border-l-2 border-violet",
+                          )}
+                        >
+                          {isPc ? "▶" : ""}
+                        </td>
+                        {showStack && (
+                          <td className="w-6 py-[1px] text-center text-[0.6875rem] font-bold text-violet">
+                            {addr === s.sp ? "SP" : ""}
+                          </td>
+                        )}
                         <td className="w-10 px-1 py-[1px] text-dim">{binStr(addr, 4)}</td>
                         <td className="w-5 py-[1px] pr-2 text-right text-mute">{addr}</td>
                         <td className="py-[1px]">
@@ -345,7 +391,13 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
                           {isData ? byte : disassemble(byte)}
                         </td>
                         <td className="hidden py-[1px] pr-1 whitespace-nowrap text-dim sm:table-cell">
-                          {prog.comments?.[addr] ?? (isData ? "" : byte ? "" : "")}
+                          {showStack && addr === s.sp ? (
+                            <span className="font-semibold text-violet">◀ next free stack slot</span>
+                          ) : onStack ? (
+                            <span className="text-violet">on the stack</span>
+                          ) : (
+                            (prog.comments?.[addr] ?? "")
+                          )}
                         </td>
                       </tr>
                     );
@@ -363,6 +415,11 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
               <span>
                 <span className="text-on">green</span> instruction · <span className="text-amber">amber</span> data
               </span>
+              {showStack && (
+                <span>
+                  <span className="text-violet">▏</span> stack (fills from address 15 toward 0)
+                </span>
+              )}
             </div>
           </Box>
         </div>
@@ -430,7 +487,7 @@ export function CpuSim({ customRam }: { customRam?: number[] | null }) {
               ))}
             </div>
             <div className="flex flex-wrap gap-1">
-              {allSignals.map((sig) => {
+              {signals.map((sig) => {
                 const on = s.last.signals.includes(sig);
                 return (
                   <span
@@ -571,20 +628,24 @@ export function InstructionDecoder() {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         {opByCode.size > 0 &&
-          [...opByCode.values()].map((o) => (
-            <button
-              key={o.name}
-              type="button"
-              onClick={() => setByte((o.code << 4) | (byte & 15))}
-              className={cx(
-                "rounded-lg border px-2 py-1 text-left font-mono text-xs transition",
-                op?.name === o.name ? "border-amber bg-amber/10 text-amber" : "border-line-2 text-mute hover:text-ink",
-              )}
-            >
-              <span className="text-dim">{binStr(o.code, 4)}</span> {o.name}
-              <div className="truncate text-[0.6875rem] text-dim">{o.short}</div>
-            </button>
-          ))}
+          [...opByCode.values()]
+            .filter((o) => !o.stack)
+            .map((o) => (
+              <button
+                key={o.name}
+                type="button"
+                onClick={() => setByte((o.code << 4) | (byte & 15))}
+                className={cx(
+                  "rounded-lg border px-2 py-1 text-left font-mono text-xs transition",
+                  op?.name === o.name
+                    ? "border-amber bg-amber/10 text-amber"
+                    : "border-line-2 text-mute hover:text-ink",
+                )}
+              >
+                <span className="text-dim">{binStr(o.code, 4)}</span> {o.name}
+                <div className="truncate text-[0.6875rem] text-dim">{o.short}</div>
+              </button>
+            ))}
       </div>
     </Widget>
   );
