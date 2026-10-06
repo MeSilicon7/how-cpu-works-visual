@@ -747,7 +747,7 @@ export function TwoToFourDecoder() {
   const [a0, setA0] = useState(false);
   const t1 = () => setA1((v) => !v);
   const t0 = () => setA0((v) => !v);
-  const RAIL_END = 372;
+  const RAIL_END = 382;
   const rails = [
     { key: "A1", y: 44, on: a1, label: "A1", x0: 50 },
     { key: "nA1", y: 92, on: !a1, label: "not A1", x0: 128 },
@@ -759,7 +759,7 @@ export function TwoToFourDecoder() {
   const gates = [0, 1, 2, 3].map((k) => {
     const hi = (k >> 1) & 1;
     const lo = k & 1;
-    const cx0 = 196 + k * 52;
+    const cx0 = 206 + k * 52;
     const left = hi ? "A1" : "nA1";
     const right = lo ? "A0" : "nA0";
     return { k, hi, lo, cx: cx0, left, right, out: railOn[left] && railOn[right] };
@@ -781,7 +781,7 @@ export function TwoToFourDecoder() {
         </span>
       </div>
       <div className="scroll-thin overflow-x-auto">
-        <svg viewBox="0 0 384 360" className="mx-auto w-full max-w-[460px] min-w-[300px]" role="img" aria-label="A 2-to-4 decoder built from two NOT gates and four AND gates">
+        <svg viewBox="0 0 394 360" className="mx-auto w-full max-w-[470px] min-w-[300px]" role="img" aria-label="A 2-to-4 decoder built from two NOT gates and four AND gates">
           {/* rails */}
           {rails.map((r) => (
             <Wire key={r.key} d={`M${r.x0} ${r.y} H${RAIL_END}`} on={r.on} />
