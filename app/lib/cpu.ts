@@ -7,10 +7,30 @@
  *
  * The emulator runs one micro-step (one clock tick) at a time and records which
  * control signals were active, so the UI can show data moving over the bus.
+ *
+ * Opcodes 9–C add a stack (used from the "Functions & the Stack" chapter on):
+ * a 4-bit stack pointer SP starts at 15 and points at the next free slot; the
+ * stack grows down from the top of RAM. CALL/PUSH write at SP then count down,
+ * RET/POP count up then read.
  */
 import { binStr } from "./bits";
 
-export type Mnemonic = "NOP" | "LDA" | "ADD" | "SUB" | "STA" | "LDI" | "JMP" | "JC" | "JZ" | "OUT" | "HLT";
+export type Mnemonic =
+  | "NOP"
+  | "LDA"
+  | "ADD"
+  | "SUB"
+  | "STA"
+  | "LDI"
+  | "JMP"
+  | "JC"
+  | "JZ"
+  | "CALL"
+  | "RET"
+  | "PUSH"
+  | "POP"
+  | "OUT"
+  | "HLT";
 
 export interface OpInfo {
   name: Mnemonic;
@@ -18,10 +38,18 @@ export interface OpInfo {
   operand: "addr" | "value" | "none";
   short: string;
   describe: string;
+  /** Part of the stack upgrade (Functions chapter); hidden in the basic CPU views. */
+  stack?: boolean;
 }
 
 export const ops: OpInfo[] = [
-  { name: "NOP", code: 0x0, operand: "none", short: "do nothing", describe: "No operation. Just move on." },
+  {
+    name: "NOP",
+    code: 0x0,
+    operand: "none",
+    short: "do nothing",
+    describe: "No operation. Just move on.",
+  },
   {
     name: "LDA",
     code: 0x1,
@@ -29,7 +57,13 @@ export const ops: OpInfo[] = [
     short: "A ← RAM[n]",
     describe: "Load A with the byte stored at address n.",
   },
-  { name: "ADD", code: 0x2, operand: "addr", short: "A ← A + RAM[n]", describe: "Add the byte at address n to A." },
+  {
+    name: "ADD",
+    code: 0x2,
+    operand: "addr",
+    short: "A ← A + RAM[n]",
+    describe: "Add the byte at address n to A.",
+  },
   {
     name: "SUB",
     code: 0x3,
@@ -37,13 +71,87 @@ export const ops: OpInfo[] = [
     short: "A ← A − RAM[n]",
     describe: "Subtract the byte at address n from A.",
   },
-  { name: "STA", code: 0x4, operand: "addr", short: "RAM[n] ← A", describe: "Store A into memory at address n." },
-  { name: "LDI", code: 0x5, operand: "value", short: "A ← n", describe: "Load A with the number n itself (0–15)." },
-  { name: "JMP", code: 0x6, operand: "addr", short: "PC ← n", describe: "Jump: continue running from address n." },
-  { name: "JC", code: 0x7, operand: "addr", short: "if C: PC ← n", describe: "Jump to n only if the carry flag is 1." },
-  { name: "JZ", code: 0x8, operand: "addr", short: "if Z: PC ← n", describe: "Jump to n only if the zero flag is 1." },
-  { name: "OUT", code: 0xe, operand: "none", short: "display ← A", describe: "Copy A to the output display." },
-  { name: "HLT", code: 0xf, operand: "none", short: "stop", describe: "Halt: stop the clock." },
+  {
+    name: "STA",
+    code: 0x4,
+    operand: "addr",
+    short: "RAM[n] ← A",
+    describe: "Store A into memory at address n.",
+  },
+  {
+    name: "LDI",
+    code: 0x5,
+    operand: "value",
+    short: "A ← n",
+    describe: "Load A with the number n itself (0–15).",
+  },
+  {
+    name: "JMP",
+    code: 0x6,
+    operand: "addr",
+    short: "PC ← n",
+    describe: "Jump: continue running from address n.",
+  },
+  {
+    name: "JC",
+    code: 0x7,
+    operand: "addr",
+    short: "if C: PC ← n",
+    describe: "Jump to n only if the carry flag is 1.",
+  },
+  {
+    name: "JZ",
+    code: 0x8,
+    operand: "addr",
+    short: "if Z: PC ← n",
+    describe: "Jump to n only if the zero flag is 1.",
+  },
+  {
+    name: "CALL",
+    code: 0x9,
+    operand: "addr",
+    short: "push PC; PC ← n",
+    describe: "Call the function at address n: save the return address on the stack, then jump.",
+    stack: true,
+  },
+  {
+    name: "RET",
+    code: 0xa,
+    operand: "none",
+    short: "PC ← pop",
+    describe: "Return: take the saved address off the stack and jump back to it.",
+    stack: true,
+  },
+  {
+    name: "PUSH",
+    code: 0xb,
+    operand: "none",
+    short: "push A",
+    describe: "Put A on top of the stack.",
+    stack: true,
+  },
+  {
+    name: "POP",
+    code: 0xc,
+    operand: "none",
+    short: "A ← pop",
+    describe: "Take the top of the stack into A.",
+    stack: true,
+  },
+  {
+    name: "OUT",
+    code: 0xe,
+    operand: "none",
+    short: "display ← A",
+    describe: "Copy A to the output display.",
+  },
+  {
+    name: "HLT",
+    code: 0xf,
+    operand: "none",
+    short: "stop",
+    describe: "Halt: stop the clock.",
+  },
 ];
 
 export const opByCode = new Map(ops.map((o) => [o.code, o]));
@@ -72,7 +180,10 @@ export type Signal =
   | "CE"
   | "CO"
   | "J"
-  | "FI";
+  | "FI"
+  | "SPO"
+  | "SPI"
+  | "SPD";
 
 export const signalInfo: Record<Signal, string> = {
   HLT: "Halt the clock",
@@ -91,11 +202,16 @@ export const signalInfo: Record<Signal, string> = {
   CO: "Counter Out (PC → bus)",
   J: "Jump (bus → PC)",
   FI: "Flags In",
+  SPO: "Stack Pointer Out (SP → bus)",
+  SPI: "Stack Pointer up (SP + 1)",
+  SPD: "Stack Pointer down (SP − 1)",
 };
+
+export const stackSignals: Signal[] = ["SPO", "SPI", "SPD"];
 
 export const allSignals = Object.keys(signalInfo) as Signal[];
 
-export type Unit = "pc" | "mar" | "ram" | "ir" | "a" | "b" | "alu" | "out" | "flags" | "control";
+export type Unit = "pc" | "mar" | "ram" | "ir" | "a" | "b" | "alu" | "out" | "flags" | "control" | "sp";
 
 export type Phase = "fetch" | "decode" | "execute" | "halted" | "ready";
 
@@ -106,6 +222,8 @@ export interface CpuState {
   ir: number;
   a: number;
   b: number;
+  /** Stack pointer: the next free stack slot (the stack grows down from 15). */
+  sp: number;
   out: number | null;
   outputs: number[];
   c: boolean;
@@ -137,6 +255,7 @@ export function initCpu(ram: number[]): CpuState {
     ir: 0,
     a: 0,
     b: 0,
+    sp: 15,
     out: null,
     outputs: [],
     c: false,
@@ -283,6 +402,114 @@ function execSteps(s: CpuState): Exec[] {
             },
           ];
     }
+    case "CALL":
+      return [
+        {
+          signals: ["SPO", "MI"],
+          bus: s.sp,
+          src: "sp",
+          dst: ["mar"],
+          note: `The stack pointer (${s.sp}) goes into the memory address register. The return address will be saved at address ${s.sp}, the next free slot on the stack.`,
+          apply: () => ({ mar: s.sp }),
+        },
+        {
+          signals: ["CO", "RI"],
+          bus: s.pc,
+          src: "pc",
+          dst: ["ram"],
+          note: `The program counter already points at the instruction after the CALL (${s.pc}). That is the return address. It is written into memory at address ${s.mar}, so the CPU can find its way back later.`,
+          apply: (st) => {
+            const ram = st.ram.slice();
+            ram[st.mar] = st.pc;
+            return { ram };
+          },
+        },
+        {
+          signals: ["SPD", "IO", "J"],
+          bus: n,
+          src: "ir",
+          dst: ["pc", "sp"],
+          note: `Two things in one tick: the stack pointer counts down to ${(s.sp - 1) & 15} (the next free slot), and the operand ${n} goes into the program counter. The next fetch comes from the function at address ${n}.`,
+          apply: () => ({ sp: (s.sp - 1) & 15, pc: n }),
+        },
+      ];
+    case "RET":
+      return [
+        {
+          signals: ["SPI"],
+          bus: null,
+          src: null,
+          dst: ["sp"],
+          note: `The stack pointer counts up from ${s.sp} to ${(s.sp + 1) & 15}, so it points at the last value saved on the stack: the return address.`,
+          apply: () => ({ sp: (s.sp + 1) & 15 }),
+        },
+        {
+          signals: ["SPO", "MI"],
+          bus: s.sp,
+          src: "sp",
+          dst: ["mar"],
+          note: `The stack pointer (${s.sp}) goes into the memory address register, to point at the saved return address.`,
+          apply: () => ({ mar: s.sp }),
+        },
+        {
+          signals: ["RO", "J"],
+          bus: s.ram[s.mar],
+          src: "ram",
+          dst: ["pc"],
+          note: `Memory sends the saved return address (${s.ram[s.mar]}) into the program counter. The next fetch continues right after the CALL that brought us here.`,
+          apply: (st) => ({ pc: st.ram[st.mar] & 15 }),
+        },
+      ];
+    case "PUSH":
+      return [
+        {
+          signals: ["SPO", "MI"],
+          bus: s.sp,
+          src: "sp",
+          dst: ["mar"],
+          note: `The stack pointer (${s.sp}) goes into the memory address register: A will be saved at address ${s.sp}.`,
+          apply: () => ({ mar: s.sp }),
+        },
+        {
+          signals: ["AO", "RI", "SPD"],
+          bus: s.a,
+          src: "a",
+          dst: ["ram", "sp"],
+          note: `Register A (${b8(s.a)} = ${s.a}) is written into memory at address ${s.mar}, and the stack pointer counts down to ${(s.sp - 1) & 15}.`,
+          apply: (st) => {
+            const ram = st.ram.slice();
+            ram[st.mar] = st.a;
+            return { ram, sp: (st.sp - 1) & 15 };
+          },
+        },
+      ];
+    case "POP":
+      return [
+        {
+          signals: ["SPI"],
+          bus: null,
+          src: null,
+          dst: ["sp"],
+          note: `The stack pointer counts up from ${s.sp} to ${(s.sp + 1) & 15}, so it points at the top value on the stack.`,
+          apply: () => ({ sp: (s.sp + 1) & 15 }),
+        },
+        {
+          signals: ["SPO", "MI"],
+          bus: s.sp,
+          src: "sp",
+          dst: ["mar"],
+          note: `The stack pointer (${s.sp}) goes into the memory address register.`,
+          apply: () => ({ mar: s.sp }),
+        },
+        {
+          signals: ["RO", "AI"],
+          bus: s.ram[s.mar],
+          src: "ram",
+          dst: ["a"],
+          note: `Memory sends the top of the stack (${b8(s.ram[s.mar])} = ${s.ram[s.mar]}) into register A.`,
+          apply: (st) => ({ a: st.ram[st.mar] }),
+        },
+      ];
     case "OUT":
       return [
         {
@@ -291,7 +518,10 @@ function execSteps(s: CpuState): Exec[] {
           src: "a",
           dst: ["out"],
           note: `Register A (${s.a}) is copied to the output display.`,
-          apply: (st) => ({ out: st.a, outputs: [...st.outputs, st.a].slice(-24) }),
+          apply: (st) => ({
+            out: st.a,
+            outputs: [...st.outputs, st.a].slice(-24),
+          }),
         },
       ];
     case "HLT":
@@ -426,6 +656,8 @@ export interface Program {
   /** Addresses holding data rather than instructions (for display). */
   data: number[];
   comments?: Record<number, string>;
+  /** Uses CALL/RET/PUSH/POP, so the simulator shows the stack pointer. */
+  stack?: boolean;
 }
 
 const enc = (name: Mnemonic, n = 0) => (opByName.get(name)!.code << 4) | (n & 15);
@@ -438,7 +670,14 @@ export const programs: Program[] = [
     explain: "Load 2 from address 14, add 3 from address 15, show the answer, stop.",
     ram: [enc("LDA", 14), enc("ADD", 15), enc("OUT"), enc("HLT"), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3],
     data: [14, 15],
-    comments: { 0: "A = 2", 1: "A = A + 3", 2: "show A", 3: "stop", 14: "the number 2", 15: "the number 3" },
+    comments: {
+      0: "A = 2",
+      1: "A = A + 3",
+      2: "show A",
+      3: "stop",
+      14: "the number 2",
+      15: "the number 3",
+    },
   },
   {
     id: "count",
@@ -447,7 +686,14 @@ export const programs: Program[] = [
     explain: "Show A, add 15, and loop until the 8-bit register overflows (the carry flag).",
     ram: [enc("OUT"), enc("ADD", 15), enc("JC", 4), enc("JMP", 0), enc("HLT"), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15],
     data: [15],
-    comments: { 0: "show A", 1: "A = A + 15", 2: "overflowed? → stop", 3: "loop back", 4: "stop", 15: "step size" },
+    comments: {
+      0: "show A",
+      1: "A = A + 15",
+      2: "overflowed? → stop",
+      3: "loop back",
+      4: "stop",
+      15: "step size",
+    },
   },
   {
     id: "mul",
@@ -496,7 +742,8 @@ export const programs: Program[] = [
     id: "fib",
     name: "Fibonacci",
     code: "x, y = 0, 1\nwhile no overflow:\n    print(x)\n    x, y = y, x + y",
-    explain: "Each number is the sum of the previous two: 0, 1, 1, 2, 3, 5, 8… up to 144. It stops when the next sum (144 + 233) no longer fits in 8 bits.",
+    explain:
+      "Each number is the sum of the previous two: 0, 1, 1, 2, 3, 5, 8… up to 144. It stops when the next sum (144 + 233) no longer fits in 8 bits.",
     ram: [
       enc("LDA", 14),
       enc("OUT"),
@@ -534,6 +781,108 @@ export const programs: Program[] = [
     },
   },
 ];
+
+/**
+ * Programs for later chapters. They are not in the CPU chapter's list; a
+ * chapter picks them with <CpuSim programIds={[...]} />.
+ */
+export const extraPrograms: Program[] = [
+  {
+    id: "double-twice",
+    name: "Call a function twice",
+    code: "def show_double(x):\n    print(x + x)\n\nshow_double(3)\nshow_double(5)",
+    explain:
+      "One function at address 7, called from two places. Each CALL saves where to come back to on the stack (the top of memory); RET jumps back there.",
+    ram: [
+      enc("LDI", 3),
+      enc("CALL", 7),
+      enc("LDI", 5),
+      enc("CALL", 7),
+      enc("HLT"),
+      0,
+      0,
+      enc("STA", 13),
+      enc("ADD", 13),
+      enc("OUT"),
+      enc("RET"),
+      0,
+      0,
+      0,
+      0,
+      0,
+    ],
+    data: [13],
+    comments: {
+      0: "x = 3",
+      1: "show_double(3)",
+      2: "x = 5",
+      3: "show_double(5)",
+      4: "stop",
+      7: "show_double: temp = x",
+      8: "A = x + x",
+      9: "print it",
+      10: "return",
+      13: "temp",
+    },
+    stack: true,
+  },
+  {
+    id: "eat-yourself",
+    name: "A function that never stops calling itself",
+    code: "def f():\n    x = x + 1\n    print(x)\n    f()      # no way out!\n\nx = 0\nf()",
+    explain:
+      "f calls itself forever. Every call saves one more return address, and the stack grows down into the program and its data. Watch addresses 15, 14, 13… fill up.",
+    ram: [
+      enc("LDI", 0),
+      enc("CALL", 2),
+      enc("ADD", 6),
+      enc("OUT"),
+      enc("CALL", 2),
+      enc("HLT"),
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    ],
+    data: [6],
+    comments: {
+      0: "x = 0",
+      1: "f()",
+      2: "f: x = x + 1",
+      3: "print x",
+      4: "f() again",
+      5: "stop (never reached)",
+      6: "the number 1",
+    },
+    stack: true,
+  },
+  {
+    id: "forgot-hlt",
+    name: "Forgot the HLT",
+    code: "letter = 'A'\nprint(letter)\n# …and then? We forgot to stop!",
+    explain:
+      "Show the byte at address 2, meant to be the letter A (65). There is no HLT, so the CPU fetches the next byte anyway, and runs the letter as an instruction.",
+    ram: [enc("LDA", 2), enc("OUT"), 65, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    data: [2],
+    comments: {
+      0: "A = letter",
+      1: "show it",
+      2: "'A' = 65 (or is it STA 1?)",
+    },
+  },
+];
+
+const everyProgram = [...programs, ...extraPrograms];
+
+export function findProgram(id: string): Program | undefined {
+  return everyProgram.find((p) => p.id === id);
+}
 
 export function ramToHex(ram: number[]) {
   return ram.map((b) => (b & 255).toString(16).padStart(2, "0")).join("");
