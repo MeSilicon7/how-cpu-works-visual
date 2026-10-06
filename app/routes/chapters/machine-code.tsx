@@ -35,7 +35,7 @@ export default function MachineCode() {
         <p>
           Compilers and assemblers aren't magic either. They're ordinary programs that read text and write bytes. The
           very first assemblers were written by hand in machine code, and every compiler since has been built using an
-          earlier one. It's translators all the way down, until you reach the transistors.
+          earlier one. It's translators on top of translators, layer after layer, until you reach the transistors.
         </p>
       </Callout>
 
@@ -68,7 +68,7 @@ export default function MachineCode() {
 
       <h2>Write assembly by hand</h2>
       <p>
-        Now you're the compiler. Here's the full instruction set of our CPU again: <code>LDA n</code>,{" "}
+        Now you're the compiler. Here's the full instruction set of our CPU again: <code>NOP</code>, <code>LDA n</code>,{" "}
         <code>ADD n</code>, <code>SUB n</code>, <code>STA n</code>, <code>LDI n</code>, <code>JMP n</code>,{" "}
         <code>JC n</code>, <code>JZ n</code>, <code>OUT</code>, <code>HLT</code>. The starter program counts down from
         5. Change it, break it, then run it on the CPU.
@@ -130,9 +130,9 @@ export default function MachineCode() {
         align="left"
         head={["CPU family", "used in", "assembly", "machine code (hex)"]}
         rows={[
-          ["x86-64", "most PCs and servers", "add eax, ebx", "01 D8"],
-          ["ARM64", "phones, Apple Silicon Macs", "add x0, x1, x2", "8B 02 00 20"],
-          ["RISC-V", "microcontrollers, new chips", "add a0, a1, a2", "00 C5 85 33"],
+          ["x86-64", "most PCs and servers", "add eax, ebx", "01 D8 (two bytes)"],
+          ["ARM64", "phones, Apple Silicon Macs", "add x0, x1, x2", "8B020020 (one 32-bit word)"],
+          ["RISC-V", "microcontrollers, new chips", "add a0, a1, a2", "00C58533 (one 32-bit word)"],
         ]}
       />
       <p>
@@ -147,7 +147,8 @@ export default function MachineCode() {
         </p>
         <p>
           <strong>Python</strong> is usually <em>interpreted</em>: the Python interpreter is a machine-code program that
-          reads your code line by line and does what it says. That's flexible but slower: one line of Python might take
+          first turns your code into simpler instructions called <em>bytecode</em>,
+          then runs them one by one. That's flexible but slower: one line of Python might take
           hundreds of machine instructions.
         </p>
         <p>

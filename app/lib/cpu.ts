@@ -214,7 +214,7 @@ function execSteps(s: CpuState): Exec[] {
           bus: res,
           src: "alu",
           dst: ["a", "flags"],
-          note: `The ALU's answer ${s.a} ${sub ? "−" : "+"} ${v} = ${raw}${raw !== res ? ` → ${res} (it doesn't fit in 8 bits, so the carry flag is set)` : ""} goes into A. Flags are updated: Z = ${res === 0 ? 1 : 0}, C = ${(sub ? s.a < v : raw > 255) ? 1 : 0}.`,
+          note: `The ALU's answer ${s.a} ${sub ? "−" : "+"} ${v} = ${raw}${raw !== res ? (sub ? ` → ${res} (the answer went below 0, so it wraps around to ${res} and the carry flag is set to mean “had to borrow”)` : ` → ${res} (it doesn't fit in 8 bits, so the carry flag is set)`) : ""} goes into A. Flags are updated: Z = ${res === 0 ? 1 : 0}, C = ${(sub ? s.a < v : raw > 255) ? 1 : 0}.`,
           apply: () => ({ a: res, z: res === 0, c: sub ? s.a < v : raw > 255 }),
         },
       ];
@@ -496,7 +496,7 @@ export const programs: Program[] = [
     id: "fib",
     name: "Fibonacci",
     code: "x, y = 0, 1\nwhile no overflow:\n    print(x)\n    x, y = y, x + y",
-    explain: "Each number is the sum of the previous two: 0, 1, 1, 2, 3, 5, 8… until it no longer fits in 8 bits.",
+    explain: "Each number is the sum of the previous two: 0, 1, 1, 2, 3, 5, 8… up to 144. It stops when the next sum (144 + 233) no longer fits in 8 bits.",
     ram: [
       enc("LDA", 14),
       enc("OUT"),

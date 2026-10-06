@@ -479,7 +479,11 @@ export function SubtractWidget() {
             </span>,
             <span className="text-on">
               {a} − {b} = {a - b}
-              {a - b < 0 ? ` (reads as ${signed} in two's complement)` : ""}
+              {a - b < -8
+                ? ` doesn't fit in 4 signed bits (−8 to 7). This is overflow: the bits wrap around and read as ${signed}.`
+                : a - b < 0
+                  ? ` (reads as ${signed} in two's complement)`
+                  : ""}
             </span>,
           ],
         ]}

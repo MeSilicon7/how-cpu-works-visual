@@ -51,8 +51,8 @@ export default function Memory() {
       <h2>Flip-flops: remember on the beat</h2>
       <p>
         In a CPU, billions of bits change every second. To keep things orderly, we want memory that only updates at a
-        precise moment: when the <Link to="/clock">clock</Link> ticks. Add a few gates in front of the latch and you get
-        a <strong>D flip-flop</strong>, with just two inputs:
+        precise moment: when the <Link to="/clock">clock</Link> ticks. Put two latches in a row (a “master” and a “slave”),
+        letting only one of them listen at a time, and you get a <strong>D flip-flop</strong>, with just two inputs:
       </p>
       <ul>
         <li>

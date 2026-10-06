@@ -100,7 +100,7 @@ export function LayersView() {
               </text>
             ))}
           </svg>
-          <div className="mt-1 text-xs text-dim">8 wires: ~1 V for 1, 0 V for 0. Showing “{sel.text}”.</div>
+          <div className="mt-1 text-xs text-dim">The 8 bus wires, drawn side by side: ~1 V for 1, 0 V for 0. Showing “{sel.text}”.</div>
         </div>
       </div>
     </Widget>

@@ -31,7 +31,7 @@ export default function Storage() {
         </p>
         <TeX block>{tex`\frac{1\text{ s}}{0.3\times10^{-9}\text{ s}} \approx 3.3 \times 10^{9}`}</TeX>
         <p>
-          RAM: <TeX>{"80\\text{ ns} \\times 3.3\\times10^9 = 267\\text{ s}"}</TeX> ≈ 4½ minutes. Hard drive:{" "}
+          RAM: <TeX>{"80\\text{ ns} \\times 3.3\\times10^9 \\approx 264\\text{ s}"}</TeX> ≈ 4½ minutes. Hard drive:{" "}
           <TeX>{"8\\text{ ms} \\times 3.3\\times10^9 \\approx 2.7\\times10^7\\text{ s}"}</TeX> ≈ 10 months. To the CPU,
           waiting for a hard drive is like waiting most of a year for a letter.
         </p>
@@ -79,7 +79,7 @@ export default function Storage() {
 
       <h3>Main memory: DRAM</h3>
       <p>
-        One transistor and one microscopic capacitor per bit, holding a few thousand electrons, maybe fewer. Tiny, so a
+        One transistor and one microscopic capacitor per bit, holding a few tens of thousands of electrons. Tiny, so a
         stick of RAM holds billions of them. But capacitors leak:
       </p>
       <DramLeak />
