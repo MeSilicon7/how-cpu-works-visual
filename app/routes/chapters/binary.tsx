@@ -107,6 +107,78 @@ export default function Binary() {
         </p>
       </Callout>
 
+      <Callout kind="idea" title="But how does the computer know 01000001 is ‘A’?">
+        <p>
+          <strong>Short answer: it doesn't.</strong> A byte in memory is just 8 tiny switches, on or off. There is no
+          label next to it that says “this is a letter”. The same <code>0100 0001</code> can be the number 65, the
+          letter A, the brightness of one colour in a photo, or an instruction for the processor.
+        </p>
+        <p>
+          <strong>The code that reads the byte decides.</strong> A text editor has been written to treat each byte as a
+          character code, so it looks up 65 in its font and draws an A. A calculator program reading the very same byte
+          would use it as the number 65. The meaning is in the program, not in the bits. The full story, from your
+          finger on the key to the A on the screen, is in <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>
+        </p>
+      </Callout>
+      <GoDeeper title="UTF-8: how a byte says “I'm part of a bigger character”">
+        <p>
+          A program reading UTF-8 text sees one long row of bytes. Some characters use 1 byte and some use 4. So how
+          does it know where one character ends and the next begins? The <strong>first few bits of every byte</strong>{" "}
+          tell it:
+        </p>
+        <DataTable
+          align="left"
+          head={["byte looks like", "it means", "bits for the code", "largest code"]}
+          rows={[
+            [<code>0xxxxxxx</code>, "a whole character (old ASCII)", "7", "127"],
+            [<code>110xxxxx</code>, "start of a 2-byte character", <span className="whitespace-nowrap">5 + 6 = 11</span>, "2,047"],
+            [<code>1110xxxx</code>, "start of a 3-byte character", <span className="whitespace-nowrap">4 + 6 + 6 = 16</span>, "65,535"],
+            [<code>11110xxx</code>, "start of a 4-byte character", <span className="whitespace-nowrap">3 + 6 + 6 + 6 = 21</span>, "2,097,151"],
+            [<code>10xxxxxx</code>, "continuation: “I am the next part of this character”", "6 each", "—"],
+          ]}
+        />
+        <p>
+          The <code>x</code> places carry the character's number. (Unicode stops at 1,114,111, so 21 bits are more than
+          enough.) The number of 1s at the front of a start byte is the number of bytes in the character.
+        </p>
+        <Callout kind="math" title="Worked example: é">
+          <p>
+            The letter <code>é</code> has Unicode number 233.
+          </p>
+          <ol>
+            <li>233 is bigger than 127, so 1 byte is not enough. It is smaller than 2,047, so 2 bytes are enough.</li>
+            <li>
+              Write 233 with 11 bits: <code className="whitespace-nowrap">00011 101001</code>.
+            </li>
+            <li>
+              Put the first 5 bits after <code>110</code>: <code className="whitespace-nowrap">110 00011</code> = <code>C3</code> in hex.
+            </li>
+            <li>
+              Put the last 6 bits after <code>10</code>: <code className="whitespace-nowrap">10 101001</code> = <code>A9</code> in hex.
+            </li>
+          </ol>
+          <p>
+            So é is stored as the two bytes <code>C3 A9</code>. Type é into the box above to check. Reading works
+            backwards: the reader sees <code>110</code>, so it knows to take 2 bytes. It removes the marker bits, joins{" "}
+            <code>00011</code> and <code>101001</code>, and gets 233 again.
+          </p>
+        </Callout>
+        <p>This design has two nice side effects:</p>
+        <ul>
+          <li>
+            Plain English text uses only <code>0xxxxxxx</code> bytes, so every old ASCII file is already valid UTF-8.
+          </li>
+          <li>
+            If a program jumps into the middle of a text, it can find the start of the next character by skipping any
+            bytes that begin with <code>10</code>.
+          </li>
+        </ul>
+        <p>
+          But a program that reads <code>C3 A9</code> with an old one-byte table shows two characters, “Ã©”, instead of
+          é. That kind of garbled text has a name, <em>mojibake</em>, and it happens because the reader used the wrong
+          rule. See <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>
+        </p>
+      </GoDeeper>
       <h2>Bigger units</h2>
       <p>Since everything is powers of 2, memory sizes come in powers of 2 as well:</p>
       <DataTable
@@ -182,6 +254,7 @@ export default function Binary() {
           <>Hex is shorthand: every 4 bits → one digit 0–F.</>,
           <>
             Text, colours, sound and video are <strong>all just numbers</strong> by agreement (ASCII, Unicode, RGB…).
+            The bits carry no label: the program that reads them decides what they mean.
           </>,
           <>Negative numbers use two's complement, so subtraction is just addition.</>,
         ]}

@@ -142,6 +142,207 @@ export function NoiseDemo() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Logic levels: what a 3.3 V output promises and an input accepts.    */
+/* ------------------------------------------------------------------ */
+
+const SUPPLY = 3.3;
+const V_IL = 0.8; // input reads 0 at or below this
+const V_IH = 2.0; // input reads 1 at or above this
+const V_OL = 0.4; // a 0 output is at most this
+const V_OH = 2.4; // a 1 output is at least this
+
+export function LogicLevels() {
+  const [bit, setBit] = useState<0 | 1>(1);
+  const [noise, setNoise] = useState(-0.3);
+  const sent = bit ? V_OH : V_OL;
+  // Round to whole hundredths so 2.4 − 0.4 is exactly 2.0, not 1.9999999.
+  const got = Math.round(Math.min(SUPPLY, Math.max(0, sent + noise)) * 100) / 100;
+  const read: 0 | 1 | null = got <= V_IL ? 0 : got >= V_IH ? 1 : null;
+  const ok = read === bit;
+
+  const W = 360;
+  const H = 262;
+  const top = 34;
+  const bottom = 244;
+  const y = (v: number) => bottom - (v / SUPPLY) * (bottom - top);
+  const colA = { x: 56, w: 78 };
+  const colB = { x: 248, w: 100 };
+  const midL = colA.x + colA.w;
+  const midR = colB.x;
+
+  // A slightly wobbly wire from the sent voltage to the received voltage.
+  const wire = Array.from({ length: 25 }, (_, i) => {
+    const t = i / 24;
+    const xx = midL + t * (midR - midL);
+    const base = sent + (got - sent) * t;
+    const wob = i === 0 || i === 24 ? 0 : Math.sin(i * 1.9) * 0.07;
+    return `${i ? "L" : "M"}${xx.toFixed(1)} ${y(base + wob).toFixed(1)}`;
+  }).join(" ");
+
+  const band = (x: number, w: number, lo: number, hi: number, fill: string, key: string) => (
+    <rect key={key} x={x} y={y(hi)} width={w} height={y(lo) - y(hi)} fill={fill} stroke="var(--color-line-2)" />
+  );
+  const fmtV = (v: number) => `${v.toFixed(2)} V`;
+
+  return (
+    <Widget
+      title="Logic levels: the safety gap"
+      subtitle="Gate A sends a bit to gate B down a wire. Gate A sends its weakest legal voltage. Add noise and see what gate B reads."
+    >
+      <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
+        <Segmented
+          value={bit}
+          onChange={(v) => setBit(v)}
+          options={[
+            { value: 1, label: "Send a 1" },
+            { value: 0, label: "Send a 0" },
+          ]}
+        />
+        <Slider
+          className="w-full max-w-72"
+          label="Noise on the wire"
+          min={-1.8}
+          max={1.8}
+          step={0.05}
+          value={noise}
+          onChange={setNoise}
+          format={(v) => `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v).toFixed(2)} V`}
+        />
+      </div>
+      <div className="grid items-center gap-5 md:grid-cols-[minmax(0,380px)_1fr]">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Voltage bands for output and input">
+          <defs>
+            <pattern id="ll-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line y2="6" stroke="var(--color-pink)" strokeOpacity={0.45} strokeWidth="1.2" />
+            </pattern>
+          </defs>
+          <text x={colA.x + colA.w / 2} y={18} textAnchor="middle" className="fill-ink font-sans text-[13px] font-semibold">
+            A sends
+          </text>
+          <text x={colB.x + colB.w / 2} y={18} textAnchor="middle" className="fill-ink font-sans text-[13px] font-semibold">
+            B reads
+          </text>
+          {/* Gate A: what an output may send */}
+          {band(colA.x, colA.w, V_OH, SUPPLY, "var(--color-on-tint)", "a1")}
+          {band(colA.x, colA.w, V_OL, V_OH, "var(--color-panel-2)", "am")}
+          {band(colA.x, colA.w, 0, V_OL, "var(--color-panel-3)", "a0")}
+          <text x={colA.x + colA.w / 2} y={y(2.85) + 5} textAnchor="middle" className="fill-on font-mono text-[15px] font-bold">
+            1
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(1.5) - 2} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+            never
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(1.5) + 13} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+            sent
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(0.2) + 5} textAnchor="middle" className="fill-dim font-mono text-[15px]">
+            0
+          </text>
+          {/* Gate B: how an input reads */}
+          {band(colB.x, colB.w, V_IH, SUPPLY, "var(--color-on-tint)", "b1")}
+          {band(colB.x, colB.w, V_IL, V_IH, "url(#ll-hatch)", "bm")}
+          {band(colB.x, colB.w, 0, V_IL, "var(--color-panel-3)", "b0")}
+          <text x={colB.x + colB.w / 2} y={y(2.65) + 5} textAnchor="middle" className="fill-on font-sans text-[13px] font-bold">
+            reads 1
+          </text>
+          <rect
+            x={colB.x + 10}
+            y={y(1.4) - 13}
+            width={colB.w - 20}
+            height={22}
+            rx={4}
+            fill="var(--color-panel)"
+            stroke="var(--color-pink)"
+            strokeOpacity={0.5}
+          />
+          <text x={colB.x + colB.w / 2} y={y(1.4) + 3} textAnchor="middle" className="fill-pink font-sans text-[12px] font-semibold">
+            undefined
+          </text>
+          <text x={colB.x + colB.w / 2} y={y(0.4) + 5} textAnchor="middle" className="fill-mute font-sans text-[13px] font-bold">
+            reads 0
+          </text>
+          {/* Voltage scale */}
+          {[0, V_OL, V_IL, V_IH, V_OH, SUPPLY].map((v) => (
+            <text key={v} x={colA.x - 6} y={y(v) + 4} textAnchor="end" className="fill-mute font-mono text-[12px]">
+              {v.toFixed(1)}
+            </text>
+          ))}
+          <text x={colA.x - 6} y={top - 16} textAnchor="end" className="fill-dim font-mono text-[12px]">
+            volts
+          </text>
+          {/* Noise margins: the gap between a promise and a rule */}
+          {[
+            [V_IH, V_OH],
+            [V_OL, V_IL],
+          ].map(([lo, hi]) => (
+            <g key={lo}>
+              <rect
+                x={midL}
+                y={y(hi)}
+                width={midR - midL}
+                height={y(lo) - y(hi)}
+                fill="var(--color-amber)"
+                opacity={0.12}
+              />
+              <line x1={midL} x2={midR} y1={y(hi)} y2={y(hi)} stroke="var(--color-amber)" strokeDasharray="3 3" />
+              <line x1={midL} x2={midR} y1={y(lo)} y2={y(lo)} stroke="var(--color-amber)" strokeDasharray="3 3" />
+            </g>
+          ))}
+          <text x={(midL + midR) / 2} y={y(V_IH) + 16} textAnchor="middle" className="fill-amber font-sans text-[12px] font-semibold">
+            0.4 V safety gap
+          </text>
+          <text x={(midL + midR) / 2} y={y(V_IL) - 7} textAnchor="middle" className="fill-amber font-sans text-[12px] font-semibold">
+            0.4 V safety gap
+          </text>
+          {/* The signal */}
+          <path d={wire} fill="none" stroke="var(--color-cyan)" strokeWidth={2.2} />
+          <circle cx={midL} cy={y(sent)} r={5} fill="var(--color-cyan)" />
+          <circle
+            cx={midR}
+            cy={y(got)}
+            r={6.5}
+            fill={ok ? "var(--color-on)" : "var(--color-pink)"}
+            stroke="var(--color-panel)"
+            strokeWidth={2}
+          />
+        </svg>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="A sends" value={fmtV(sent)} sub={bit ? "weakest legal 1" : "weakest legal 0"} tone="cyan" />
+            <Stat label="B receives" value={fmtV(got)} sub={`after ${noise >= 0 ? "+" : "−"}${Math.abs(noise).toFixed(2)} V noise`} />
+          </div>
+          <div
+            className={cx(
+              "rounded-md border px-3 py-2 font-sans text-sm font-semibold",
+              ok ? "border-on bg-on-tint text-on" : "border-pink bg-pink-tint text-pink",
+            )}
+          >
+            {read === null
+              ? `✗ Undefined. ${fmtV(got)} is between 0.8 V and 2.0 V, so B might read 0 or 1.`
+              : ok
+                ? `✓ B reads ${read}, which is correct.`
+                : `✗ B reads ${read}, but A sent ${bit}. The bit flipped.`}
+          </div>
+          <p className="font-serif text-[0.9375rem] leading-normal text-mute">
+            {ok ? (
+              <>
+                Now gate B drives its <em>own</em> output from its own supply: close to {bit ? "3.3 V" : "0 V"}, not the
+                tired {fmtV(got)} it received. The noise does not travel any further.
+              </>
+            ) : (
+              <>
+                Any noise up to 0.4 V is always safe, because a legal output is at least 0.4 V away from the
+                undefined zone. Here the noise is {Math.abs(noise).toFixed(2)} V.
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* The MOSFET cross-section.                                           */
 /* ------------------------------------------------------------------ */
 
