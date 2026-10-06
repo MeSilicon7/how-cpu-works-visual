@@ -226,15 +226,15 @@ export default function Storage() {
               A cosmic ray flips bit 5: the chip now reads <code>0110111</code>.
             </>,
             <>
-              Count again, now including the check bit itself:
-              <span className="mt-1 block">Check 1 (positions 1, 3, 5, 7): 0 + 1 + 1 + 1 = 3, odd ✗</span>
-              <span className="block">Check 2 (positions 2, 3, 6, 7): 1 + 1 + 1 + 1 = 4, even ✓</span>
-              <span className="block">Check 4 (positions 4, 5, 6, 7): 0 + 1 + 1 + 1 = 3, odd ✗</span>
+              Count again, now including each check bit itself (positions in brackets):
+              <span className="mt-1 block">Check 1 (1, 3, 5, 7): 0 + 1 + 1 + 1 = 3, odd ✗</span>
+              <span className="block">Check 2 (2, 3, 6, 7): 1 + 1 + 1 + 1 = 4, even ✓</span>
+              <span className="block">Check 4 (4, 5, 6, 7): 0 + 1 + 1 + 1 = 3, odd ✗</span>
             </>,
             <>
               Write the results as a binary number, check 4 first:
-              <TeX block>{tex`\underbrace{1}_{\text{check 4}}\;\underbrace{0}_{\text{check 2}}\;\underbrace{1}_{\text{check 1}} = 101_2 = 4 + 1 = 5`}</TeX>
-              Flip bit 5 back: <code>0110011</code>, and the data is 1011 again ✓.
+              <TeX block>{tex`\underbrace{1}_{\text{check 4}}\;\underbrace{0}_{\text{check 2}}\;\underbrace{1}_{\text{check 1}} = 101_2 = 5`}</TeX>
+              (4 + 1 = 5, the same as adding the numbers of the failing checks.) Flip bit 5 back: <code>0110011</code>, and the data is 1011 again ✓.
             </>,
           ]}
         </Steps>
@@ -245,9 +245,9 @@ export default function Storage() {
         Real hardware uses the same trick on bigger blocks. <strong>ECC memory</strong> (error-correcting code memory),
         used in servers, stores every 64 data bits with 8 check bits, 72 bits in total. Seven Hamming checks give{" "}
         <TeX>{"2^7 = 128"}</TeX> possible answers, more than enough to point at any one of the 72 positions. The eighth
-        is an overall parity bit, like the 8-bit mode in the figure. The cost:
+        is an overall parity bit, like the 8-bit mode in the figure. The cost is 12.5% extra memory:
       </p>
-      <TeX block>{tex`\frac{8 \text{ check bits}}{64 \text{ data bits}} = 0.125 = 12.5\% \text{ extra memory}`}</TeX>
+      <TeX block>{tex`\frac{8 \text{ check bits}}{64 \text{ data bits}} = 12.5\%`}</TeX>
       <p>
         For that, the memory controller fixes any single flipped bit and detects any two, on every read, in hardware.
         You never notice it happening.

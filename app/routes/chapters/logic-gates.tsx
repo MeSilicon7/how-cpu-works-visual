@@ -3,7 +3,15 @@ import { Link } from "react-router";
 import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { CmosNand, GatePlayground, NandUniversal, SwitchGates, XorBuild } from "~/widgets/gates";
+import {
+  CmosNand,
+  GatePlayground,
+  NandUniversal,
+  PatternDetector,
+  SwitchGates,
+  TwoToFourDecoder,
+  XorBuild,
+} from "~/widgets/gates";
 
 export const meta = () => chapterMeta("logic-gates");
 
@@ -180,7 +188,10 @@ export default function LogicGates() {
         </p>
         <ol>
           <li>Find every row where the output is 1.</li>
-          <li>For each such row, AND the inputs together, putting a NOT on any input that is 0 in that row.</li>
+          <li>
+            For each such row, AND the inputs together, putting a NOT on any input that is 0 in that row. (That is
+            exactly a pattern detector from the Decoders section.)
+          </li>
           <li>OR all those terms together.</li>
         </ol>
         <p>For XOR, the output is 1 in rows (A=0, B=1) and (A=1, B=0), giving:</p>
@@ -189,6 +200,12 @@ export default function LogicGates() {
           This proves something huge: <strong>with AND, OR and NOT you can build any logic function at all</strong>.
           Addition, comparison, “is this pixel inside the triangle?”: if you can write down the truth table, you can
           build the circuit.
+        </p>
+        <p>
+          In plain words: “the output is 1 when the input is <em>this</em> pattern, or <em>that</em> pattern, or…”. You
+          can see a real example in the 7-segment display decoder of{" "}
+          <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>, where each of the 7 bars of a digit has its own
+          small formula like this.
         </p>
       </GoDeeper>
 
@@ -218,6 +235,10 @@ export default function LogicGates() {
             circuit → NOT.
           </>,
           <>A truth table lists every input combination, so it completely describes a gate.</>,
+          <>
+            An AND gate with NOTs on some inputs fires for exactly one pattern. A <strong>decoder</strong> has one such
+            detector per pattern. That is how hardware “recognises” bits: by wiring, not by understanding.
+          </>,
           <>
             With AND, OR and NOT (or NAND alone) you can build <strong>any</strong> logic function.
           </>,
