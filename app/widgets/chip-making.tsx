@@ -1211,8 +1211,8 @@ function CellRow({ withPins }: { withPins: boolean }) {
       {CELLS.map((c, i) => (
         <g key={i}>
           <rect x={c.x} y={ROW_TOP} width={c.w} height={ROW_BOT - ROW_TOP} fill="var(--color-panel-2)" stroke="var(--color-line-2)" />
-          <rect x={c.x + 5} y={ROW_TOP + 14} width={c.w - 10} height={16} fill="var(--color-si-n)" stroke="var(--color-si-n-edge)" strokeWidth={0.75} />
-          <rect x={c.x + 5} y={ROW_BOT - 30} width={c.w - 10} height={16} fill="var(--color-si-p)" stroke="var(--color-si-p-edge)" strokeWidth={0.75} />
+          <rect x={c.x + 5} y={ROW_TOP + 14} width={c.w - 10} height={16} fill="var(--color-si-p)" stroke="var(--color-si-p-edge)" strokeWidth={0.75} />
+          <rect x={c.x + 5} y={ROW_BOT - 30} width={c.w - 10} height={16} fill="var(--color-si-n)" stroke="var(--color-si-n-edge)" strokeWidth={0.75} />
           {Array.from({ length: c.t / 2 }, (_, j) => (
             <rect
               key={j}
@@ -1252,9 +1252,9 @@ export function CodeToCells() {
   const v = (bit: boolean) => (bit ? 1 : 0);
 
   const tracks: Array<{ d: string; on: boolean; ends: Array<[number, number]> }> = [
-    { d: "M20 14 H185 M90 14 V78 M185 14 V78", on: a, ends: [[90, 14], [185, 14]] },
-    { d: "M20 28 H200 M115 28 V78 M200 28 V78", on: b, ends: [[115, 28], [200, 28]] },
-    { d: "M20 42 H360 M275 42 V78 M360 42 V78", on: cin, ends: [[275, 42], [360, 42]] },
+    { d: "M30 14 H185 M90 14 V78 M185 14 V78", on: a, ends: [[90, 14], [185, 14]] },
+    { d: "M30 28 H200 M115 28 V78 M200 28 V78", on: b, ends: [[115, 28], [200, 28]] },
+    { d: "M30 42 H360 M275 42 V78 M360 42 V78", on: cin, ends: [[275, 42], [360, 42]] },
     { d: "M150 78 V56 H345 M250 56 V78 M345 56 V78", on: x1, ends: [[150, 56], [250, 56], [345, 56]] },
     { d: "M218 78 V14 H420 V78", on: ab, ends: [[218, 14], [420, 14]] },
     { d: "M378 78 V42 H405 V78", on: cxv, ends: [[378, 42], [405, 42]] },
@@ -1420,7 +1420,7 @@ export function CodeToCells() {
                     [42, "cin", cin],
                   ] as const
                 ).map(([y, t, on]) => (
-                  <text key={t} x={16} y={y + 4} textAnchor="end" className="font-mono text-[12px] font-semibold" fill={on ? "var(--color-on)" : "var(--color-mute)"}>
+                  <text key={t} x={26} y={y + 4} textAnchor="end" className="font-mono text-[12px] font-semibold" fill={on ? "var(--color-on)" : "var(--color-mute)"}>
                     {t}
                   </text>
                 ))}

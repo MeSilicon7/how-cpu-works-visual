@@ -1858,11 +1858,9 @@ export function Voltmeter() {
               highlight={steps - 1}
               rows={seq.slice(0, steps).map((st, i) => [
                 <span className="font-mono">{i + 1}</span>,
-                <span className="font-mono">
-                  {st.test}/256 = {st.tv.toFixed(3)} V
-                </span>,
-                st.yes ? "yes → keep it" : "no → remove it",
-                <span className={cx("font-mono", st.yes ? "font-bold text-on" : "text-dim")}>
+                <span className="font-mono whitespace-nowrap">{st.tv.toFixed(3)} V</span>,
+                <span className="whitespace-nowrap">{st.yes ? "yes ✓" : "no ✗"}</span>,
+                <span className={cx("font-mono whitespace-nowrap", st.yes ? "font-bold text-on" : "text-dim")}>
                   b{st.b} = {st.yes ? 1 : 0}
                 </span>,
               ])}
