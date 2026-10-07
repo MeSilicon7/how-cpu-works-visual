@@ -21,7 +21,7 @@ function ByteBits({ v, className, width = 8 }: { v: number; className?: string; 
       {[...s].map((c, i) => (
         <span
           key={i}
-          className={cx(c === "1" ? "font-bold text-ink" : "font-normal text-dim", i > 0 && i % 4 === 0 && "ml-[0.3em]")}
+          className={cx(c === "1" ? "font-bold text-ink" : "font-normal text-dim", i > 0 && (width - i) % 4 === 0 && "ml-[0.3em]")}
         >
           {c}
         </span>
@@ -958,6 +958,17 @@ export function FileXray() {
         )}
       </div>
 
+      {readAs === "hex" && verdict.marks.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
+          {verdict.marks.map((m, i) => (
+            <span key={i} className="flex items-center gap-1.5">
+              <span className={cx("rounded-[3px] px-1 font-mono", toneCls[m.tone])}>{hx(bytes[m.from] ?? 0)}</span>
+              {m.label} (byte{m.to - m.from > 1 ? `s ${m.from}–${m.to - 1}` : ` ${m.from}`})
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="mt-4 grid gap-4 @2xl:grid-cols-[minmax(0,1fr)_auto]">
         <div className="space-y-2 font-serif text-[0.9375rem] text-body">
           <div className="flex flex-wrap items-baseline gap-2">
@@ -1122,14 +1133,14 @@ export function SevenSegDecoder() {
               <b>{SEG_NAMES.filter((_, i) => (out >> i) & 1).join(", ")}</b> light up.
             </p>
             {rom === "dec" && (
-              <p className="mt-2">
-                You can also build any one column of the table from gates. Segment e is lit only for 0, 2, 6 and 8:{" "}
-                <span className="font-mono text-sm">
-                  e = NOT b0 AND (NOT b2 OR b1) = {nb0} AND ({nb2} OR {b[1]}) ={" "}
+              <div className="mt-2">
+                You can also build any one column of the table from gates. Segment e is lit only for 0, 2, 6 and 8:
+                <div className="mt-1 font-mono text-sm text-ink">
+                  e = NOT b0 AND (NOT b2 OR b1)
+                  <br />= {nb0} AND ({nb2} OR {b[1]}) ={" "}
                   <span className={eVal ? "font-bold text-on" : "text-dim"}>{eVal}</span>
-                </span>
-                .
-              </p>
+                </div>
+              </div>
             )}
           </>
         )}
@@ -1193,7 +1204,8 @@ export function OpcodeDecoder() {
       <p className="mt-4 border-t border-line pt-3 font-serif text-[0.9375rem] text-body">
         {op ? (
           <>
-            Only the <b>{op.name}</b> line is 1. It switches on the {op.name} recipe in the control unit's ROM: {op.describe}
+            Only the <b>{op.name}</b> line is 1. It switches on the {op.name} recipe in the control unit's ROM (
+            {op.short}).
           </>
         ) : (
           <>Pattern 1101 has no recipe in SAP-8. Its line goes nowhere, so the CPU does nothing for it.</>
@@ -1450,7 +1462,8 @@ export function FollowTheA() {
             </div>
             <p className="font-serif text-[0.9375rem] text-body">
               <span className="text-amber">Byte 2 = 0x{hx(usage)} = {usage}</span>: “key number {usage} in the standard
-              list went down”. In that list, number 4 is simply the key in the place where US keyboards print A.
+              list went down”. In that list, number {usage} is simply the key in the place where US keyboards print{" "}
+              {KB[r][c][0]}.
               {shift && <span className="text-cyan"> Byte 0 = 02: “the left Shift key is also down”.</span>} The
               keyboard sends exactly these bytes whatever is printed on the key.
             </p>
