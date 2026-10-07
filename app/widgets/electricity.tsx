@@ -554,7 +554,7 @@ export function CircuitSandbox() {
           <div className="scroll-thin overflow-x-auto">
             <svg
               viewBox="0 0 580 292"
-              className="w-full min-w-[520px]"
+              className="w-full min-w-[500px]"
               role="img"
               aria-label={`${topo} circuit, current ${fmtAmps(iTot)}`}
             >
@@ -1214,12 +1214,12 @@ export function ChargeBucket() {
         />
         <Slider
           className="sm:col-span-2"
-          label="Next clock tick comes after"
+          label="Next clock tick after"
           min={1}
           max={T_MAX}
           value={period}
           onChange={setPeriod}
-          format={(t) => `${t} ps  (a ${sig(1000 / t)} GHz clock)`}
+          format={(t) => `${t} ps (${sig(1000 / t)} GHz)`}
         />
       </div>
 
@@ -1246,7 +1246,7 @@ export function ChargeBucket() {
         aria-live="polite"
       >
         <Pill tone={ok ? "on" : "pink"}>{ok ? "✓ correct" : "✗ wrong answer"}</Pill>
-        <span className={cx("min-w-0 flex-1 font-serif text-[0.9375rem]", ok ? "text-body" : "text-pink")}>
+        <span className={cx("min-w-[14rem] flex-1 font-serif text-[0.9375rem]", ok ? "text-body" : "text-pink")}>
           {ok ? (
             <>
               At the tick the bucket is {Math.round(vTick * 100)}% full ({vTick.toFixed(2)} V), past the 0.5 V line. The
@@ -1542,7 +1542,7 @@ export function RelayLab() {
         <div className="scroll-thin overflow-x-auto">
           <svg
             viewBox={`0 0 600 ${H}`}
-            className="w-full min-w-[540px]"
+            className="w-full min-w-[510px]"
             role="img"
             aria-label={`Relay circuit, lamp ${lit ? "on" : "off"}`}
           >

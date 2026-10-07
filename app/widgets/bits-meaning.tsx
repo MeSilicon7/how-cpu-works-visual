@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import { TeX } from "~/components/tex";
-import { BitButton, Btn, cx, DataTable, Pill, Segmented, Stat, Widget } from "~/components/ui";
+import { BitButton, Btn, cx, DataTable, Segmented, Stat, Widget } from "~/components/ui";
 import { binStr, fmt, hexStr, toSigned } from "~/lib/bits";
 import { disassemble, opByCode } from "~/lib/cpu";
 import { boldRows, glyph8, MISSING_GLYPH, pictureFor, rowsToGrid } from "~/lib/font8";
@@ -463,7 +463,7 @@ function buildSamples(): Sample[] {
       id: "docx",
       name: "letter.docx",
       bytes: [
-        ...fromHex("504b0304140006000800000021009c8e5a2b5a01000020050000130000"),
+        ...fromHex("504b0304 1400 0600 0800 0000 2100 9c8e5a2b 5a010000 20050000 1300 0000"),
         ...latin1("[Content_Types].xml"),
         ...fromHex("a2040228a000020000000000000000"),
       ],
@@ -475,10 +475,10 @@ function buildSamples(): Sample[] {
         ...latin1("ID3"),
         ...fromHex("04000000000f76"),
         ...latin1("TIT2"),
-        ...fromHex("0000000a000003"),
+        ...fromHex("00000008000003"),
         ...latin1("My song"),
         ...latin1("TPE1"),
-        ...fromHex("0000000b000003"),
+        ...fromHex("00000009000003"),
         ...latin1("The Bits"),
       ],
     },
@@ -1819,4 +1819,3 @@ export function HiThreeWays() {
   );
 }
 
-export { Pill };

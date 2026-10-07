@@ -129,7 +129,7 @@ export function RawSizeCalc() {
       <div className="mt-4 rounded-xl border border-line bg-bg/60 p-3 text-sm">
         <TeX
           block
-        >{`\\underbrace{${r.w} \\times ${r.h}}_{\\text{pixels}} \\times \\underbrace{3}_{\\text{bytes}} \\times \\underbrace{${fps}}_{\\text{fps}} \\times \\underbrace{${minutes * 60}}_{\\text{seconds}} = ${fmt(raw).replace(/,/g, "{,}")} \\text{ bytes}`}</TeX>
+        >{`\\begin{aligned} &\\underbrace{${r.w} \\times ${r.h}}_{\\text{pixels}} \\times \\underbrace{3}_{\\text{bytes}} \\times \\underbrace{${fps}}_{\\text{fps}} \\times \\underbrace{${minutes * 60}}_{\\text{seconds}} \\\\ &= ${fmt(raw).replace(/,/g, "{,}")} \\text{ bytes} \\end{aligned}`}</TeX>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         <Stat label="Raw (uncompressed)" value={fmtBytes(raw)} tone="pink" sub={`${fmtBytes(perFrame)} per frame`} />

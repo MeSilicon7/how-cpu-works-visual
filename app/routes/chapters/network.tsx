@@ -50,7 +50,7 @@ export default function Network() {
         </p>
         <TeX
           block
-        >{tex`\text{guessing a 256-bit AES key: } 2^{256} \approx 1.2 \times 10^{77} \text{ possibilities} \qquad \text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years}`}</TeX>
+        >{tex`\begin{aligned} &\text{256-bit key: } 2^{256} \approx 1.2 \times 10^{77} \text{ keys} \\ &\text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years} \end{aligned}`}</TeX>
       </Callout>
       <p>
         The actual scrambling uses a cipher like AES: rounds of XOR, substitutions and shifts, exactly the bitwise
@@ -85,7 +85,7 @@ export default function Network() {
       <Callout kind="math" title="How long is a Wi-Fi wave?">
         <TeX
           block
-        >{tex`\lambda = \frac{c}{f} = \frac{3 \times 10^8\ \text{m/s}}{2.4 \times 10^9\ \text{Hz}} = 0.125\ \text{m} = 12.5\ \text{cm}`}</TeX>
+        >{tex`\begin{aligned} \lambda = \frac{c}{f} &= \frac{3 \times 10^8\ \text{m/s}}{2.4 \times 10^9\ \text{Hz}} \\ &= 0.125\ \text{m} = 12.5\ \text{cm} \end{aligned}`}</TeX>
         <p>That's why Wi-Fi antennas are a few centimetres long, a fraction of the wavelength.</p>
       </Callout>
 
@@ -122,7 +122,7 @@ export default function Network() {
         </p>
         <TeX
           block
-        >{tex`142.250.74.46 = \underbrace{10001110\;11111010}_{\text{matches } 142.250.0.0/16}\;01001010\;00101110`}</TeX>
+        >{tex`\begin{aligned} &142.250.74.46 = \\ &\underbrace{10001110\;11111010}_{\text{matches } 142.250.0.0/16}\;01001010\;00101110 \end{aligned}`}</TeX>
         <p>
           Routers constantly tell their neighbours which addresses they can reach (using protocols like BGP), so when a
           cable breaks, traffic flows around it within seconds. That's the internet's original design goal: no single
