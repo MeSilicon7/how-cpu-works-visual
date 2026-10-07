@@ -1228,8 +1228,8 @@ export function ChargeBucket() {
         <Stat label="Next gate flips after" value={`${sig(t50, 2)} ps`} tone="amber" sub="0.69 × τ" />
         <Stat
           label="Electrons when full"
-          value={`≈ ${sig(fullElectrons, 2)}`}
-          sub={`C × 1 V ÷ 1.6 × 10⁻¹⁹ C`}
+          value={`≈ ${sig(fullElectrons, 3)}`}
+          sub={`C × 1 V ÷ (1.602 × 10⁻¹⁹ C)`}
         />
         <Stat
           label="Fastest clock, 1 gate"

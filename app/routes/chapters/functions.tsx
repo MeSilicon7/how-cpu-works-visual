@@ -279,8 +279,8 @@ export default function Functions() {
 
       <h3>A call inside a call</h3>
       <p>
-        Nested calls work the same way. Here is the program from “A call inside a call” above, in SAP-8 code. I ran it
-        on the same simulator:
+        Nested calls work the same way. Here is the program from “A call inside a call” above, in SAP-8 code, with the
+        ticks from running it on the same CPU:
       </p>
       <Asm
         lines={[

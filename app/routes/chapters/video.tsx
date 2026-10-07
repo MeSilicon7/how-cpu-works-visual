@@ -238,7 +238,7 @@ export default function Video() {
         </p>
         <TeX
           block
-        >{tex`\begin{aligned} F(u,v) = \;&\tfrac{1}{4}\, C(u)\, C(v) \\ &\times \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \\ &\times \cos\!\left[\frac{(2x+1)u\pi}{16}\right] \cos\!\left[\frac{(2y+1)v\pi}{16}\right] \end{aligned}`}</TeX>
+        >{tex`\begin{aligned} F(u,v) = \;&\tfrac{1}{4}\, C(u)\, C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \\ &\times \cos\!\left[\frac{(2x+1)u\pi}{16}\right] \\ &\times \cos\!\left[\frac{(2y+1)v\pi}{16}\right] \end{aligned}`}</TeX>
         <p>
           where <TeX>{"C(0) = 1/\\sqrt{2}"}</TeX> and <TeX>{"C(k) = 1"}</TeX> otherwise. In words: for each pattern{" "}
           <TeX>{"(u, v)"}</TeX>, multiply every pixel by that pattern's value at the same spot and add everything up. If
