@@ -513,7 +513,7 @@ export function WalkTheString() {
                   )}
                 >
                   {bytes.map((b, j) => (
-                    <div key={j} className="flex w-10 flex-col items-center py-0.5">
+                    <div key={j} className="flex w-8 flex-col items-center py-0.5 sm:w-10">
                       <span className="font-mono text-[0.6875rem] text-dim tabular-nums">{WALK_BASE + k * size + j}</span>
                       <span
                         className={cx(
@@ -584,11 +584,11 @@ export function WalkTheString() {
             <div>
               p = base + i × size
             </div>
-            <div>
-              {"  "}= {WALK_BASE} + {w.i} × {size}
+            <div className="pl-[2ch]">
+              = {WALK_BASE} + {w.i} × {size}
             </div>
-            <div>
-              {"  "}= <span className="font-bold text-cyan">{p}</span>
+            <div className="pl-[2ch]">
+              = <span className="font-bold text-cyan">{p}</span>
             </div>
             {w.x !== null && w.line !== 0 && (
               <div className="mt-1 text-mute">
@@ -598,10 +598,10 @@ export function WalkTheString() {
             )}
           </div>
           <div className="surface-screen rounded-md px-3 py-2.5">
-            <div className="label-caps text-screen-dim">Screen</div>
+            <div className="label-caps text-dim">Screen</div>
             <div className="mt-1 min-h-7 font-mono text-xl text-screen-ink">
               {w.shown}
-              {!done && <span className="animate-pulse text-screen-dim">▏</span>}
+              {!done && <span className="animate-pulse text-dim motion-reduce:animate-none">▏</span>}
             </div>
           </div>
         </div>

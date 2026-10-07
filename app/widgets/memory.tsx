@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Gate, InputPin, Junction, OutputPin, Wire } from "~/components/circuit";
 import { TeX } from "~/components/tex";
-import { BitButton, Btn, cx, Pill, Widget } from "~/components/ui";
+import { BitButton, Btn, cx, Pill, Stat, Widget } from "~/components/ui";
 import { binStr } from "~/lib/bits";
 import { useInterval } from "~/lib/hooks";
 
@@ -358,6 +358,261 @@ export function RamGrid() {
               })}
             </tbody>
           </table>
+        </div>
+      </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Master–slave: two latches that take turns                            */
+/* ------------------------------------------------------------------ */
+
+function LatchCard({
+  name,
+  rule,
+  open,
+  value,
+}: {
+  name: string;
+  rule: string;
+  open: boolean;
+  value: boolean;
+}) {
+  return (
+    <div
+      className={cx(
+        "min-w-0 flex-1 rounded-md border p-3 transition-colors",
+        open ? "border-amber bg-amber-tint halo-amber" : "border-line-2 bg-panel-2",
+      )}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="font-sans text-sm font-semibold text-ink">{name}</div>
+        <div className="font-sans text-xs text-mute">{rule}</div>
+      </div>
+      <div className="mt-2 flex items-center gap-3">
+        <BitButton on={value} size="md" />
+        <div className={cx("font-sans text-sm font-semibold", open ? "text-amber" : "text-mute")}>
+          {open ? "open: copying its input" : "closed: holding its bit"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FlowArrow({ on }: { on: boolean }) {
+  return (
+    <div className={cx("flex items-center justify-center font-mono text-xl", on ? "text-ink" : "text-dim")} aria-hidden>
+      <span className="sm:hidden">↓</span>
+      <span className="hidden sm:inline">→</span>
+    </div>
+  );
+}
+
+export function MasterSlave() {
+  const [d, setD] = useState(true);
+  const [clk, setClk] = useState(false);
+  const [master, setMaster] = useState(true);
+  const [q, setQ] = useState(false);
+  const [note, setNote] = useState(
+    "The clock is 0, so the master is open and already copies D = 1. The slave is closed, so Q still shows its old 0.",
+  );
+
+  const flipD = () => {
+    const nd = !d;
+    setD(nd);
+    if (!clk) {
+      setMaster(nd);
+      setNote(`D is now ${nd ? 1 : 0}. The master is open, so it follows. The slave is closed, so Q stays ${q ? 1 : 0}.`);
+    } else {
+      setNote(`D is now ${nd ? 1 : 0}, but the master is closed, so nothing moves. Q stays ${q ? 1 : 0}.`);
+    }
+  };
+  const flipClk = () => {
+    const nc = !clk;
+    setClk(nc);
+    if (nc) {
+      setQ(master);
+      setNote(
+        `Rising edge (0 → 1)! The master closes and keeps ${master ? 1 : 0}. The slave opens and copies it: Q = ${master ? 1 : 0}.`,
+      );
+    } else {
+      setMaster(d);
+      setNote(`Falling edge (1 → 0). The slave closes and holds Q = ${q ? 1 : 0}. The master opens and follows D again.`);
+    }
+  };
+
+  return (
+    <Widget
+      title="Master and slave: two latches taking turns"
+      subtitle="The master listens while the clock is 0. The slave listens while the clock is 1. They are never open at the same time."
+    >
+      <div className="flex flex-wrap items-end gap-4">
+        <BitButton on={d} onClick={flipD} color="cyan" label="D (flip it)" size="lg" />
+        <Btn onClick={flipClk} variant="primary">
+          {clk ? "Lower the clock (1 → 0)" : "Raise the clock (0 → 1)"}
+        </Btn>
+        <Pill tone="amber">CLK = {clk ? 1 : 0}</Pill>
+      </div>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-stretch">
+        <div className="flex items-center justify-center rounded-md border border-cyan bg-cyan-tint px-3 py-2 font-mono text-sm text-cyan">
+          D = {d ? 1 : 0}
+        </div>
+        <FlowArrow on={!clk} />
+        <LatchCard name="Master" rule="open when CLK = 0" open={!clk} value={master} />
+        <FlowArrow on={clk} />
+        <LatchCard name="Slave" rule="open when CLK = 1" open={clk} value={q} />
+        <FlowArrow on={clk} />
+        <div
+          className={cx(
+            "flex items-center justify-center rounded-md border px-3 py-2 font-mono text-sm",
+            q ? "border-on bg-on-tint font-bold text-on" : "border-line-2 bg-panel text-dim",
+          )}
+        >
+          Q = {q ? 1 : 0}
+        </div>
+      </div>
+      <p className="mt-4 font-serif text-[0.9375rem] leading-normal text-body" aria-live="polite">
+        {note}
+      </p>
+      <p className="mt-1 font-serif text-[0.9375rem] leading-normal text-mute">
+        Try this: raise the clock, then flip D a few times. Q does not move until the next rising edge.
+      </p>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* ROM: a lookup table of squares, frozen in transistors                */
+/* ------------------------------------------------------------------ */
+
+const ROM_ROWS = 8;
+const ROM_BITS = 6;
+const romWord = (n: number) => n * n; // what the chip makers decided to store
+
+export function RomSquares() {
+  const [addr, setAddr] = useState(5);
+  const word = romWord(addr);
+  const rowY = (r: number) => 44 + r * 32;
+  const colX = (c: number) => 114 + c * 38; // c = 0 is the top bit (b5)
+  const bitOf = (v: number, c: number) => (v >> (ROM_BITS - 1 - c)) & 1;
+  const bottom = rowY(ROM_ROWS - 1) + 22;
+
+  return (
+    <Widget
+      title="A ROM that knows its squares"
+      subtitle="3 address bits pick one of 8 rows. A dot is a transistor, which makes its column read 1. The dots were placed when the chip was made: they store n × n for every n from 0 to 7."
+    >
+      <div className="grid items-start gap-5 md:grid-cols-[minmax(0,380px)_1fr]">
+        <svg viewBox="0 0 364 348" className="mx-auto w-full max-w-[400px]" role="img" aria-label="ROM grid: a decoder picks one row; dots on that row switch their columns on">
+          <rect x={8} y={26} width={76} height={bottom - 18} rx={6} fill="var(--color-panel-2)" stroke="var(--color-line-2)" />
+          <text x={46} y={18} textAnchor="middle" className="fill-mute font-sans text-[13px] font-semibold">
+            decoder
+          </text>
+          {Array.from({ length: ROM_BITS }, (_, c) => (
+            <text key={c} x={colX(c)} y={18} textAnchor="middle" className="fill-mute font-mono text-[13px]">
+              b{ROM_BITS - 1 - c}
+            </text>
+          ))}
+          {/* column (bit) lines */}
+          {Array.from({ length: ROM_BITS }, (_, c) => (
+            <Wire key={c} d={`M${colX(c)} 28 V${bottom + 16}`} on={!!bitOf(word, c)} />
+          ))}
+          {/* row (word) lines, dots and labels */}
+          {Array.from({ length: ROM_ROWS }, (_, r) => {
+            const sel = r === addr;
+            const y = rowY(r);
+            return (
+              <g key={r}>
+                <Wire d={`M84 ${y} H${colX(ROM_BITS - 1) + 14}`} on={sel} />
+                <text
+                  x={46}
+                  y={y + 5}
+                  textAnchor="middle"
+                  className={sel ? "fill-violet font-mono text-[13px] font-bold" : "fill-dim font-mono text-[13px]"}
+                >
+                  {binStr(r, 3)}
+                </text>
+                {Array.from({ length: ROM_BITS }, (_, c) =>
+                  bitOf(romWord(r), c) ? (
+                    <circle
+                      key={c}
+                      cx={colX(c)}
+                      cy={y}
+                      r={5.5}
+                      fill={sel ? "var(--color-on)" : "var(--color-mute)"}
+                      stroke="var(--color-panel)"
+                      strokeWidth={1.5}
+                      className={sel ? "glow-on" : undefined}
+                    />
+                  ) : null,
+                )}
+                <text
+                  x={colX(ROM_BITS - 1) + 22}
+                  y={y + 5}
+                  className={sel ? "fill-on font-mono text-[13px] font-bold" : "fill-dim font-mono text-[13px]"}
+                >
+                  {romWord(r)}
+                </text>
+              </g>
+            );
+          })}
+          {/* outputs */}
+          {Array.from({ length: ROM_BITS }, (_, c) => {
+            const on = !!bitOf(word, c);
+            return (
+              <g key={c}>
+                <rect
+                  x={colX(c) - 13}
+                  y={bottom + 16}
+                  width={26}
+                  height={26}
+                  rx={4}
+                  fill={on ? "var(--color-on-tint)" : "var(--color-panel)"}
+                  stroke={on ? "var(--color-on)" : "var(--color-off)"}
+                  strokeWidth={1.75}
+                />
+                <text
+                  x={colX(c)}
+                  y={bottom + 34}
+                  textAnchor="middle"
+                  className={on ? "fill-on font-mono text-[14px] font-bold" : "fill-dim font-mono text-[14px]"}
+                >
+                  {on ? 1 : 0}
+                </text>
+              </g>
+            );
+          })}
+          <text x={46} y={bottom + 34} textAnchor="middle" className="fill-mute font-sans text-[13px] font-semibold">
+            output
+          </text>
+        </svg>
+
+        <div className="min-w-0 space-y-4">
+          <div>
+            <div className="label-caps text-dim">Address (3 bits)</div>
+            <div className="mt-2 flex items-start gap-1.5">
+              {[2, 1, 0].map((i) => (
+                <BitButton
+                  key={i}
+                  on={!!((addr >> i) & 1)}
+                  color="violet"
+                  label={`A${i}`}
+                  onClick={() => setAddr((a) => a ^ (1 << i))}
+                />
+              ))}
+              <span className="ml-2 pt-1 font-mono text-lg text-violet tabular-nums">= {addr}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="Row switched on" value={`row ${addr}`} tone="violet" />
+            <Stat label="Output" value={`${binStr(word, 6)} = ${word}`} sub={`${addr} × ${addr} = ${word}`} tone="on" />
+          </div>
+          <p className="font-serif text-[0.9375rem] leading-normal text-mute">
+            The decoder switches on row {addr}. Wherever that row has a dot, the column wire turns on; the other columns
+            stay 0. Nothing is calculated: the answer was built into the wiring. (Many real chips use the opposite rule,
+            a transistor means 0. Either works, as long as the designers agree.)
+          </p>
         </div>
       </div>
     </Widget>

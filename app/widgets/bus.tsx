@@ -109,9 +109,36 @@ function PanelText({ x, title, sub, tone }: { x: number; title: string; sub: str
   );
 }
 
+/** A value badge at the end of a wire, sized for this figure. */
+function Tag({ x, y, text, tone }: { x: number; y: number; text: string; tone: "on" | "off" }) {
+  const c = tone === "on" ? "var(--color-on)" : "var(--color-dim)";
+  return (
+    <g>
+      <rect
+        x={x - 10}
+        y={y - 11}
+        width={20}
+        height={22}
+        rx={4}
+        fill="var(--color-panel)"
+        stroke={tone === "on" ? c : "var(--color-off)"}
+      />
+      <text
+        x={x}
+        y={y + 4.5}
+        textAnchor="middle"
+        className={cx("font-mono text-[13px]", tone === "on" && "font-bold")}
+        fill={c}
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
+
 export function TriStateFigure() {
-  // three single outputs, then two outputs sharing one wire
-  const xs = [48, 186, 324];
+  // one output in its three states (left), then two outputs sharing one wire (right)
+  const xs = [40, 160, 280];
   return (
     <Figure
       caption={
@@ -122,87 +149,93 @@ export function TriStateFigure() {
         </>
       }
     >
-      <svg
-        viewBox="0 0 640 238"
-        className="block w-full min-w-[560px]"
-        role="img"
-        aria-label="Four drawings of output switches: driving 1, driving 0, letting go (Z), and two outputs fighting"
-      >
-        <CircuitDefs />
-        {/* separators */}
-        {[146, 284, 422].map((x) => (
-          <line key={x} x1={x} y1={6} x2={x} y2={232} stroke="var(--color-line)" strokeWidth={1} />
-        ))}
+      <div className="grid gap-x-4 gap-y-3 sm:grid-cols-[360fr_220fr]">
+        <svg
+          viewBox="0 0 360 238"
+          className="block w-full"
+          role="img"
+          aria-label="One output in three states: driving 1, driving 0, and letting go (Z)"
+        >
+          {[120, 240].map((x) => (
+            <line key={x} x1={x} y1={6} x2={x} y2={232} stroke="var(--color-line)" strokeWidth={1} />
+          ))}
 
-        {/* 1: drives 1 */}
-        <Stage x={xs[0]} up down={false} />
-        <Junction x={xs[0]} y={112} on />
-        <Wire d={`M${xs[0]} 112 H112`} on flow={false} />
-        <SignalTag x={124} y={112} on />
-        <PanelText x={73} title="enable 1, in 1" sub="out = 1" tone="var(--color-on)" />
+          {/* drives 1 */}
+          <Stage x={xs[0]} up down={false} />
+          <Junction x={xs[0]} y={112} on />
+          <Wire d={`M${xs[0]} 112 H92`} on flow={false} />
+          <Tag x={102} y={112} text="1" tone="on" />
+          <PanelText x={60} title="enable 1, in 1" sub="out = 1" tone="var(--color-on)" />
 
-        {/* 2: drives 0 */}
-        <Stage x={xs[1]} up={false} down />
-        <Junction x={xs[1]} y={112} on={false} />
-        <Wire d={`M${xs[1]} 112 H250`} on={false} />
-        <SignalTag x={262} y={112} on={false} />
-        <PanelText x={215} title="enable 1, in 0" sub="out = 0" tone="var(--color-mute)" />
+          {/* drives 0 */}
+          <Stage x={xs[1]} up={false} down />
+          <Junction x={xs[1]} y={112} on={false} />
+          <Wire d={`M${xs[1]} 112 H212`} on={false} />
+          <Tag x={222} y={112} text="0" tone="off" />
+          <PanelText x={180} title="enable 1, in 0" sub="out = 0" tone="var(--color-mute)" />
 
-        {/* 3: Z */}
-        <Stage x={xs[2]} up={false} down={false} />
-        <circle cx={xs[2]} cy={112} r={3.5} fill="var(--color-off)" />
-        <path d={`M${xs[2]} 112 H388`} stroke="var(--color-off)" strokeWidth={1.75} strokeDasharray="4 4" fill="none" />
-        <SignalTag x={400} y={112} on={false} text="Z" />
-        <PanelText x={353} title="enable 0" sub="out = Z (let go)" tone="var(--color-mute)" />
+          {/* lets go: Z */}
+          <Stage x={xs[2]} up={false} down={false} />
+          <circle cx={xs[2]} cy={112} r={3.5} fill="var(--color-off)" />
+          <path
+            d={`M${xs[2]} 112 H332`}
+            stroke="var(--color-off)"
+            strokeWidth={1.75}
+            strokeDasharray="4 4"
+            fill="none"
+          />
+          <Tag x={342} y={112} text="Z" tone="off" />
+          <PanelText x={300} title="enable 0" sub="out = Z (let go)" tone="var(--color-mute)" />
+        </svg>
 
-        {/* 4: two talkers fighting */}
-        <Stage x={470} up down={false} hot />
-        <Stage x={598} up={false} down hot />
-        <path
-          d="M470 112 H598"
-          stroke="var(--color-pink)"
-          strokeWidth={3.5}
-          fill="none"
-          markerEnd="url(#arrow-short)"
-        />
-        <defs>
-          <marker
-            id="arrow-short"
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="5"
-            markerHeight="5"
-            orient="auto-start-reverse"
+        <div className="border-t border-line pt-3 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4">
+          <svg
+            viewBox="0 0 220 238"
+            className="mx-auto block w-full max-w-[280px] sm:max-w-none"
+            role="img"
+            aria-label="Two outputs on one wire: A connects it to +, B connects it to ground, so current flows straight through: a short circuit"
           >
-            <path d="M0 0 L10 5 L0 10 z" fill="var(--color-pink)" />
-          </marker>
-        </defs>
-        <circle cx={470} cy={112} r={4} fill="var(--color-pink)" />
-        <circle cx={598} cy={112} r={4} fill="var(--color-pink)" />
-        <text x={485} y={56} className="font-mono text-[13px] font-bold" fill="var(--color-ink)">
-          A
-        </text>
-        <text x={583} y={56} textAnchor="end" className="font-mono text-[13px] font-bold" fill="var(--color-ink)">
-          B
-        </text>
-        <rect
-          x={490}
-          y={124}
-          width={88}
-          height={22}
-          rx={4}
-          fill="var(--color-pink-tint)"
-          stroke="var(--color-pink)"
-        />
-        <text x={534} y={139.5} textAnchor="middle" className="font-mono text-[13px] font-bold" fill="var(--color-pink)">
-          ✗ 1 or 0?
-        </text>
-        <text x={534} y={104} textAnchor="middle" className="font-sans text-[12px]" fill="var(--color-pink)">
-          current
-        </text>
-        <PanelText x={534} title="A says 1, B says 0" sub="✗ short circuit" tone="var(--color-pink)" />
-      </svg>
+            <defs>
+              <marker
+                id="arrow-short"
+                viewBox="0 0 10 10"
+                refX="8"
+                refY="5"
+                markerWidth="5"
+                markerHeight="5"
+                orient="auto-start-reverse"
+              >
+                <path d="M0 0 L10 5 L0 10 z" fill="var(--color-pink)" />
+              </marker>
+            </defs>
+            <Stage x={40} up down={false} hot />
+            <Stage x={168} up={false} down hot />
+            <path d="M40 112 H168" stroke="var(--color-pink)" strokeWidth={3.5} fill="none" markerEnd="url(#arrow-short)" />
+            <circle cx={40} cy={112} r={4} fill="var(--color-pink)" />
+            <circle cx={168} cy={112} r={4} fill="var(--color-pink)" />
+            <text x={40} y={33} textAnchor="middle" className="font-mono text-[13px] font-bold" fill="var(--color-ink)">
+              A
+            </text>
+            <text x={168} y={33} textAnchor="middle" className="font-mono text-[13px] font-bold" fill="var(--color-ink)">
+              B
+            </text>
+            <text x={104} y={104} textAnchor="middle" className="font-sans text-[12px]" fill="var(--color-pink)">
+              current
+            </text>
+            <rect x={60} y={124} width={88} height={22} rx={4} fill="var(--color-pink-tint)" stroke="var(--color-pink)" />
+            <text
+              x={104}
+              y={139.5}
+              textAnchor="middle"
+              className="font-mono text-[13px] font-bold"
+              fill="var(--color-pink)"
+            >
+              ✗ 1 or 0?
+            </text>
+            <PanelText x={104} title="A says 1, B says 0" sub="✗ short circuit" tone="var(--color-pink)" />
+          </svg>
+        </div>
+      </div>
     </Figure>
   );
 }
@@ -406,7 +439,7 @@ export function WhoIsTalking() {
       <div
         key={i}
         className={cx(
-          "min-w-0 rounded-md border bg-panel px-3 py-2.5 transition-colors duration-300",
+          "min-w-0 flex-1 rounded-md border bg-panel px-3 py-2.5 transition-colors duration-300",
           fighting
             ? "border-pink halo-pink"
             : talking
@@ -490,7 +523,12 @@ export function WhoIsTalking() {
         <strong>
           ✓ {NAMES[talkers[0]]} is talking: {busVal} is on the bus.
         </strong>{" "}
-        {listeners.length ? (
+        {loaded.length ? (
+          <>
+            {names(loaded)} copied it at the tick, so now {loaded.length > 1 ? "they hold" : "it holds"} {busVal} too.
+            Change the switches to move a number somewhere else.
+          </>
+        ) : listeners.length ? (
           <>
             {names(listeners)} {listeners.length > 1 ? "are" : "is"} listening. Press <em>Tick</em> and{" "}
             {listeners.length > 1 ? "they" : NAMES[listeners[0]]} will copy it.
@@ -528,7 +566,7 @@ export function WhoIsTalking() {
     >
       <div className="grid grid-cols-2 gap-x-2 sm:gap-x-3">
         {[0, 1].map((i) => (
-          <div key={i} className="min-w-0">
+          <div key={i} className="flex min-w-0 flex-col">
             {card(i)}
             <Link2Bus out={out[i]} inn={inn[i]} short={state === "short"} />
           </div>
@@ -559,7 +597,7 @@ export function WhoIsTalking() {
 
       <div className="grid grid-cols-2 gap-x-2 sm:gap-x-3">
         {[2, 3].map((i) => (
-          <div key={i} className="min-w-0">
+          <div key={i} className="flex min-w-0 flex-col">
             <Link2Bus out={out[i]} inn={inn[i]} short={state === "short"} below />
             {card(i)}
           </div>

@@ -1,8 +1,9 @@
 import { Link } from "react-router";
 
+import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { AssemblerEditor, LayersView, TinyCompiler } from "~/widgets/machine-code";
+import { AssemblerEditor, LayersView, TinyCompiler, WalkTheString } from "~/widgets/machine-code";
 
 export const meta = () => chapterMeta("machine-code");
 
@@ -117,8 +118,96 @@ export default function MachineCode() {
       <p>
         That's the “3 × 4” program in the <Link to="/cpu">CPU chapter</Link>. (The compiler did one sneaky thing: it
         checks the condition at the bottom of the loop, which works fine as long as y starts above 0.) Every{" "}
-        <code>if</code>, <code>for</code>, <code>while</code> and function call in every app you use comes down to this:
-        flags and jumps.
+        <code>if</code>, <code>for</code> and <code>while</code> in every app you use comes down to this: flags and
+        jumps. A <strong>function call</strong> needs one more thing: a way to jump back to the place it was called
+        from. That is the job of the <strong>stack</strong>, in the next chapter,{" "}
+        <Link to="/functions">Functions &amp; the Stack</Link>.
+      </p>
+
+      <h2>Where do variables live?</h2>
+      <p>
+        Look at the 3 × 4 program again. The Python version talks about <code>product</code> and <code>y</code>. The
+        assembly never uses those names. It says <code>LDA 14</code> and <code>STA 15</code>. Where did the names go?
+      </p>
+      <p>
+        A <strong>variable</strong> is a memory address that the compiler has given a name. While it translates, the
+        compiler keeps a list called the <strong>symbol table</strong>: each name, and the address it picked for it.
+        Every time your code says <code>product</code>, the compiler looks it up and writes 14.
+      </p>
+      <DataTable
+        head={["name in the code", "address the compiler picked", "value at the start"]}
+        rows={[
+          [<code key="p">product</code>, "14", "0"],
+          [<code key="y">y</code>, "15", "4"],
+          ["the constant 3", "13", "3"],
+          ["the constant 1", "12", "1"],
+        ]}
+      />
+      <p>
+        When compiling is finished, the table is thrown away (or kept in a separate file to help with debugging). The
+        CPU never sees the word “product”. It only ever sees 14.
+      </p>
+
+      <h3>Three ways to say where a number is</h3>
+      <p>
+        An instruction can give its number in different ways, called <strong>addressing modes</strong>. You have
+        already used two of them:
+      </p>
+      <DataTable
+        align="left"
+        head={["mode", "example", "what the instruction holds", "A gets"]}
+        rows={[
+          ["immediate", <code key="i">LDI 5</code>, "the number itself", "5"],
+          ["direct", <code key="d">LDA 14</code>, "an address", "the number stored at address 14"],
+          [
+            "indirect",
+            <code key="n">mov al, [rbx]</code>,
+            "the name of a register that holds an address",
+            "the number stored at the address that is in rbx",
+          ],
+        ]}
+      />
+      <p>
+        The last row is x86 assembly. A variable that holds an <em>address</em> is called a <strong>pointer</strong>,
+        because it points at another place in memory. SAP-8 has no indirect mode, so it can't follow a pointer in one
+        instruction, but every real CPU can. Pointers are what let one short loop work through a long list: change the
+        pointer, and the same instructions read a different place. You will meet a very important pointer in the next
+        chapter: the stack pointer.
+      </p>
+
+      <h3>Lists: base + i × size</h3>
+      <p>
+        An <strong>array</strong> (a list) is a row of items that all have the same size, stored one after another in
+        memory. To find item number i, the code needs only two things: the address of the first item (the{" "}
+        <strong>base</strong>) and the size of one item in bytes.
+      </p>
+      <TeX block>{tex`\text{address of item } i = \text{base} + i \times \text{size}`}</TeX>
+      <Callout kind="math" title="Finding an item in a list">
+        <p>A list of whole numbers starts at address 1000. Each number takes 4 bytes (32 bits). Where is item 3?</p>
+        <TeX block>{tex`1000 + 3 \times 4 = 1012`}</TeX>
+        <p>
+          And item 0 is at <TeX>{"1000 + 0 \\times 4 = 1000"}</TeX>, the base itself. That's why most programming
+          languages number list items from 0: the index means “how many items to skip”.
+        </p>
+        <p>
+          The screen works the same way. In <Link to="/graphics">Graphics</Link> you'll see that the picture on the
+          screen is one long list of pixels in memory, row after row, 4 bytes per pixel. On a screen 1920 pixels wide,
+          pixel (x = 10, y = 2) comes after 2 full rows plus 10 pixels:
+        </p>
+        <TeX block>{tex`\begin{aligned} (2 \times 1920 + 10) \times 4 &= 3850 \times 4 \\ &= 15{,}400 \end{aligned}`}</TeX>
+        <p>So that pixel's 4 bytes start 15,400 bytes after the beginning of the screen's memory.</p>
+      </Callout>
+      <p>
+        <strong>Text</strong> is a list too. Each letter is stored as its code from the{" "}
+        <Link to="/binary">Binary</Link> chapter, and a 0 marks the end. So “hi” is three bytes: 104, 105, 0. To show
+        it, a loop starts at the base, reads an item, stops if it is 0, otherwise shows it and moves on to the next
+        item.
+      </p>
+      <WalkTheString />
+      <p>
+        Change the item size and step again. The loop is the same; only the “× size” changes. Real programs use all
+        three sizes. Standard Python, for example, stores each piece of text with 1, 2 or 4 bytes per letter, picking
+        the smallest size that fits the biggest letter in it.
       </p>
 
       <h2>Real machine code</h2>
@@ -161,12 +250,76 @@ export default function MachineCode() {
         </p>
       </GoDeeper>
 
+      <h2>So what is software, physically?</h2>
+      <p>We can now answer a question that sounds like philosophy but has a very physical answer.</p>
+      <p>
+        The <strong>hardware</strong> is fixed. Once a chip leaves the factory (see{" "}
+        <Link to="/chip-making">Making a Chip</Link>), its transistors and wires never change. The same CPU runs a
+        game, a web browser and a calculator without a single wire moving.
+      </p>
+      <p>
+        <strong>Software</strong> is a pattern of bits stored in memory: charges in the cells of your SSD or your RAM.
+        When the program counter points at those bits, they travel into the instruction register, and the control unit
+        turns them into control signals that steer the fixed hardware: which register talks on the bus, which one
+        listens, add or subtract. Software doesn't change the machine. It steers it, one instruction at a time.
+      </p>
+      <p>
+        So <strong>installing</strong> an app means copying bytes onto your SSD. <strong>Opening</strong> it means
+        that a program called the <strong>loader</strong>, part of the{" "}
+        <Link to="/operating-system">operating system</Link>, copies those bytes into RAM and jumps to the first
+        instruction. <strong>Deleting</strong> it means marking those bytes as free space.
+      </p>
+
+      <h3>What's inside a program file</h3>
+      <p>
+        A program file is more than machine code. It starts with a <strong>header</strong>, a few bytes that describe
+        the rest, and then come the code and the data (for example, the text the program will show). The very first
+        bytes are a <strong>magic number</strong>: a fixed pattern that says what kind of file this is. Here is the
+        start of a Linux program file:
+      </p>
+      <DataTable
+        align="left"
+        head={["bytes", "what they say", "example"]}
+        rows={[
+          ["0–3", "magic number: “I am a program”", "7F 45 4C 46 (“.ELF” as text)"],
+          ["4", "32-bit or 64-bit code", "2 means 64-bit"],
+          ["18–19", "which CPU family the code is for", "62 = x86-64, 183 = ARM64"],
+          ["24–31", "the entry address: where to start running", "the address of the first instruction"],
+          ["after that", "where the code and the data start in the file", "positions, counted in bytes"],
+        ]}
+      />
+      <p>
+        Windows programs start with 4D 5A (“MZ”) instead. Photos, PDFs and music files have magic numbers too. You'll
+        see them in <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>. The CPU-family field is why an app
+        built for an Intel PC won't run on an ARM phone: the loader reads “x86-64”, sees that this CPU speaks ARM, and
+        refuses. And if it tried anyway, the ARM decoder would read the x86 bytes as completely different
+        instructions. (Apple's Rosetta 2 gets around this by translating x86 machine code into ARM machine code, just
+        like a compiler.)
+      </p>
+
+      <h3>Tiny computers everywhere</h3>
+      <p>
+        Your laptop contains more computers than the one you think of. The keyboard, the SSD, the battery, the charger,
+        the webcam and the monitor each have their own small CPU, a little RAM, and a program stored in flash memory.
+        Many of these are <strong>microcontrollers</strong>: a whole small computer on one chip. Their programs are
+        called <strong>firmware</strong>, and a typical laptop holds a dozen or more of them. A “firmware update” works
+        exactly like installing an app: new bytes are copied into that flash, and the hardware stays the same.
+      </p>
+
       <KeyIdeas
         items={[
           <>Code → (compiler) → assembly → (assembler) → machine code → bits in RAM → voltages.</>,
           <>A compiler lexes text into tokens, parses them into a tree, and generates instructions.</>,
           <>Loops and if-statements are built from flags, conditional jumps and plain jumps.</>,
+          <>
+            A variable is a name for a memory address. Item i of a list is at <strong>base + i × size</strong>, and a{" "}
+            <strong>pointer</strong> is a variable that holds an address.
+          </>,
           <>Each CPU family has its own instruction encoding, but the idea is identical to our tiny CPU.</>,
+          <>
+            Software is a pattern of bits that steers hardware that never changes. A program file is a header (magic
+            number, CPU family, entry address) plus code and data.
+          </>,
         ]}
       />
     </>

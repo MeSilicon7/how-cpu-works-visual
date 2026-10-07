@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { ClockCounter, GhzCalculator, SettleDemo } from "~/widgets/clock";
+import { ClockCounter, ClockTree, GhzCalculator, RingOscillator, SettleDemo } from "~/widgets/clock";
 
 export const meta = () => chapterMeta("clock");
 
@@ -59,7 +59,11 @@ export default function Clock() {
 
       <h2>Why not just tick faster?</h2>
       <p>
-        Each gate takes a few picoseconds to react (its <strong>propagation delay</strong>). A clock tick has to be long
+        Each gate takes a few picoseconds to react (its <strong>propagation delay</strong>). Why does a gate need time at
+        all? Its output wire, and the gate inputs it feeds, are tiny capacitors: little buckets of charge. The transistors
+        must fill or empty those buckets before the next gate sees the new value. The capacitor section of{" "}
+        <Link to="/electricity">Electricity Basics</Link> works it out: 10 kΩ × 1 fF gives a time constant of 10 ps,
+        which is where the “about 10 ps per gate” comes from. A clock tick has to be long
         enough for the <em>slowest</em> path of gates between two flip-flops, called the <strong>critical path</strong>,
         to finish. If the tick comes too early, the register captures a half-computed answer. Push the clock too high
         and watch an adder fail:
@@ -68,6 +72,11 @@ export default function Clock() {
       <TeX
         block
       >{tex`f_{\max} = \frac{1}{t_{\text{critical path}}} \qquad \text{e.g. } \frac{1}{180\ \text{ps}} \approx 5.6\ \text{GHz}`}</TeX>
+      <p>
+        (Real designers add a little extra time on top: the flip-flop needs its input to be steady for a moment before
+        the edge, its <em>setup time</em>. The box “Inside the D flip-flop” in <Link to="/memory">Memory</Link> explains
+        why.)
+      </p>
       <p>
         That's exactly what “overclocking” risks: run the clock faster than the designers tested and some rare input
         combinations produce wrong answers. You get crashes, glitches, or silently wrong maths. CPU designers spend
@@ -109,6 +118,64 @@ export default function Clock() {
         <p>
           That multiplier changes all the time. When your laptop is idle, it drops the clock (and voltage) to save
           battery. When you open a game, it ramps up within microseconds.
+        </p>
+      </GoDeeper>
+
+      <GoDeeper title="Ring of NOTs and the clock tree">
+        <p>
+          Where does the PLL get its fast wobble from? From the simplest circuit there is: NOT gates in a circle.
+        </p>
+        <p>
+          Connect 3 NOT gates in a ring, each output feeding the next input. Suppose gate 1 says 0. Then gate 2 says 1,
+          and gate 3 says 0. But gate 3 feeds gate 1, so gate 1 should say 1, and it says 0! So gate 1 flips. Now gate 2
+          must flip, then gate 3, then gate 1 again, forever. With an odd number of NOTs the gates can never all agree, so
+          a change keeps chasing itself around the ring. This circuit is called a <strong>ring oscillator</strong>.
+        </p>
+        <RingOscillator />
+        <Callout kind="math" title="3 NOTs at 10 ps each">
+          <p>A change travels once around the ring in</p>
+          <TeX block>{tex`3 \times 10\ \text{ps} = 30\ \text{ps}`}</TeX>
+          <p>
+            That flips gate 1's output once (0 → 1). It takes a second trip to flip it back (1 → 0), so one full wave
+            takes two trips:
+          </p>
+          <TeX block>{tex`\begin{aligned} T &= 2 \times 3 \times 10\ \text{ps} = 60\ \text{ps} \\ f &= \frac{1}{60\ \text{ps}} \approx 16.7\ \text{GHz} \end{aligned}`}</TeX>
+        </Callout>
+        <p>
+          So why not use a ring as the clock directly? Because its speed drifts: a warmer chip or a slightly lower voltage
+          makes every gate a little slower. A PLL fixes this. Inside it is a ring whose gate delay can be tuned by a
+          control voltage. The PLL divides the ring's output down (for example by 45), compares it with the steady 100 MHz
+          signal from the quartz crystal, and nudges the ring faster or slower until the two match exactly. The fast ring
+          is then <em>locked</em> to the slow, precise quartz.
+        </p>
+        <p>
+          <strong>The clock tree.</strong> One more problem: the tick must reach about a billion flip-flops at the same
+          moment. One gate can drive only about 4 inputs quickly, because every extra input is one more little bucket of
+          charge to fill. So the clock is passed through levels of <strong>buffers</strong> (two NOT gates in a row,
+          which repeat a signal with fresh strength). One buffer drives 4, each of those drives 4 more, and so on: 4,
+          16, 64, …
+        </p>
+        <Callout kind="math" title="How many levels for a billion flip-flops?">
+          <p>
+            After <TeX>{"k"}</TeX> levels the clock reaches <TeX>{"4^k"}</TeX> inputs. We need{" "}
+            <TeX>{"4^k \\geq 10^9"}</TeX>:
+          </p>
+          <TeX block>{tex`\begin{aligned} k &= \log_4 (10^9) = \frac{\log 10^9}{\log 4} \\ &= \frac{9}{0.602} \approx 14.95 \;\Rightarrow\; 15 \text{ levels} \end{aligned}`}</TeX>
+          <p>
+            Check: <TeX>{"4^{15} = 1{,}073{,}741{,}824"}</TeX>, just over a billion.
+          </p>
+        </Callout>
+        <p>
+          The wires are laid out in an H shape, repeated inside itself. That way every path from the centre to a
+          flip-flop has the same length, and the tick arrives everywhere together:
+        </p>
+        <ClockTree />
+        <p>
+          <strong>Clock gating.</strong> The clock wires flip on every single tick, so the clock tree burns a big share
+          of a chip's power. When part of the chip has nothing to do (say, the video decoder while you read text), an AND
+          gate in the tree switches that branch off: branch clock = clock AND enable. No ticks means no flipping, and
+          almost no switching power (<TeX>{"\\alpha = 0"}</TeX> in <TeX>{"P \\approx \\alpha C V^2 f"}</TeX>). Modern
+          chips switch thousands of branches on and off like this, all the time.
         </p>
       </GoDeeper>
 

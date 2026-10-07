@@ -55,7 +55,7 @@ export default function Storage() {
       </ul>
       <Callout kind="math" title="Why a 95% hit rate is a huge deal">
         <p>Average time per memory access = (chance of hit × hit time) + (chance of miss × miss time):</p>
-        <TeX block>{tex`0.95 \times 1\text{ ns} + 0.05 \times 80\text{ ns} = 0.95 + 4 = 4.95\text{ ns}`}</TeX>
+        <TeX block>{tex`\begin{aligned} &0.95 \times 1\text{ ns} + 0.05 \times 80\text{ ns} \\ &= 0.95 + 4 = 4.95\text{ ns} \end{aligned}`}</TeX>
         <p>
           That's 16× faster than going to RAM every time (80 ns), with a cache holding less than 0.001% of the data.
           Real CPUs hit L1 more than 95% of the time.
@@ -117,7 +117,7 @@ export default function Storage() {
       <Callout kind="math" title="Rotational latency at 7,200 RPM">
         <TeX
           block
-        >{tex`\frac{7200 \text{ turns}}{60 \text{ s}} = 120 \tfrac{\text{turns}}{\text{s}} \;\Rightarrow\; \frac{1}{120} \text{ s} = 8.33\text{ ms per turn}`}</TeX>
+        >{tex`\begin{aligned} \frac{7200 \text{ turns}}{60 \text{ s}} &= 120 \tfrac{\text{turns}}{\text{s}} \\ \Rightarrow\; \frac{1}{120} \text{ s} &= 8.33\text{ ms per turn} \end{aligned}`}</TeX>
         <p>
           On average the sector you want is half a turn away: <TeX>{"4.17\\text{ ms}"}</TeX>. Add an average seek of
           about 4 ms and a random read costs ~8 ms. An SSD has no moving parts and answers in ~0.08 ms, about{" "}
@@ -290,7 +290,7 @@ export default function Storage() {
       </p>
       <TeX
         block
-      >{tex`\frac{10^{12}\text{ bytes}}{2^{30}\ \tfrac{\text{bytes}}{\text{GiB}}} = \frac{1{,}000{,}000{,}000{,}000}{1{,}073{,}741{,}824} \approx 931\text{ GiB}`}</TeX>
+      >{tex`\begin{aligned} \frac{10^{12}\text{ bytes}}{2^{30}\ \tfrac{\text{bytes}}{\text{GiB}}} &= \frac{1{,}000{,}000{,}000{,}000}{1{,}073{,}741{,}824} \\ &\approx 931\text{ GiB} \end{aligned}`}</TeX>
       <p>Nothing is missing. It's the same number of bytes, counted with a different ruler.</p>
 
       <h2>Putting it together: opening a photo</h2>

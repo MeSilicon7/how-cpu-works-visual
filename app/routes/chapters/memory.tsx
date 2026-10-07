@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { DFlipFlop, RamGrid, SrLatch } from "~/widgets/memory";
+import { DFlipFlop, MasterSlave, RamGrid, RomSquares, SrLatch } from "~/widgets/memory";
 
 export const meta = () => chapterMeta("memory");
 
@@ -67,6 +67,56 @@ export default function Memory() {
         Between clock ticks, D can wobble around as much as it likes while circuits compute. Q only “takes a photo” of
         it on the rising edge. This is what lets a whole CPU move in lock-step.
       </p>
+
+      <GoDeeper title="Inside the D flip-flop: why it listens only at the edge">
+        <p>
+          <strong>Step 1: why S = R = 1 is “not allowed”.</strong> In the SR latch, S = R = 1 forces both NOR gates to
+          output 0, so Q and not Q are both 0. They no longer disagree, as their names promise. Worse, when S and R both
+          drop back to 0 at the same moment, each gate sees 0 and 0, and <em>both</em> try to switch to 1. Whichever gate
+          is a few picoseconds faster wins, and nobody can say in advance which one it will be. This is called a{" "}
+          <strong>race</strong>. So good circuits make sure S = R = 1 can never happen.
+        </p>
+        <p>
+          <strong>Step 2: the gated D latch.</strong> Use one data wire D and make R always the opposite of S. Add an{" "}
+          <em>enable</em> wire E, with an AND gate in front of each input:
+        </p>
+        <TeX block>{tex`S = D \cdot E \qquad\qquad R = \overline{D} \cdot E`}</TeX>
+        <ul>
+          <li>
+            E = 1: if D = 1, then S = 1 and R = 0, so Q becomes 1. If D = 0, then R = 1, so Q becomes 0. Q simply follows
+            D. The latch is <strong>open</strong> (engineers say “transparent”).
+          </li>
+          <li>E = 0: S = R = 0, so the latch holds its bit. It is closed.</li>
+        </ul>
+        <p>
+          S and R can never both be 1 now, so the race is gone. But there is a new problem. If E is the clock, the latch
+          stays open for the whole time the clock is 1, which is half of every tick. Any change on D runs straight through
+          to Q during that time. For a counter, whose output +1 is fed back into D, the value could race around the loop
+          and count up several times in one tick.
+        </p>
+        <p>
+          <strong>Step 3: master and slave.</strong> Put two gated D latches in a row and give them <em>opposite</em>{" "}
+          enables. The first (the master) is open while the clock is 0. The second (the slave) is open while the clock
+          is 1. At every moment one of them is closed, so D can never run straight through to Q. Only at the rising
+          edge, when the master closes and the slave opens, does one value move across.
+        </p>
+        <MasterSlave />
+        <p>
+          <strong>How many transistors?</strong> Built from NAND gates, each latch needs 4 NAND gates, or{" "}
+          <TeX>{"4 \\times 4 = 16"}</TeX> transistors. Two latches plus a NOT gate for the clock come to{" "}
+          <TeX>{"2 \\times 16 + 2 = 34"}</TeX>. Real chips use a smarter design with tiny transistor switches (called{" "}
+          <em>transmission gates</em>) instead of whole gates. It needs about 20 transistors, the number we use for RAM
+          below.
+        </p>
+        <p>
+          <strong>Setup and hold time.</strong> At the rising edge, the master needs a moment to close firmly. So D must
+          be steady for a short time <em>before</em> the edge (the <strong>setup time</strong>, typically a few tens of
+          picoseconds in a modern chip) and a short time <em>after</em> it (the <strong>hold time</strong>, often even
+          shorter). If D changes inside that window, the flip-flop can get stuck halfway between 0 and 1 for a moment. This
+          is one more reason why the answer must be ready a little before each tick, as{" "}
+          <Link to="/clock">The Clock</Link> explains.
+        </p>
+      </GoDeeper>
 
       <h2>Registers: a row of flip-flops</h2>
       <p>
@@ -137,6 +187,65 @@ export default function Memory() {
         </p>
       </GoDeeper>
 
+      <h2>ROM: wired, not written</h2>
+      <p>
+        RAM can be written again and again. But some bits never need to change: the first program a computer runs when
+        you switch it on, the dot patterns of letters in a simple font, or the CPU's own list of steps for each
+        instruction. These live in <strong>ROM</strong> (read-only memory).
+      </p>
+      <p>
+        A ROM is built from parts you already know. The address goes into a <strong>decoder</strong> (from{" "}
+        <Link to="/logic-gates">Logic Gates</Link>), which switches on exactly one row wire. Each row crosses a few column
+        wires, one for each output bit. At every crossing, the chip makers either put a transistor or leave the spot
+        empty. Where there is a transistor, the active row switches its column on. Where there is none, the column stays
+        0. The pattern of transistors <em>is</em> the data, and it is fixed when the chip is made.
+      </p>
+      <RomSquares />
+      <Callout kind="idea" title="A truth table frozen in hardware">
+        <p>
+          A ROM is a truth table you can hold in your hand: address in, stored bits out. <em>Any</em> truth table with{" "}
+          <TeX>{"n"}</TeX> input bits and <TeX>{"m"}</TeX> output bits fits in a ROM with <TeX>{"2^n"}</TeX> rows of{" "}
+          <TeX>{"m"}</TeX> bits. Instead of designing a squaring circuit out of gates, you can simply write down all the
+          answers.
+        </p>
+      </Callout>
+      <Callout kind="math" title="How big is a ROM?">
+        <TeX block>{tex`\text{size} = 2^{n} \text{ rows} \times m \text{ bits}`}</TeX>
+        <ul>
+          <li>
+            Our squares ROM: <TeX>{"2^3 \\times 6 = 8 \\times 6 = 48"}</TeX> bits.
+          </li>
+          <li>
+            The control unit of SAP-8 in <Link to="/cpu">The CPU</Link> has 4 opcode bits + 3 step bits + 2 flag bits ={" "}
+            9 inputs, and 16 control wires out: <TeX>{"2^9 \\times 16 = 512 \\times 16 = 8{,}192"}</TeX> bits.
+          </li>
+          <li>
+            Every extra input bit doubles the size. 20 input bits would need <TeX>{"2^{20}"}</TeX>, about a million,
+            rows.
+          </li>
+        </ul>
+      </Callout>
+      <p>ROMs, and tables that work like them, appear all over a computer:</p>
+      <ul>
+        <li>
+          <strong>Microcode</strong>: the recipe of control signals for each instruction (see{" "}
+          <Link to="/cpu">The CPU</Link>).
+        </li>
+        <li>
+          <strong>Firmware</strong>: the first program that runs at power-on and wakes up the rest of the machine (see{" "}
+          <Link to="/operating-system">The Operating System</Link>).
+        </li>
+        <li>
+          <strong>Fonts</strong>: the dot pattern of every letter in a simple bitmap font (see{" "}
+          <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>).
+        </li>
+      </ul>
+      <p>
+        Today most “ROM” chips are really <strong>flash memory</strong>, which keeps its bits without power but can be
+        rewritten slowly. That is how a “firmware update” works. You'll meet flash in{" "}
+        <Link to="/storage">Storage</Link>.
+      </p>
+
       <KeyIdeas
         items={[
           <>
@@ -148,6 +257,10 @@ export default function Memory() {
             <TeX>{"n"}</TeX> address bits → <TeX>{"2^n"}</TeX> locations. 34 bits address 16 GB.
           </>,
           <>Caches use fast SRAM (6 transistors/bit). Main memory uses dense, leaky DRAM (1 transistor + capacitor).</>,
+          <>
+            A <strong>ROM</strong> is a truth table frozen in hardware: a decoder plus a grid with or without a transistor
+            at each crossing.
+          </>,
         ]}
       />
     </>

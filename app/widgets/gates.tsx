@@ -837,7 +837,7 @@ export function TwoToFourDecoder() {
                   {g.hi}
                   {g.lo}
                 </text>
-                <text x={g.cx} y={GY + 116} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+                <text x={g.cx} y={GY + 116} textAnchor="middle" className="fill-mute font-sans text-[13px]">
                   out {g.k}
                 </text>
               </g>

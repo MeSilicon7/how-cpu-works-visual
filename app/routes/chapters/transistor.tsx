@@ -76,7 +76,7 @@ export default function Transistor() {
         is called the <strong>noise margin</strong>.
       </p>
       <Callout kind="math" title="The two noise margins">
-        <TeX block>{tex`\text{for a 1: } 2.4\text{ V} - 2.0\text{ V} = 0.4\text{ V} \qquad \text{for a 0: } 0.8\text{ V} - 0.4\text{ V} = 0.4\text{ V}`}</TeX>
+        <TeX block>{tex`\begin{aligned} \text{for a 1:}\quad & 2.4\text{ V} - 2.0\text{ V} = 0.4\text{ V} \\ \text{for a 0:}\quad & 0.8\text{ V} - 0.4\text{ V} = 0.4\text{ V} \end{aligned}`}</TeX>
         <p>Any noise smaller than 0.4 V can never change what the next chip reads.</p>
       </Callout>
       <LogicLevels />

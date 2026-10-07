@@ -259,7 +259,7 @@ const stackSteps = [
   },
   {
     who: "CPU",
-    what: "Finishes its current instruction, saves all its registers to RAM, and jumps to the interrupt handler. It's a JMP to an address listed in a table.",
+    what: "Finishes its current instruction, pushes the program counter and the flags onto the stack in RAM, and jumps to the interrupt handler (a JMP to an address listed in a table). The handler pushes any other registers it will use.",
     tone: "amber",
   },
   { who: "Keyboard driver", what: "Reads the report: code 0x5A means “keypad 2 went down”.", tone: "violet" },
@@ -270,7 +270,7 @@ const stackSteps = [
   },
   {
     who: "CPU",
-    what: "Restores the saved registers and jumps back. The interrupted program never notices.",
+    what: "Pops the saved registers off the stack, then “return from interrupt” pops the program counter and flags. The interrupted program carries on and never notices.",
     tone: "amber",
   },
   { who: "Calculator app", what: "Its event loop picks up the event: the user typed “2”.", tone: "on" },
@@ -281,10 +281,10 @@ export function SoftwareStack() {
   const [auto, setAuto] = useState(true);
   useInterval(() => setI((v) => (v + 1) % stackSteps.length), auto ? 1800 : null);
   const toneCls: Record<string, string> = {
-    cyan: "border-cyan bg-cyan/10 text-cyan",
-    amber: "border-amber bg-amber/10 text-amber",
-    violet: "border-violet bg-violet/10 text-violet",
-    on: "border-on bg-on/10 text-on",
+    cyan: "border-cyan bg-cyan-tint text-cyan halo-cyan",
+    amber: "border-amber bg-amber-tint text-amber halo-amber",
+    violet: "border-violet bg-violet-tint text-violet halo-violet",
+    on: "border-on bg-on-tint text-on halo-on",
   };
   return (
     <Widget
@@ -300,12 +300,12 @@ export function SoftwareStack() {
               setAuto(false);
             }}
             className={cx(
-              "flex cursor-pointer gap-3 rounded-xl border px-3 py-2 transition",
-              k === i ? toneCls[s.tone] : k < i ? "border-line bg-bg/40 opacity-70" : "border-line bg-bg/40 opacity-40",
+              "flex cursor-pointer gap-3 rounded-md border px-3 py-2 transition-colors",
+              k === i ? toneCls[s.tone] : k < i ? "border-line bg-panel text-mute" : "border-line bg-panel text-dim hover:bg-panel-2",
             )}
           >
             <span className="w-32 shrink-0 font-mono text-xs font-bold">{s.who}</span>
-            <span className={cx("text-sm", k === i ? "text-ink" : "text-mute")}>{s.what}</span>
+            <span className={cx("text-sm", k === i ? "text-ink" : k < i ? "text-mute" : "text-dim")}>{s.what}</span>
           </li>
         ))}
       </ol>
