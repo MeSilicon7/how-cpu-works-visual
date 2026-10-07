@@ -941,7 +941,7 @@ export function MouseSensor() {
               { name: "dx", v: bu & 0xff, note: `${signed(bu)} as a signed byte` },
               { name: "dy", v: bv & 0xff, note: `${signed(bv)} as a signed byte` },
             ].map((r, i) => (
-              <div key={r.name} className="flex flex-wrap items-baseline gap-x-3 rounded border border-line bg-panel px-2.5 py-1.5">
+              <div key={r.name} className="flex max-w-[36rem] flex-wrap items-baseline gap-x-3 rounded border border-line bg-panel px-2.5 py-1.5">
                 <span className="w-28 font-sans text-xs text-dim">
                   byte {i} · {r.name}
                 </span>
@@ -2059,6 +2059,12 @@ export function SoundSampler() {
         </svg>
       </div>
 
+      {N > 120 && (
+        <p className="mt-1 font-sans text-xs text-dim">
+          {fmt(N + 1)} samples are too many to draw as dots, so only the steps are shown. Choose 8,000 samples per
+          second to see each dot.
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-2 gap-3 @2xl:grid-cols-4">
         <Stat label="Samples per wave" value={fmt(fs / f, 1)} sub={`${fmt(fs)} ÷ ${fmt(f)}`} />
         <Stat label="Highest safe pitch" value={`${fmt(fs / 2)} Hz`} sub="half the sample rate" />
@@ -2195,7 +2201,7 @@ export function PanelDrivers() {
         </>
       }
     >
-      <svg viewBox="0 0 560 330" className="w-full min-w-[520px]" role="img" aria-label="Panel row and column drivers">
+      <svg viewBox="0 0 574 330" className="w-full min-w-[520px]" role="img" aria-label="Panel row and column drivers">
         <CircuitDefs />
         <rect x={8} y={8} width={110} height={56} rx={6} fill="var(--color-panel-2)" stroke="var(--color-line-2)" />
         <text x={63} y={32} textAnchor="middle" className="font-sans text-[13px]" fill="var(--color-ink)">

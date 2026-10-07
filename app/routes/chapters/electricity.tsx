@@ -99,7 +99,10 @@ export default function Electricity() {
           Copper has about <TeX>{"n = 8.5 \\times 10^{28}"}</TeX> free electrons per cubic metre. Take a normal wire
           with an area of 1 mm² (<TeX>{"10^{-6}\\ \\text{m}^2"}</TeX>) carrying 1 A:
         </p>
-        <TeX block>{tex`v = \frac{1}{8.5 \times 10^{28} \times 10^{-6} \times 1.6 \times 10^{-19}} \approx \frac{1}{13{,}600} \approx 0.000073\ \text{m/s} \approx 0.07\ \text{mm/s}`}</TeX>
+        <TeX block>{tex`\begin{aligned}
+v &= \frac{1}{8.5 \times 10^{28} \times 10^{-6} \times 1.6 \times 10^{-19}} \approx \frac{1}{13{,}600}\ \text{m/s}\\[4pt]
+  &\approx 0.000073\ \text{m/s} \approx 0.07\ \text{mm/s}
+\end{aligned}`}</TeX>
         <p>
           That is far slower than a snail. An electron would need almost 4 hours to travel one metre of wire! Yet the
           light comes on at once. Why?
@@ -339,7 +342,7 @@ P_{\text{supply}} &= 5\ \text{V} \times 0.010\ \text{A} = 0.050\ \text{W} = 50\ 
         <p>
           The power supply in a desktop computer, or the charger of a phone, changes AC into DC. First,{" "}
           <strong>diodes</strong> (one-way valves for current) let the current through in only one direction. Then
-          capacitors smooth out the bumps, and a fast switching circuit sets the output to exactly 12 V (desktop) or 5
+          capacitors (little stores of charge, explained below) smooth out the bumps, and a fast switching circuit sets the output to exactly 12 V (desktop) or 5
           V (USB). Next to the processor, <strong>voltage regulators</strong> switch on and off hundreds of thousands
           of times per second and smooth the result with coils and capacitors, to make a steady 1 V or so. They change
           it many times per second, as the chip gets busier or quieter.
@@ -392,7 +395,7 @@ P_{\text{supply}} &= 5\ \text{V} \times 0.010\ \text{A} = 0.050\ \text{W} = 50\ 
       <Callout kind="math" title="Worked example: how many electrons is a 1?">
         <p>A typical wire plus the gate it drives might have about 1 fF. Charge it to 1 V:</p>
         <TeX block>{tex`Q = C \times V = 10^{-15}\ \text{F} \times 1\ \text{V} = 10^{-15}\ \text{C}`}</TeX>
-        <TeX block>{tex`\frac{10^{-15}\ \text{C}}{1.6 \times 10^{-19}\ \text{C per electron}} \approx 6{,}000\ \text{electrons}`}</TeX>
+        <TeX block>{tex`\frac{10^{-15}\ \text{C}}{1.602 \times 10^{-19}\ \text{C per electron}} \approx 6{,}240\ \text{electrons}`}</TeX>
         <p>
           So changing that wire from 0 to 1 means moving only about 6,000 electrons. That is a very small bucket, and
           it is why a chip can flip so fast.
