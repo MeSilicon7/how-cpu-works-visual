@@ -392,9 +392,13 @@ export function WayBack() {
             <span>
               <span className="text-pink">▶</span> program counter (next instruction)
             </span>
-            <span>
-              <span className="font-bold text-amber">amber</span> = the lines your choice changes
-            </span>
+            {sc === "two" ? (
+              <span>
+                <span className="font-bold text-amber">amber</span> = the lines your choice changes
+              </span>
+            ) : (
+              <span>Same code for both choices: only the way CALL and RET keep their notes changes.</span>
+            )}
           </div>
         </div>
 
@@ -603,9 +607,9 @@ export function StackPlayground() {
                   style={{ height: PG_ROW, ...(isProg && broken !== addr ? hatch : {}) }}
                   className={cx(
                     "flex items-center gap-2 border-b border-line pr-14 pl-2 font-mono text-xs tabular-nums last:border-b-0",
-                    onStack && "bg-violet-tint",
-                    broken === addr && "bg-pink-tint",
-                    touched && "halo-violet relative z-[1]",
+                    broken === addr ? "bg-pink-tint" : onStack && "bg-violet-tint",
+                    touched && (broken === addr ? "halo-pink" : "halo-violet"),
+                    touched && "relative z-[1]",
                   )}
                 >
                   <span className="w-5 text-right text-dim">{addr}</span>
@@ -1625,6 +1629,8 @@ export function InterruptDemo() {
 /* Static figure: one real stack frame                                  */
 /* ------------------------------------------------------------------ */
 
+const SLOT_H = 26;
+
 export function FrameAnatomy() {
   const parts: Array<{ label: string; bytes: number; kind: CellKind | "saved"; sub: string }> = [
     { label: "local variables", bytes: 32, kind: "local", sub: "4 numbers × 8 bytes" },
@@ -1639,31 +1645,34 @@ export function FrameAnatomy() {
     ret: "border-cyan bg-cyan-tint text-cyan",
   };
   return (
-    <div className="mx-auto flex max-w-[30rem] items-stretch gap-3 font-sans">
-      <div className="flex-1">
-        <div className="mb-1 text-[0.6875rem] text-dim">◂ SP (smaller addresses, newer)</div>
-        {parts.map((p) => {
-          return (
+    <div className="mx-auto max-w-[32rem] font-sans">
+      <div className="mb-1 text-[0.6875rem] text-dim">▴ SP side: smaller addresses, the newest data</div>
+      <div className="flex items-stretch gap-2">
+        <div className="min-w-0 flex-1">
+          {parts.map((p) => (
             <div
               key={p.label}
-              className={cx("-mt-px flex items-center justify-between border px-3", tone[p.kind])}
-              style={{ height: Math.max(30, p.bytes * 1.6) }}
+              className={cx("-mt-px flex items-center justify-between gap-3 border px-3", tone[p.kind])}
+              style={{
+                height: (p.bytes / 8) * SLOT_H,
+                backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${SLOT_H - 1}px, var(--color-line-2) ${SLOT_H - 1}px ${SLOT_H}px)`,
+              }}
             >
-              <div>
-                <div className="text-sm font-semibold">{p.label}</div>
-                <div className="text-[0.6875rem] text-mute">{p.sub}</div>
+              <div className="min-w-0 leading-tight">
+                <span className="text-sm font-semibold">{p.label}</span>{" "}
+                <span className="text-[0.6875rem] text-mute">· {p.sub}</span>
               </div>
-              <div className="text-right font-mono text-sm font-bold tabular-nums">{p.bytes} B</div>
+              <div className="shrink-0 text-right font-mono text-sm font-bold tabular-nums">{p.bytes} B</div>
             </div>
-          );
-        })}
-        <div className="mt-1 text-[0.6875rem] text-dim">▾ the caller's frame (bigger addresses, older)</div>
+          ))}
+        </div>
+        <div className="flex w-14 shrink-0 items-stretch gap-1.5">
+          <div className="w-2.5 rounded-r border-y border-r border-ink" />
+          <div className="self-center font-mono text-sm font-bold text-ink">64 B</div>
+        </div>
       </div>
-      <div className="flex w-16 flex-col items-center justify-center">
-        <div className="w-3 flex-1 rounded-r border-y border-r border-ink" />
-        <div className="py-1 text-center font-mono text-sm font-bold text-ink">64 B</div>
-        <div className="w-3 flex-1 rounded-r border-y border-r border-ink" />
-      </div>
+      <div className="mt-1 text-[0.6875rem] text-dim">▾ below: the caller's frame (bigger addresses, older)</div>
+      <div className="mt-2 text-[0.6875rem] text-dim">Each thin line marks one 8-byte slot.</div>
     </div>
   );
 }
