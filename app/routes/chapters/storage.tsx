@@ -125,7 +125,7 @@ export default function Storage() {
         </p>
       </Callout>
 
-      <h2>When a bit flips</h2>
+      <h2 id="bit-flips">When a bit flips</h2>
       <p>
         Every way of storing a bit in this chapter uses something tiny: a few tens of thousands of electrons in a DRAM
         capacitor, a few hundred on a flash cell's floating gate, a magnetised spot a few nanometres wide. Tiny things

@@ -2020,7 +2020,7 @@ export function LoaderDemo() {
 
         <Panel title="Chat's new address space (virtual)">
           {k < 2 ? (
-            <div className="flex min-h-[12rem] items-center justify-center text-sm text-dim">
+            <div className="flex min-h-[6rem] items-center justify-center text-sm text-dim @3xl:min-h-[12rem]">
               no process yet
             </div>
           ) : (

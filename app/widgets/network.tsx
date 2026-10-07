@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
 
 import { TeX } from "~/components/tex";
 import { Btn, cx, DataTable, Pill, Segmented, Slider, Stat, Widget } from "~/components/ui";
@@ -175,8 +176,13 @@ export function Packetizer() {
       </div>
       <p className="mt-3 text-sm text-mute">
         Checksum (simplified): add up the payload bytes, keep the remainder after dividing by 256. The receiver does the
-        same sum; if it doesn't match, a bit got flipped on the way and the packet is thrown away. Real packets carry up
-        to ~1,500 bytes; a photo becomes a few thousand of them.
+        same sum; if it doesn't match, a bit got flipped on the way and the packet is thrown away. Real links use a
+        stronger check: Wi-Fi and Ethernet add a 32-bit <strong className="text-ink">CRC</strong> to every frame, which
+        catches almost any pattern of flipped bits (see{" "}
+        <Link to="/storage#bit-flips" className="text-cyan underline decoration-1 underline-offset-2 hover:decoration-2">
+          when a bit flips
+        </Link>{" "}
+        in Storage). Real packets carry up to ~1,500 bytes; a photo becomes a few thousand of them.
       </p>
     </Widget>
   );

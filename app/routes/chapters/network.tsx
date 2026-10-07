@@ -137,11 +137,74 @@ export default function Network() {
         stores it until Sam's phone is reachable. Sam's phone keeps a quiet connection open to the server, so the server
         can immediately push the message down that connection, and the phone buzzes.
       </p>
+      <Callout kind="idea" title="Which app gets it? Ports">
+        <p>
+          An IP address only brings a packet to the right <em>device</em>. But Sam's phone runs dozens of apps that use
+          the network at the same time. So every packet also carries a 16-bit <strong>port number</strong>:{" "}
+          <TeX>{"2^{16} = 65{,}536"}</TeX> possible ports, numbered 0 to 65,535. Servers wait on well-known ports
+          (secure web pages use port 443). When the chat app opens its connection, the phone gives it a free port, say
+          51234, and writes “port 51234 → chat app” in a table.
+        </p>
+        <p>
+          <strong>The IP address finds the phone; the port finds the app.</strong> Keeping that table and handing each
+          arriving packet to the right app is one of the jobs of the{" "}
+          <Link to="/operating-system">operating system</Link>.
+        </p>
+      </Callout>
       <p>
         Then everything runs in reverse on Sam's phone: radio → bits → packets reassembled in order → decrypted with the
         shared secret → UTF-8 bytes → characters → glyphs from a font → pixels in the framebuffer → light from the
         screen, exactly like the end of <Link to="/calculator">the 2 + 3 scene</Link>.
       </p>
+
+      <GoDeeper title="And when you open a web page?">
+        <p>
+          A web page travels the same way, packet by packet. The browser asks DNS for the server's address, opens a
+          connection to port 443, agrees on a secret key, and then sends a request that is just plain text (encrypted on
+          the way):
+        </p>
+        <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+          {"GET /index.html HTTP/1.1\nHost: example.com"}
+        </pre>
+        <p>
+          The server answers with more text: <code>HTTP/1.1 200 OK</code>, a few lines of details, and then the page
+          itself, written in <strong>HTML</strong>. HTML is text with tags around each part:
+        </p>
+        <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+          {"<h1>Hello</h1>\n<p>Hi <b>Sam</b>!</p>"}
+        </pre>
+        <p>Then the browser, which is just a program, does four steps, each one only numbers and tables:</p>
+        <ol>
+          <li>
+            <strong>Parse:</strong> it reads the characters one by one and builds a tree: the page contains a heading
+            and a paragraph, the paragraph contains some text and a bold part. A compiler reads a program the same way.
+          </li>
+          <li>
+            <strong>Style:</strong> it matches style rules (CSS), like “headings are 32 pixels tall”, to every part of
+            the tree.
+          </li>
+          <li>
+            <strong>Layout:</strong> it works out a box for every part, as numbers: x, y, width and height. Text is cut
+            into lines that fit the width.
+          </li>
+          <li>
+            <strong>Paint:</strong> every letter is looked up in a font and drawn as pixels into the framebuffer, just
+            like the “5” in <Link to="/calculator">the 2 + 3 scene</Link>. The GPU combines everything into the final
+            picture.
+          </li>
+        </ol>
+        <Callout kind="math" title="How heavy is a web page?">
+          <p>
+            A typical web page today is about <strong>2 MB</strong>, fetched with about <strong>70</strong> separate
+            requests (the HTML, style sheets, scripts, pictures and fonts). On a 50 Mbit/s connection:
+          </p>
+          <TeX block>{tex`\frac{2 \text{ MB} \times 8\ \tfrac{\text{bits}}{\text{byte}}}{50 \text{ Mbit/s}} = \frac{16 \text{ Mbit}}{50 \text{ Mbit/s}} = 0.32 \text{ s}`}</TeX>
+          <p>
+            Plus a round trip of 50–100 ms for every new connection. That's why browsers reuse connections and fetch
+            many things at once.
+          </p>
+        </Callout>
+      </GoDeeper>
 
       <h2>How long did it take?</h2>
       <LatencyCalc />

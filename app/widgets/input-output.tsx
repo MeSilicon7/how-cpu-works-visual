@@ -1899,7 +1899,7 @@ const fFromSlider = (v: number) => Math.round(50 * Math.pow(400, v / 1000));
 const sliderFromF = (f: number) => Math.round((1000 * Math.log(f / 50)) / Math.log(400));
 
 export function SoundSampler() {
-  const [sv, setSv] = useState(() => sliderFromF(440));
+  const [f, setF] = useState(440);
   const [fs, setFs] = useState(48000);
   const [bits, setBits] = useState(16);
   const [playing, setPlaying] = useState(false);
@@ -1919,7 +1919,6 @@ export function SoundSampler() {
     [],
   );
 
-  const f = fFromSlider(sv);
   const A = Math.pow(2, bits - 1) - 1;
   const sample = (n: number) => Math.round(A * Math.sin((2 * Math.PI * f * n) / fs));
   const fa = Math.abs(f - fs * Math.round(f / fs));
@@ -1997,14 +1996,14 @@ export function SoundSampler() {
           label="Pitch (how many wiggles per second)"
           min={0}
           max={1000}
-          value={sv}
-          onChange={setSv}
+          value={sliderFromF(f)}
+          onChange={(v) => setF(fFromSlider(v))}
           format={() => `${fmt(f)} Hz`}
         />
         <div className="flex flex-wrap items-end gap-2">
           <Btn
             onClick={() => {
-              setSv(sliderFromF(440));
+              setF(440);
               setFs(48000);
               setBits(16);
             }}
@@ -2013,7 +2012,7 @@ export function SoundSampler() {
           </Btn>
           <Btn
             onClick={() => {
-              setSv(sliderFromF(7000));
+              setF(7000);
               setFs(8000);
             }}
           >

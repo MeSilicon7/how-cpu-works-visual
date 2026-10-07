@@ -666,7 +666,7 @@ export function PrintLayerWidget() {
       fill={value ? "var(--color-on)" : "var(--color-mute)"}
     >
       {label}
-      {value !== null && (side === "l" ? `=${value ? 1 : 0}` : ` ${value ? 1 : 0}`)}
+      {value !== null && `=${value ? 1 : 0}`}
     </text>
   );
 
@@ -764,7 +764,7 @@ export function PrintLayerWidget() {
                       mask
                     </text>
                     <text x={GX + GW + 12} y={GY + 28} className="fill-violet font-mono text-[12px]">
-                      + light
+                      light
                     </text>
                   </g>
                 )}
@@ -960,8 +960,8 @@ export function PrintLayerWidget() {
                     {!a && !b ? "Both pMOS (top) are" : `The pMOS for input ${!a ? "A" : "B"} is`} switched on, joining OUT
                     to VDD. The nMOS chain at the bottom is broken. OUT = <span className="font-mono text-on">1</span>.
                   </>
-                )}{" "}
-                A solid green box marks a transistor that is switched on; a dashed box, one that is off.
+                )}
+                {zoom === 1 && " A solid green box marks a transistor that is switched on; a dashed box, one that is off."}
               </p>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-mute">Zoom out:</span>
@@ -1111,8 +1111,8 @@ export function MetalFloors() {
   ];
   const gates = [40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480];
   return (
-    <Figure caption="A slice through the top of a chip (not to scale). The transistors sit on the silicon at the bottom. Floors of copper wire are stacked above them in glass, joined by vias. Six floors are drawn here; real chips have 10 to 20.">
-      <svg viewBox="0 0 640 290" className="w-full min-w-[560px]" role="img" aria-label="Cross-section of metal layers above transistors">
+    <Figure caption="A slice through the top of a chip (not to scale). The transistors sit on the silicon at the bottom. Floors of copper wire are stacked above them in glass, joined by vias. The lowest floors have the thinnest wires, for short hops between neighbours. Six floors are drawn here; real chips have 10 to 20.">
+      <svg viewBox="0 0 640 284" className="w-full min-w-[560px]" role="img" aria-label="Cross-section of metal layers above transistors">
         {/* glass */}
         <rect x={L} y={30} width={R - L} height={210} fill="var(--color-oxide)" />
         <rect x={L} y={30} width={R - L} height={210} fill="url(#chip-floors-hatch)" opacity={0.4} />
@@ -1173,9 +1173,6 @@ export function MetalFloors() {
         </text>
         <text x={R} y={20} textAnchor="end" className="fill-mute font-sans text-[12px]">
           glass between the floors
-        </text>
-        <text x={L} y={276} className="fill-mute font-sans text-[12px]">
-          ↓ thinnest wires: short hops between neighbours
         </text>
       </svg>
     </Figure>
@@ -1630,7 +1627,7 @@ export function WaferYield() {
             </Btn>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 @lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-4">
             <Stat label="Whole dies" value={fmt(gross)} sub={`${side.toFixed(1)} mm squares`} />
             <Stat label="✗ Hit by a defect" value={fmt(nBad)} sub={`${fmt(nDef)} defects on the wafer`} tone="pink" />
             <Stat label="✓ Good dies" value={fmt(nGood)} sub={`yield ${gross ? ((nGood / gross) * 100).toFixed(1) : "0"}%`} tone="cyan" />
@@ -1684,16 +1681,16 @@ const CHIPS: ChipPoint[] = [
   { name: "Intel 8086", short: "8086", year: 1978, count: 29000, shown: "about 29,000", use: "the ancestor of today's PC processors", lx: -9, ly: 4, anchor: "end" },
   { name: "Intel 386", short: "386", year: 1985, count: 275000, shown: "about 275,000", use: "PCs", lx: -9, ly: 4, anchor: "end" },
   { name: "Intel 486", short: "486", year: 1989, count: 1.18e6, shown: "about 1.2 million", use: "PCs", lx: -9, ly: 4, anchor: "end" },
-  { name: "Intel Pentium", short: "Pentium", year: 1993, count: 3.1e6, shown: "about 3.1 million", use: "PCs", lx: -9, ly: 4, anchor: "end" },
+  { name: "Intel Pentium", short: "Pentium", year: 1993, count: 3.1e6, shown: "about 3.1 million", use: "PCs", lx: 4, ly: 17, anchor: "start" },
   { name: "Intel Pentium II", short: "Pentium II", year: 1997, count: 7.5e6, shown: "about 7.5 million", use: "PCs", lx: 9, ly: 4, anchor: "start" },
   { name: "Intel Pentium 4", short: "Pentium 4", year: 2000, count: 42e6, shown: "about 42 million", use: "PCs", lx: 9, ly: 4, anchor: "start" },
   { name: "Intel Core 2 Duo", short: "Core 2 Duo", year: 2006, count: 291e6, shown: "about 291 million", use: "laptops and desktops (2 cores)", lx: 9, ly: 4, anchor: "start" },
   { name: "Apple A7", short: "A7", year: 2013, count: 1e9, shown: "about 1 billion", use: "the iPhone 5s", lx: 9, ly: 4, anchor: "start" },
   { name: "Apple A12", short: "A12", year: 2018, count: 6.9e9, shown: "about 6.9 billion", use: "the iPhone XS", lx: -9, ly: 4, anchor: "end" },
-  { name: "Apple M1", short: "M1", year: 2020, count: 16e9, shown: "about 16 billion", use: "the MacBook Air and other Macs", lx: -9, ly: 4, anchor: "end" },
+  { name: "Apple M1", short: "M1", year: 2020, count: 16e9, shown: "about 16 billion", use: "the MacBook Air and other Macs", lx: 0, ly: 18, anchor: "middle" },
   { name: "Nvidia H100", short: "H100", year: 2022, count: 80e9, shown: "about 80 billion", use: "AI data centres", lx: 9, ly: 4, anchor: "start" },
-  { name: "Apple A17 Pro", short: "A17 Pro", year: 2023, count: 19e9, shown: "about 19 billion", use: "the iPhone 15 Pro", lx: -12, ly: 18, anchor: "start" },
-  { name: "Nvidia B200", short: "B200", year: 2024, count: 208e9, shown: "about 208 billion", use: "AI data centres (two dies joined in one package)", lx: 0, ly: -12, anchor: "middle" },
+  { name: "Apple A17 Pro", short: "A17 Pro", year: 2023, count: 19e9, shown: "about 19 billion", use: "the iPhone 15 Pro", lx: 9, ly: 4, anchor: "start" },
+  { name: "Nvidia B200", short: "B200", year: 2024, count: 208e9, shown: "about 208 billion", use: "AI data centres (two dies joined in one package)", lx: 0, ly: -15, anchor: "middle" },
 ];
 
 const DECADE_WORDS = [
