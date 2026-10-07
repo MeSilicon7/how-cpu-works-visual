@@ -361,7 +361,8 @@ export default function Chapter() {
         <TeX block>{tex`\texttt{0x00403A7C} = \underbrace{0000\,0000\,0100\,0000\,0011}_{\text{page: top 20 bits}}\;\underbrace{1010\,0111\,1100}_{\text{offset: low 12 bits}}`}</TeX>
         <TeX block>{tex`\text{page} = \texttt{0x00403A7C} \gg 12 = \texttt{0x403} \qquad \text{offset} = \texttt{0x00403A7C} \;\&\; \texttt{0xFFF} = \texttt{0xA7C}`}</TeX>
         <p>
-          The MMU looks up page 0x403 in this app's page table and finds frame 0x1F2. Then:
+          (Zeros at the front don't change a number, so 0x00403 and 0x403 are the same page.) The MMU looks up page
+          0x403 in this app's page table and finds frame 0x1F2. Then:
         </p>
         <TeX block>{tex`\text{physical} = \text{frame} \times 4096 + \text{offset} = \texttt{0x1F2} \times \texttt{0x1000} + \texttt{0xA7C} = \texttt{0x1F2A7C}`}</TeX>
         <p>

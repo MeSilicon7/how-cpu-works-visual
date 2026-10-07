@@ -33,7 +33,7 @@ export default function Graphics() {
       <RgbMixer />
       <TeX
         block
-      >{tex`\begin{aligned} 256 \times 256 \times 256 &= 2^{8} \times 2^{8} \times 2^{8} \\ &= 2^{24} = 16{,}777{,}216 \text{ colours} \end{aligned}`}</TeX>
+      >{tex`\begin{aligned} &256 \times 256 \times 256 \\ &= 2^{8} \times 2^{8} \times 2^{8} = 2^{24} \\ &= 16{,}777{,}216 \text{ colours} \end{aligned}`}</TeX>
       <Callout kind="idea">
         <p>
           The hex colour codes in web design are exactly these bytes. <code>#FF8800</code> is <code>FF</code> = 255 red,{" "}
@@ -82,7 +82,8 @@ export default function Graphics() {
         </p>
         <TeX
           block
-        >{tex`\begin{aligned} \text{colour}(P) = \;& w_A \cdot \text{colour}_A + w_B \cdot \text{colour}_B \\ +\;& w_C \cdot \text{colour}_C, \qquad w_A + w_B + w_C = 1 \end{aligned}`}</TeX>
+        >{tex`\begin{aligned} \text{colour}(P) = \;& w_A \cdot \text{colour}_A \\ +\;& w_B \cdot \text{colour}_B \\ +\;& w_C \cdot \text{colour}_C \end{aligned}`}</TeX>
+        <TeX block>{tex`w_A + w_B + w_C = 1`}</TeX>
       </Callout>
 
       <h2>From 3D to a flat screen</h2>

@@ -893,7 +893,7 @@ export function MouseSensor() {
           </div>
         </div>
 
-        <div className="grid min-w-0 gap-6 @xl:grid-cols-[auto_minmax(0,1fr)]">
+        <div className="min-w-0">
           <div>
             <div className="label-caps mb-1 text-dim">Difference for each guess (small = match)</div>
             <div className="inline-grid grid-cols-[2rem_repeat(7,2.1rem)] gap-px font-mono text-xs tabular-nums">
@@ -932,8 +932,9 @@ export function MouseSensor() {
               Best match: dx = {signed(bu)}, dy = {signed(bv)} {bu === dx && bv === dy ? "✓" : ""}
             </p>
           </div>
+        </div>
 
-          <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-2 @3xl:col-span-2">
             <div className="label-caps text-dim">The 3-byte report sent over USB</div>
             {[
               { name: "buttons", v: left ? 1 : 0, note: left ? "bit 0 = left button down" : "no buttons down" },
@@ -941,7 +942,7 @@ export function MouseSensor() {
               { name: "dy", v: bv & 0xff, note: `${signed(bv)} as a signed byte` },
             ].map((r, i) => (
               <div key={r.name} className="flex flex-wrap items-baseline gap-x-3 rounded border border-line bg-panel px-2.5 py-1.5">
-                <span className="w-16 font-sans text-xs text-dim">
+                <span className="w-28 font-sans text-xs text-dim">
                   byte {i} · {r.name}
                 </span>
                 <Bits value={r.v} width={8} className="text-base" />
@@ -956,7 +957,6 @@ export function MouseSensor() {
               </span>
               . A negative dx means left; a positive dy means toward you, so the pointer goes down.
             </p>
-          </div>
         </div>
       </div>
     </Widget>

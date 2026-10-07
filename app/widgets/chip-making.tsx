@@ -10,6 +10,9 @@ import { BitButton, Btn, cx, DataTable, Figure, Segmented, Slider, Stat, Widget 
 import { fmt, rng } from "~/lib/bits";
 
 /** A unique id that is safe inside url(#…). */
+/** Round to 0.01 so the server and the browser print identical SVG numbers. */
+const r2 = (v: number) => Math.round(v * 100) / 100;
+
 function useSvgId() {
   return "chip" + useId().replace(/[^a-zA-Z0-9]/g, "");
 }
@@ -994,7 +997,7 @@ export function SandToWafer() {
       const u = r();
       const x = 20 + u * 100;
       const top = 112 - 46 * Math.sin(u * Math.PI);
-      return { x, y: top + 6 + r() * (118 - top - 8) };
+      return { x: r2(x), y: r2(top + 6 + r() * (118 - top - 8)) };
     });
   }, []);
   return (
@@ -1500,7 +1503,7 @@ export function WaferYield() {
     return Array.from({ length: MAX_DEFECTS }, () => {
       const rad = WAFER_R * Math.sqrt(r());
       const th = 2 * Math.PI * r();
-      return [rad * Math.cos(th), rad * Math.sin(th)] as const;
+      return [r2(rad * Math.cos(th)), r2(rad * Math.sin(th))] as const;
     });
   }, [seed]);
 
@@ -1728,8 +1731,8 @@ export function MooresLaw() {
   const ph = H - pad.t - pad.b;
   const y0 = 1968;
   const y1 = 2027;
-  const X = (yr: number) => pad.l + ((yr - y0) / (y1 - y0)) * pw;
-  const Yc = (n: number) => pad.t + ((12 - Math.log10(n)) / 9) * ph;
+  const X = (yr: number) => r2(pad.l + ((yr - y0) / (y1 - y0)) * pw);
+  const Yc = (n: number) => r2(pad.t + ((12 - Math.log10(n)) / 9) * ph);
   const line = (yr: number) => 2300 * 2 ** ((yr - 1971) / T);
   const linePath = Array.from({ length: 55 }, (_, i) => 1971 + i)
     .map((yr, i) => `${i ? "L" : "M"}${X(yr).toFixed(1)} ${Yc(line(yr)).toFixed(1)}`)

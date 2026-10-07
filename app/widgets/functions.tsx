@@ -1628,8 +1628,8 @@ export function InterruptDemo() {
 export function FrameAnatomy() {
   const parts: Array<{ label: string; bytes: number; kind: CellKind | "saved"; sub: string }> = [
     { label: "local variables", bytes: 32, kind: "local", sub: "4 numbers × 8 bytes" },
-    { label: "saved register", bytes: 8, kind: "saved", sub: "the caller's value, kept safe" },
     { label: "arguments", bytes: 16, kind: "arg", sub: "2 numbers × 8 bytes" },
+    { label: "saved register", bytes: 8, kind: "saved", sub: "the caller's value, kept safe" },
     { label: "return address", bytes: 8, kind: "ret", sub: "the way back" },
   ];
   const tone: Record<string, string> = {
