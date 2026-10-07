@@ -320,9 +320,9 @@ g[role="button"]:focus-visible > rect {
   color: var(--color-dim);
   letter-spacing: 0.5em;
 }
-/* A drop cap on the first paragraph, where the browser supports it properly. */
+/* A drop cap on the chapter's opening paragraph (not inside Go-deeper boxes), where the browser supports it properly. */
 @supports (initial-letter: 3) or (-webkit-initial-letter: 3) {
-  .prose-book > p:first-child::first-letter {
+  article.prose-book > p:first-child::first-letter {
     -webkit-initial-letter: 3;
     initial-letter: 3;
     font-family: var(--font-display);

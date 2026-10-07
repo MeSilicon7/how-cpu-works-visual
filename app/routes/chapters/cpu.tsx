@@ -32,7 +32,7 @@ export default function Cpu() {
         <strong>control unit</strong>, and with it we get a <strong>CPU</strong> (Central Processing Unit).
       </p>
 
-      <h2>The big idea: programs are just numbers in memory</h2>
+      <h2>Programs are numbers in memory</h2>
       <p>
         In 1945 John von Neumann described the design almost every computer still uses: store the{" "}
         <strong>program</strong> in the same memory as the <strong>data</strong>. An instruction like “add the number at
