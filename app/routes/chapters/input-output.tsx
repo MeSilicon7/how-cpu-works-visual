@@ -156,7 +156,7 @@ export default function InputOutput() {
         it is 0, go back and read it again; if it is 1, read the data mailbox. In the toy assembly language of{" "}
         <Link to="/machine-code">Machine Code</Link> it looks like this:
       </p>
-      <pre>
+      <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
         <code>{`wait: LDA 0xF001   ; read the keyboard status
       JZ  wait     ; 0 means nothing yet: ask again
       LDA 0xF000   ; 1 means a key is waiting: read its code`}</code>

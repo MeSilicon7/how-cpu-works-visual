@@ -329,7 +329,7 @@ export default function Chapter() {
       </Callout>
       <Callout kind="fact">
         <p>
-          Real chips have more than one bit for this. x86 processors have four levels (“rings” 0 to 3), and ARM chips
+          Real chips have more than one bit for this. x86 processors (the kind in most PCs and laptops) have four levels (“rings” 0 to 3), and ARM chips
           have four “exception levels”. But operating systems mostly use just two: one for the kernel, one for apps.
         </p>
       </Callout>
@@ -518,11 +518,11 @@ export default function Chapter() {
         screen shows where windows overlap?
       </p>
       <p>First, an app with a window is a simple loop:</p>
-      <pre className="not-prose rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+      <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-[0.8125rem] leading-relaxed text-ink sm:text-sm">
         {`loop forever:
-    wait for an event     ← the process sleeps here (state: waiting)
-    handle it             ← for example, add the letter to the text
-    redraw the window`}
+  wait for an event   ← sleeps here (waiting)
+  handle it           ← e.g. add the letter
+  redraw the window`}
       </pre>
       <p>
         The kernel and the <strong>window system</strong> (a part of the OS that manages windows) put events into each
@@ -547,7 +547,7 @@ export default function Chapter() {
         <li>
           <strong>Packets go by port number.</strong> Every network packet carries a 16-bit <strong>port</strong>{" "}
           number, from 0 to 65,535. When the chat app opened its connection, the kernel noted “port 51234 → Chat”. The
-          IP address finds your computer; the port finds the app.
+          IP address (your computer's address on the internet) finds your computer; the port finds the app.
         </li>
       </ul>
       <DesktopDispatcher />
