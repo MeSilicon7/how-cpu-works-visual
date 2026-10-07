@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 
+import { Gate, Wire } from "~/components/circuit";
 import { TeX } from "~/components/tex";
-import { BitButton, Btn, cx, Pill, Slider, Stat, Widget } from "~/components/ui";
+import { BitButton, Btn, cx, Figure, Pill, Segmented, Slider, Stat, Widget } from "~/components/ui";
 import { binStr, fmt } from "~/lib/bits";
-import { useAnimationTime } from "~/lib/hooks";
+import { useAnimationTime, useInterval, useReducedMotion } from "~/lib/hooks";
 
 /* ------------------------------------------------------------------ */
 /* A slowed-down clock driving a counter                                 */
@@ -310,5 +311,236 @@ export function SettleDemo() {
         for this input. A real chip must be safe for the <em>worst</em> input: {(BITS + 1) * STAGE_PS} ps here.
       </p>
     </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* A ring of NOT gates: the simplest oscillator                          */
+/* ------------------------------------------------------------------ */
+
+const RING_HIST = 44;
+
+/** Start with every gate agreeing with its input, except gate 1 (when n is odd). */
+function ringStart(n: number): boolean[] {
+  return Array.from({ length: n }, (_, i) => i % 2 === 1);
+}
+
+/** One gate delay later: every gate shows NOT of what its input was. */
+function ringStep(v: boolean[]): boolean[] {
+  return v.map((_, i) => !v[(i - 1 + v.length) % v.length]);
+}
+
+function ringHistory(n: number) {
+  let v = ringStart(n);
+  const hist = [v[0]];
+  for (let k = 1; k < RING_HIST; k++) {
+    v = ringStep(v);
+    hist.push(v[0]);
+  }
+  return { v, hist };
+}
+
+export function RingOscillator() {
+  const reduced = useReducedMotion();
+  const [n, setN] = useState(3);
+  const [delay, setDelay] = useState(10);
+  const [paused, setPaused] = useState(false);
+  const [sim, setSim] = useState(() => ringHistory(3));
+
+  const step = () =>
+    setSim((s) => {
+      const v = ringStep(s.v);
+      return { v, hist: [...s.hist.slice(1), v[0]] };
+    });
+  useInterval(step, paused || reduced ? null : 420);
+
+  const choose = (k: number) => {
+    setN(k);
+    setSim(ringHistory(k));
+  };
+
+  const v = sim.v;
+  const odd = n % 2 === 1;
+  const unstable = v.findIndex((out, i) => out === v[(i - 1 + n) % n]);
+  const period = 2 * n * delay;
+
+  // Geometry of the ring.
+  const C = 140;
+  const R = 92;
+  const S = 0.75; // gate scale: body 42 × 30, input at −21, output at +21 along the ring
+  const half = 28 * S;
+  const ang = (i: number) => -Math.PI / 2 + (i * 2 * Math.PI) / n;
+  const pos = (i: number) => [C + R * Math.cos(ang(i)), C + R * Math.sin(ang(i))] as const;
+  const tan = (i: number) => [-Math.sin(ang(i)), Math.cos(ang(i))] as const;
+  const end = (i: number, side: 1 | -1) => {
+    const [x, y] = pos(i);
+    const [tx, ty] = tan(i);
+    return [x + side * half * tx, y + side * half * ty] as const;
+  };
+  const arcR = Math.hypot(R, half);
+
+  const W = 520;
+  const hx = (k: number) => 10 + (k * (W - 20)) / (RING_HIST - 1);
+  const wave = sim.hist
+    .map((b, k) => {
+      const y = b ? 12 : 56;
+      if (k === 0) return `M${hx(0)} ${y}`;
+      const py = sim.hist[k - 1] ? 12 : 56;
+      return py === y ? `L${hx(k)} ${y}` : `L${hx(k)} ${py} L${hx(k)} ${y}`;
+    })
+    .join(" ");
+
+  return (
+    <Widget
+      title="A ring of NOT gates"
+      subtitle="Each NOT feeds the next, and the last feeds the first. With an odd number of gates they can never all agree, so a flip runs around the ring forever."
+    >
+      <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <Segmented
+          value={n}
+          onChange={choose}
+          options={[2, 3, 5, 7].map((k) => ({ value: k, label: `${k} NOTs` }))}
+        />
+        <Slider
+          className="w-full max-w-64"
+          label="Delay of one gate"
+          min={5}
+          max={30}
+          value={delay}
+          onChange={setDelay}
+          format={(d) => `${d} ps`}
+        />
+        <div className="flex gap-2">
+          {!reduced && (
+            <Btn onClick={() => setPaused((p) => !p)} active={paused}>
+              {paused ? "▶ Run" : "⏸ Pause"}
+            </Btn>
+          )}
+          <Btn onClick={step}>Step one gate delay</Btn>
+        </div>
+      </div>
+
+      <div className="mt-4 grid items-center gap-5 md:grid-cols-[minmax(0,300px)_1fr]">
+        <svg viewBox="0 0 280 280" className="mx-auto w-full max-w-[300px]" role="img" aria-label={`${n} NOT gates connected in a ring`}>
+          {Array.from({ length: n }, (_, i) => {
+            const [x1, y1] = end(i, 1);
+            const [x2, y2] = end((i + 1) % n, -1);
+            return <Wire key={`w${i}`} d={`M${x1.toFixed(1)} ${y1.toFixed(1)} A${arcR.toFixed(1)} ${arcR.toFixed(1)} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}`} on={v[i]} />;
+          })}
+          {Array.from({ length: n }, (_, i) => {
+            const [x, y] = pos(i);
+            const deg = (ang(i) * 180) / Math.PI + 90;
+            const [lx, ly] = [C + (R + 34) * Math.cos(ang(i)), C + (R + 34) * Math.sin(ang(i))];
+            return (
+              <g key={`g${i}`}>
+                {odd && i === unstable && (
+                  <circle cx={x} cy={y} r={27} fill="none" stroke="var(--color-amber)" strokeWidth={2} strokeDasharray="4 3" className="glow-amber" />
+                )}
+                <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)})`}>
+                  <Gate kind="NOT" x={-half} y={-20 * S} out={v[i]} label={false} scale={S} />
+                </g>
+                <text x={lx} y={ly + 5} textAnchor="middle" className="fill-mute font-mono text-[13px] font-semibold">
+                  {i + 1}
+                </text>
+              </g>
+            );
+          })}
+          <text x={C} y={C - 4} textAnchor="middle" className="fill-ink font-sans text-[15px] font-semibold">
+            {n} NOTs
+          </text>
+          <text x={C} y={C + 16} textAnchor="middle" className={odd ? "fill-amber font-sans text-[13px]" : "fill-mute font-sans text-[13px]"}>
+            {odd ? "never at rest" : "stuck: at rest"}
+          </text>
+        </svg>
+
+        <div className="min-w-0 space-y-3">
+          {odd ? (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <Stat label="One trip" value={`${n * delay} ps`} sub={`${n} × ${delay} ps`} />
+                <Stat label="Period" value={`${period} ps`} sub="two trips" tone="amber" />
+                <Stat label="Frequency" value={`${(1000 / period).toFixed(1)} GHz`} sub={`1 ÷ ${period} ps`} tone="amber" />
+              </div>
+              <p className="font-serif text-[0.9375rem] leading-normal text-mute">
+                The dashed circle marks the gate that is about to flip: its output still equals its input. One trip
+                around the ring flips every gate once, so the output of gate 1 needs two trips to go 0 → 1 → 0.
+              </p>
+            </>
+          ) : (
+            <p className="rounded-md border border-line-2 bg-panel-2 px-3 py-2 font-serif text-[0.9375rem] leading-normal text-body">
+              With 2 NOTs, every gate already shows the opposite of its input, so nothing ever changes. This is the loop
+              that <em>remembers</em> a bit, from the Memory chapter. Only an odd number of NOTs makes a clock.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="label-caps text-dim">Output of gate 1 over time</div>
+        <svg viewBox={`0 0 ${W} 68`} className="mt-1 w-full" role="img" aria-label="Square wave from gate 1">
+          {sim.hist.map((_, k) => (
+            <line key={k} x1={hx(k)} x2={hx(k)} y1={6} y2={62} stroke="var(--color-line)" />
+          ))}
+          <path d={wave} fill="none" stroke="var(--color-amber)" strokeWidth={2.2} />
+        </svg>
+        <p className="mt-1 font-sans text-xs text-mute">
+          Each thin line is one gate delay ({delay} ps). {odd ? `One full wave is 2 × ${n} × ${delay} = ${period} ps.` : "The line stays flat."}
+        </p>
+      </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* The H-tree that carries the clock everywhere at once                  */
+/* ------------------------------------------------------------------ */
+
+export function ClockTree() {
+  const segs: Array<{ x1: number; y1: number; x2: number; y2: number; level: number }> = [];
+  const leaves: Array<[number, number]> = [];
+  const MAX = 5;
+  const grow = (x: number, y: number, len: number, horizontal: boolean, level: number) => {
+    const dx = horizontal ? len / 2 : 0;
+    const dy = horizontal ? 0 : len / 2;
+    segs.push({ x1: x - dx, y1: y - dy, x2: x + dx, y2: y + dy, level });
+    if (level === MAX) {
+      leaves.push([x - dx, y - dy], [x + dx, y + dy]);
+      return;
+    }
+    grow(x - dx, y - dy, len / Math.SQRT2, !horizontal, level + 1);
+    grow(x + dx, y + dy, len / Math.SQRT2, !horizontal, level + 1);
+  };
+  grow(150, 110, 150, true, 0);
+
+  return (
+    <Figure
+      caption={
+        <>
+          An H-tree. The clock enters at the centre (the large dot) and splits 6 times to reach 2⁶ = 64 flip-flops (the
+          small dots). Every path from the centre to a small dot has exactly the same length, so the tick arrives
+          everywhere at the same moment. A real chip puts a buffer (two NOT gates in a row) at each split to give the
+          signal fresh strength.
+        </>
+      }
+    >
+      <svg viewBox="0 0 300 220" className="mx-auto w-full max-w-[420px]" role="img" aria-label="H-shaped clock tree">
+        {segs.map((s, i) => (
+          <line
+            key={i}
+            x1={s.x1}
+            y1={s.y1}
+            x2={s.x2}
+            y2={s.y2}
+            stroke="var(--color-amber)"
+            strokeWidth={4.5 - s.level * 0.6}
+            strokeLinecap="round"
+          />
+        ))}
+        {leaves.map(([x, y], i) => (
+          <circle key={i} cx={x} cy={y} r={3} fill="var(--color-ink)" />
+        ))}
+        <circle cx={150} cy={110} r={7} fill="var(--color-amber)" stroke="var(--color-panel)" strokeWidth={2} />
+      </svg>
+    </Figure>
   );
 }

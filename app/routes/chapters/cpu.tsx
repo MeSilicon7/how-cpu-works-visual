@@ -123,9 +123,9 @@ export default function Cpu() {
       </p>
       <TriStateFigure />
       <DataTable
-        head={["enable", "input", "top switch (to +)", "bottom switch (to 0 V)", "wire"]}
+        head={["enable", "input", "top switch", "bottom switch", "wire"]}
         rows={[
-          ["0", "0 or 1", "open", "open", <strong key="z">Z (let go)</strong>],
+          ["0", "any", "open", "open", <strong key="z">Z</strong>],
           ["1", "0", "open", "closed", "0"],
           ["1", "1", "closed", "open", "1"],
         ]}
@@ -134,7 +134,7 @@ export default function Cpu() {
         Every part that can talk to the bus sits behind 8 of these buffers, one per bus wire, and all 8 share one enable
         wire. Those enable wires are exactly the control signals whose names end in O (for “out”):{" "}
         <code>CO</code> (program counter), <code>RO</code> (RAM), <code>IO</code> (instruction register),{" "}
-        <code>AO</code> (register A) and <code>EO</code> (the ALU). That's <TeX>{"5 \\times 8 = 40"}</TeX> buffers.
+        <code>AO</code> (register A) and <code>EO</code> (the ALU). That's about <TeX>{"5 \\times 8 = 40"}</TeX> buffers.
         (The stack pointer in <Link to="/functions">Functions &amp; the Stack</Link> adds one more talker.) The
         control unit's table is written so that <strong>at most one O signal is on in any tick</strong>. Try breaking
         that rule yourself:
@@ -162,8 +162,11 @@ export default function Cpu() {
         </p>
         <TeX block>{tex`D = Q \cdot \overline{\text{LOAD}} + \text{bus} \cdot \text{LOAD}`}</TeX>
         <p>Say the register holds Q = 0 and the bus carries a 1.</p>
-        <TeX block>{tex`\text{LOAD} = 0:\quad D = 0 \cdot 1 + 1 \cdot 0 = 0 \;\Rightarrow\; \text{after the tick, } Q = 0 \text{ (bus ignored)}`}</TeX>
-        <TeX block>{tex`\text{LOAD} = 1:\quad D = 0 \cdot 0 + 1 \cdot 1 = 1 \;\Rightarrow\; \text{after the tick, } Q = 1 \text{ (loaded)}`}</TeX>
+        <TeX block>{tex`\begin{aligned} \text{LOAD} = 0:&\quad D = 0 \cdot 1 + 1 \cdot 0 = 0 \\ \text{LOAD} = 1:&\quad D = 0 \cdot 0 + 1 \cdot 1 = 1 \end{aligned}`}</TeX>
+        <p>
+          With LOAD = 0, D is 0, so after the tick Q is still 0: the bus was ignored. With LOAD = 1, D is 1, so after
+          the tick Q becomes 1: the bus was loaded.
+        </p>
         <p>
           An 8-bit register is 8 of these side by side, all sharing one LOAD wire. The program counter is the same idea
           with a 3-way choice: keep Q, take Q + 1 from a small adder (count up, that's <code>CE</code>), or take the bus
@@ -188,7 +191,7 @@ export default function Cpu() {
       <CpuSim customRam={customRam} />
       <Callout kind="fact" title="Who put the program in memory?">
         <p>
-          Here, clicking a program copies its 16 bytes into RAM. Early home computers like the Altair 8800 (1975) had
+          In the simulator above, choosing a program copies its 16 bytes into RAM. Early home computers like the Altair 8800 (1975) had
           a row of switches on the front: you set 8 switches to one byte, pressed <em>Deposit</em>, and repeated that
           for every byte of the program.
         </p>

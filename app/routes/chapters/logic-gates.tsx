@@ -133,7 +133,11 @@ export default function LogicGates() {
         exactly when the input matches the pattern. For the pattern <code>0100</code> on bits <TeX>{"b_7"}</TeX> to{" "}
         <TeX>{"b_4"}</TeX> (the top 4 bits of a byte), that is:
       </p>
-      <TeX block>{tex`\text{out} = \overline{b_7} \cdot b_6 \cdot \overline{b_5} \cdot \overline{b_4} \qquad\text{(NOT } b_7 \text{ AND } b_6 \text{ AND NOT } b_5 \text{ AND NOT } b_4\text{)}`}</TeX>
+      <TeX block>{tex`\text{out} = \overline{b_7} \cdot b_6 \cdot \overline{b_5} \cdot \overline{b_4}`}</TeX>
+      <p>
+        Read it aloud as “NOT <TeX>{"b_7"}</TeX> AND <TeX>{"b_6"}</TeX> AND NOT <TeX>{"b_5"}</TeX> AND NOT{" "}
+        <TeX>{"b_4"}</TeX>”. The bar over a bit means NOT, and the dot means AND.
+      </p>
       <Callout kind="math" title="Check it with two inputs">
         <p>
           Input <code>0100</code>: the four wires into the AND gate carry <TeX>{"\\overline{0}, 1, \\overline{0}, \\overline{0}"}</TeX>, which is{" "}
