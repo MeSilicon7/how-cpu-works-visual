@@ -872,7 +872,7 @@ export const extraPrograms: Program[] = [
     data: [2],
     comments: {
       0: "A = letter",
-      1: "show it",
+      1: "show it (until the letter overwrites it)",
       2: "'A' = 65 (or is it STA 1?)",
     },
   },

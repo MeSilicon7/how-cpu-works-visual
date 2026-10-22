@@ -26,6 +26,14 @@ export default function BitsMeaning() {
         question completely, with no step skipped. The short answer surprises most people: the computer never knows.
         The meaning is not stored in the bits. It comes from whatever <em>reads</em> them.
       </p>
+      <p>
+        Here is the whole answer in four steps. The rest of the chapter checks each one with real numbers. When you
+        press Shift and the A key, a table in the operating system turns that key into the number 65, because people
+        agreed in 1963 that 65 stands for A. Programs keep, save and send that 65 as a plain number. To show it, a{" "}
+        <strong>font</strong>, which is another table, keeps a small drawing of an A at place number 65, so the number
+        65 picks out that drawing's dots. And the monitor never receives 65 at all. It gets only the colour of each
+        dot, and your eyes see an A.
+      </p>
 
       <h2>A byte means nothing alone</h2>
       <p>
@@ -51,14 +59,17 @@ export default function BitsMeaning() {
         <p>Bits have no meaning by themselves. Meaning comes from three places:</p>
         <ol className="ml-5 list-decimal space-y-1">
           <li>
-            <b>Agreements people made:</b> codes and standards like ASCII, Unicode and USB.
+            <b>Agreements people made:</b> codes and standards like ASCII, Unicode, USB key codes and file formats.
+            Both sides must use the same table.
           </li>
           <li>
-            <b>Which circuit or program reads the bits:</b> an ADD treats them as a number, a font lookup as a
-            character, the CPU's fetch as an instruction.
+            <b>Which circuit or program reads the bits, and when:</b> an ADD treats them as a number, a font lookup as
+            a character, the CPU's fetch as an instruction, an image app (after checking the file's first bytes) as
+            pixels.
           </li>
           <li>
-            <b>Labels people add:</b> file names like <code>.jpg</code> and “magic numbers” at the start of files.
+            <b>Tables built into hardware:</b> a decoder gate that fires for exactly one pattern, a ROM, a font. People
+            filled them in. The circuit just follows them, without understanding anything.
           </li>
         </ol>
         <p>The rest of this chapter shows each one, with real numbers.</p>
@@ -71,7 +82,8 @@ export default function BitsMeaning() {
       </p>
       <ByteLenses />
       <p>
-        Try <code>193</code> = <code>1100 0001</code>. As a whole number it is 193. As a signed number it is −63. Is
+        Try <code>193</code> = <code>1100 0001</code>. As a whole number it is 193. As a <strong>signed</strong>{" "}
+        number (one that can be negative; see “Negative numbers” in <Link to="/binary">Binary</Link>) it is −63. Is
         one of them wrong? No. They are two different rules applied to the same bits, and the computer will follow
         whichever rule the program asks for.
       </p>
@@ -85,7 +97,10 @@ export default function BitsMeaning() {
             <TeX>{"-128 + 64 + 1 = -63"}</TeX>.
           </li>
           <li>
-            Brightness: <TeX>{"65 / 255 \\approx 0.25"}</TeX>, so about 25% of full light, a dark grey.
+            Brightness: 65 is about 25% of the way from 0 (black) to 255 (white),{" "}
+            <TeX>{"65 / 255 \\approx 0.25"}</TeX>, so this reader paints a dark grey. (Screens follow a curve called
+            gamma, so 25% of the scale gives only about 5% of the light.{" "}
+            <Link to="/input-output">Input, Output &amp; the Monitor</Link> explains why.)
           </li>
           <li>
             SAP-8 instruction: the left four bits <code>0100</code> = 4 = STA, the right four bits <code>0001</code> =
@@ -121,11 +136,18 @@ export default function BitsMeaning() {
         </li>
       </ul>
       <p>
-        Why 65, and not 1? The committee chose numbers that made machines simpler. Written in 7 bits, 65 is{" "}
-        <code>100 0001</code>: the left part <code>10</code> says “capital letters” and the right part{" "}
-        <code>0 0001</code> says “letter number 1”. B is <TeX>{"64 + 2 = 66"}</TeX> and Z is{" "}
-        <TeX>{"64 + 26 = 90"}</TeX>. Small letters start at 96, so a is 97. Digits start at 48, so the character ‘7’
-        is <TeX>{"48 + 7 = 55"}</TeX>. Physics did not decide any of this. A meeting did.
+        Why 65, and not 1? The committee first set aside codes 0–31 for commands to printers and terminals, like
+        “new line”. Codes 32–64 went to the space, the digits and punctuation. So the capitals begin just after 64.
+        Written in 7 bits, 65 is <code>100 0001</code>: the left part <code>10</code> says “capital letters” and the
+        right part <code>0 0001</code> says “letter number 1”. B is <TeX>{"64 + 2 = 66"}</TeX> and Z is{" "}
+        <TeX>{"64 + 26 = 90"}</TeX>.
+      </p>
+      <p>
+        The numbers were also chosen to make machines simpler. Small letters (added in 1967) sit exactly 32 places
+        after the capitals, so a is <TeX>{"65 + 32 = 97"}</TeX> = <code>110 0001</code>. ‘A’ and ‘a’ differ in just
+        one bit, the one worth 32, so a machine changes a letter's case by flipping a single bit. Digits start at 48,
+        so the character ‘7’ is <TeX>{"48 + 7 = 55"}</TeX> = <code>011 0111</code>, and its right four bits,{" "}
+        <code>0111</code>, are the number 7 itself. Physics did not decide any of this. A meeting did.
       </p>
       <Callout kind="idea">
         <p>
@@ -151,8 +173,8 @@ export default function BitsMeaning() {
       <p>
         A different instruction can read the very same bits with a different rule. Real CPUs have
         <strong> floating-point</strong> instructions, which read 4 bytes as a fraction written in scientific
-        notation (see the “Fractions” section in <Link to="/binary">Binary</Link>). The 4 bytes{" "}
-        <code>41 20 00 00</code> mean 1,092,616,192 to an integer ADD, and exactly 10.0 to a floating-point add.
+        notation (see the “Fractions” section in <Link to="/binary">Binary</Link>). The 32-bit pattern{" "}
+        <code>0x41200000</code> means 1,092,616,192 to an integer ADD, and exactly 10.0 to a floating-point add.
       </p>
       <Callout kind="math" title="One pattern, 1,092,616,192 or 10.0">
         <p>
@@ -163,8 +185,10 @@ export default function BitsMeaning() {
         </p>
         <p>
           As a float, split into three fields. Sign = 0 (positive). Exponent = <code>10000010</code> = 130, and the
-          rule says subtract 127: <TeX>{"130 - 127 = 3"}</TeX>. Fraction = <code>01</code> followed by zeros ={" "}
-          <TeX>{"0.25"}</TeX>. So
+          rule says subtract 127: <TeX>{"130 - 127 = 3"}</TeX>. Fraction = <code>01</code> followed by zeros. The
+          places after a binary point are worth ½, ¼, ⅛ and so on, so <code>01</code> means{" "}
+          <TeX>{"0 \\times \\tfrac12 + 1 \\times \\tfrac14 = 0.25"}</TeX>. The rule always puts a 1 in front of the
+          fraction. That 1 is not stored: it is always there, so storing it would waste a bit. So
         </p>
         <TeX block>{tex`(1 + 0.25) \times 2^{3} = 1.25 \times 8 = 10.0`}</TeX>
       </Callout>
@@ -180,7 +204,9 @@ export default function BitsMeaning() {
           <b>65</b>. (The <Link to="/calculator">calculator scene</Link> does exactly this.)
         </li>
         <li>
-          <strong>“Print as a letter”</strong> does no maths. It draws character 65 directly. You see <b>A</b>.
+          <strong>“Print as a letter”</strong> does no dividing. It hands 65 straight to the <strong>font</strong>,
+          a table of letter drawings, which picks out drawing number 65: the shape of an A. (The section “Follow one
+          ‘A’ to the glass” below shows every number of this lookup.) You see <b>A</b>.
         </li>
       </ul>
       <p>
@@ -192,16 +218,24 @@ export default function BitsMeaning() {
       <p>
         So who chooses the right instruction? The programmer, with help from the <strong>compiler</strong> (the
         program that turns code into <Link to="/machine-code">machine code</Link>). In the C language, these two lines
-        put exactly the same byte, <code>0x41</code>, into memory:
+        both store the pattern <code>0100 0001</code> = <code>0x41</code>:
       </p>
-      <pre>
+      <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
         <code>{"int  x = 65;    // a whole number\nchar c = 'A';   // a character"}</code>
       </pre>
       <p>
+        In memory, <code>c</code> is the single byte <code>41</code>. An <code>int</code> is 4 bytes long, so{" "}
+        <code>x</code> is stored as <code>41 00 00 00</code> (smallest byte first, see “endianness” at the end of
+        this chapter). The byte that holds 65 is exactly the same; <code>x</code> just has three bytes of zeros next
+        to it.
+      </p>
+      <p>
         The words <code>int</code> and <code>char</code> are <strong>types</strong>: notes for the compiler. Later,
-        when you write <code>x + 1</code>, the compiler reads its note and picks an ADD. When you print{" "}
-        <code>c</code>, it picks the “print as a letter” code. After compiling, the notes are thrown away. The machine
-        code has only instructions and addresses; the byte in memory is still just <code>0100 0001</code>.
+        when you write <code>x + 1</code>, the compiler reads its note and picks an ADD for whole numbers. When you
+        print, your code names the reader itself: <code>printf("%c", c)</code> runs the “print as a letter” code and
+        shows A, while <code>printf("%d", c)</code> runs “print as a number” on the very same byte and shows 65.
+        After compiling, the notes are thrown away. The machine code has only instructions and addresses; the byte in
+        memory is still just <code>0100 0001</code>.
       </p>
       <Callout kind="warn" title="But Python knows the type!">
         <p>
@@ -220,9 +254,10 @@ export default function BitsMeaning() {
         <code>ADD 15</code>, if the PC ever lands on it.
       </p>
       <p>
-        This tiny program is meant to show the letter A. Address 0 says <code>LDA 2</code> (load the byte at address
-        2), address 1 says <code>OUT</code>, and address 2 holds the data: 65, the letter A. But the programmer forgot
-        the <code>HLT</code> at the end. Step through it and watch what happens after the 65 appears.
+        This tiny program is meant to output the letter A. Address 0 says <code>LDA 2</code> (load the byte at
+        address 2), address 1 says <code>OUT</code>, and address 2 holds the data: 65, the letter A. But the
+        programmer forgot the <code>HLT</code> at the end. Press <b>Step instruction</b> a few times (or <b>Run</b>)
+        and watch what happens after the 65 appears.
       </p>
       <CpuSim
         programIds={["forgot-hlt"]}
@@ -233,8 +268,9 @@ export default function BitsMeaning() {
       <Callout kind="math" title="What the CPU did, step by step">
         <ol className="ml-5 list-decimal space-y-1.5">
           <li>
-            Address 0, <code>LDA 2</code>: register A = 65. Address 1, <code>OUT</code>: the display shows 65. So far,
-            so good.
+            Address 0, <code>LDA 2</code>: register A = 65. Address 1, <code>OUT</code>: the display shows 65.
+            Notice: the number 65, not the letter A. SAP-8's output display is a reader that shows numbers; it has no
+            font. So far, so good.
           </li>
           <li>
             The PC is now 2. The CPU fetches the byte there, 65 = <code>0100 0001</code>, and decodes it like any
@@ -253,10 +289,20 @@ export default function BitsMeaning() {
         </ol>
       </Callout>
       <p>
+        Look again at address 2. The CPU read the same byte, <code>0100 0001</code>, twice, and nothing in it
+        changed. The first time, during <code>LDA 2</code>, the control unit switched on <code>RO</code> +{" "}
+        <code>AI</code>. The byte went from RAM into register A, whose wires lead to the adder. There it was a
+        number. The second time, during a fetch, the control unit switched on <code>RO</code> + <code>II</code>. The
+        same byte went into the instruction register, whose top 4 wires lead to the decoder. There it was an
+        instruction. This is what physically decides what a byte “is” at each moment: which register's door is open
+        when it arrives, and so which circuit its 8 wires feed.
+      </p>
+      <p>
         This is not just a toy problem. Many real attacks work this way: an attacker hides machine code inside data
         (a long message, a picture) and then tricks the program into jumping there. Modern CPUs help the{" "}
-        <Link to="/operating-system">operating system</Link> defend against this: each region of memory carries a
-        “never run this as code” flag, so a jump into data stops the program instead.
+        <Link to="/operating-system">operating system</Link> defend against this: each page of memory has one more
+        permission bit, next to “writable” in its page-table entry, that says “never run this as code”. So a jump
+        into data stops the program instead.
       </p>
 
       <h2>Reader four: the file format</h2>
@@ -277,15 +323,15 @@ export default function BitsMeaning() {
       </ol>
       <DataTable
         align="left"
-        head={["format", "first bytes (hex)", "the same bytes as text"]}
+        head={["format", "first bytes (hex)", "as text (· = no visible letter)"]}
         rows={[
-          ["PNG image", "89 50 4E 47 0D 0A 1A 0A", "‰PNG…"],
-          ["JPEG photo", "FF D8 FF", "(not text)"],
+          ["PNG image", "89 50 4E 47 0D 0A 1A 0A", "·PNG····"],
+          ["JPEG photo", "FF D8 FF", "···"],
           ["GIF image", "47 49 46 38", "GIF8"],
           ["PDF document", "25 50 44 46", "%PDF"],
-          ["ZIP, and .docx / .xlsx / .pptx", "50 4B 03 04", "PK…"],
-          ["MP4 video", "(4 bytes) 66 74 79 70", "….ftyp"],
-          ["Linux program", "7F 45 4C 46", "…ELF"],
+          ["ZIP, and .docx / .xlsx / .pptx", "50 4B 03 04", "PK··"],
+          ["MP4 video", "4 bytes (a length), then 66 74 79 70", "····ftyp"],
+          ["Linux program", "7F 45 4C 46", "·ELF"],
           ["Windows program", "4D 5A", "MZ"],
         ]}
       />
@@ -301,16 +347,17 @@ export default function BitsMeaning() {
           The PNG designers chose the 8 bytes so that common accidents would break them in a visible way. 89 has its
           top bit set, so a connection that drops the 8th bit changes it. <code>0D 0A</code> and <code>0A</code> are
           the Windows and Unix “new line” codes, so a program that “fixes” line endings changes them.{" "}
-          <code>1A</code> told the old MS-DOS <code>type</code> command to stop printing. A damaged PNG is caught at
-          byte 1, not in the middle of your picture.
+          <code>1A</code> told the old MS-DOS <code>type</code> command to stop printing. A damaged PNG is caught in
+          its first 8 bytes, before any of your picture is read.
         </p>
       </Callout>
       <Callout kind="math" title="Reading a header: the size of a PNG">
         <p>
-          The PNG rules say: after the 8-byte magic number comes a block named <code>IHDR</code>, and bytes 16–19 hold
-          the width, biggest byte first. In the sample, bytes 16–19 are <code>00 00 00 02</code>:
+          The PNG rules say: after the 8-byte magic number (bytes 0–7) come 4 bytes giving the length of the first
+          block (<code>00 00 00 0D</code> = 13) and 4 bytes with its name, <code>IHDR</code> (bytes 12–15). Then bytes
+          16–19 hold the width, biggest byte first. In the sample, bytes 16–19 are <code>00 00 00 02</code>:
         </p>
-        <TeX block>{tex`0 \times 256^3 + 0 \times 256^2 + 0 \times 256 + 2 = 2 \text{ pixels}`}</TeX>
+        <TeX block>{tex`\begin{gathered} 0 \times 256^3 + 0 \times 256^2 + 0 \times 256 + 2 \\ = 2 \text{ pixels} \end{gathered}`}</TeX>
         <p>
           A photo 1,920 pixels wide would have <code>00 00 07 80</code> there: <TeX>{"7 \\times 256 + 128 = 1920"}</TeX>.
         </p>
@@ -345,7 +392,16 @@ export default function BitsMeaning() {
           d, f and g light up, and our eyes see a “5”.
         </p>
         <p>
-          Any one bar can also be built from gates. Bar e is lit only for 0, 2, 6 and 8, which gives{" "}
+          How does the ROM find address <code>0101</code>? With the same trick as the STA gate. Its address decoder
+          (one AND gate per pattern) switches on only the row wire for <code>0101</code>. Along that row the chip
+          makers put transistors on wires a, c, d, f and g and none on b and e (see{" "}
+          <Link to="/memory">Memory</Link>), so exactly those five wires carry a 1.
+        </p>
+        <p>
+          Any one bar can also be built from gates. Bar e is lit only for 0, 2, 6 and 8. All four are even, so b0 must
+          be 0: that gives <TeX>{"\\overline{b_0}"}</TeX>. But the even digit 4 = <code>0100</code> must stay dark,
+          and 4 is the only even digit with b2 = 1 and b1 = 0. So we also need “b2 is 0, or b1 is 1”, which is{" "}
+          <TeX>{"\\overline{b_2} + b_1"}</TeX>. Together:{" "}
           <TeX>{"e = \\overline{b_0} \\cdot (\\overline{b_2} + b_1)"}</TeX>. Check 4 = <code>0100</code>:{" "}
           <TeX>{"1 \\cdot (0 + 0) = 0"}</TeX>, dark. Check 6 = <code>0110</code>: <TeX>{"1 \\cdot (0 + 1) = 1"}</TeX>,
           lit.
@@ -379,16 +435,25 @@ export default function BitsMeaning() {
       <p>
         Your text editor, your chat app and the web page all keep text as a list of numbers. Searching, sorting,
         spell-checking and sending a message all work on the 65, never on a picture of an A. Saved to a file, the 65
-        becomes the byte <code>41</code>.
+        is stored as the byte <code>0x41</code>, which is just 65 written in hex.
       </p>
 
       <h3>The font turns a number into dots</h3>
       <p>
         Only when the text must be <em>seen</em> does anything look up a shape. A <strong>font</strong> is itself a
-        table. In the simple 8×8 font of the figure, every character has 8 bytes, one per row, stored in code order.
-        So the glyph (the drawing) for code 65 starts at byte <TeX>{"65 \\times 8 = 520"}</TeX>, and its 8 bytes are{" "}
+        table. In the simple 8×8 font of the figure, every character has 8 bytes, one per row, stored in code order:
+        character 0 uses bytes 0–7, character 1 uses bytes 8–15, and so on. So the glyph (the drawing) for code 65
+        comes after 65 glyphs of 8 bytes each, at byte <TeX>{"65 \\times 8 = 520"}</TeX>, and its 8 bytes are{" "}
         <code>30 78 CC CC FC CC CC 00</code>. The first row, <code>30</code> = <code>0011 0000</code>, says “ink in
-        columns 2 and 3”: the top of the A. A font is bytes whose agreed meaning is “pixels”.
+        columns 2 and 3” (counting from 0 at the left, as the figure does): the top of the A. A font is bytes whose
+        agreed meaning is “pixels”.
+      </p>
+      <p>
+        No circuit needs to understand 65 to find this. In binary, multiplying by 8 just adds three 0s on the right:
+        65 is <code>100 0001</code> and 520 is <code>100 0001 000</code>. So a video card with an 8×8 font ROM simply
+        connects the wires of the character code to the top address wires of the ROM, and the row number (0 to 7,
+        three bits) to the bottom three. The ROM's address decoder, the same one-AND-gate-per-pattern idea as above,
+        picks the byte.
       </p>
       <Callout kind="fact" title="The mystery “J” in emails">
         <p>
@@ -396,6 +461,15 @@ export default function BitsMeaning() {
           email programs turn a typed <code>:)</code> into code 74 drawn with Wingdings. When the reader's computer
           draws code 74 with a normal font, the smiley arrives as a plain <b>J</b>. The byte was right. The table was
           different.
+        </p>
+      </Callout>
+      <Callout kind="idea" title="So where does the computer keep “65 means A”?">
+        <p>
+          Nowhere. There is no single place in the computer that says “65 = A”. The agreement exists only because two
+          tables were built to match the same published list (ASCII, now Unicode). The keyboard layout puts 65 where
+          the A key is, and the font puts the drawing of an A at place 65. Pressing A shows an A because both tables
+          follow the same list. Change one of them, for example a French layout or the Wingdings font, and the very
+          same bits give a different result.
         </p>
       </Callout>
 
@@ -408,9 +482,12 @@ export default function BitsMeaning() {
       <TeX block>{tex`\text{address} = (y \times 1920 + x) \times 4`}</TeX>
       <p>
         For the top-left corner of our glyph at x = 32, y = 16 that is{" "}
-        <TeX>{"(16 \\times 1920 + 32) \\times 4 = 123{,}008"}</TeX>. Every inked dot becomes white,{" "}
-        <code>FF FF FF</code>, and every other dot black, <code>00 00 00</code>.{" "}
-        <strong>From here on, the ‘A’ is gone.</strong> The framebuffer has no idea that 64 of its pixels once came
+        <TeX>{"(16 \\times 1920 + 32) \\times 4 = 123{,}008"}</TeX>. That corner stays black,{" "}
+        <code>00 00 00</code>, because row 0 is <code>0011 0000</code> and its first bit is 0. The first inked dot is
+        column 2 of row 0, so it lands at x = 32 + 2 = 34, y = 16:{" "}
+        <TeX>{"(16 \\times 1920 + 34) \\times 4 = 123{,}016"}</TeX>. The three bytes from address 123,016 on become
+        white, <code>FF FF FF</code>. The same sum runs for all 64 dots: the 28 inked ones become white, every other
+        one black. <strong>From here on, the ‘A’ is gone.</strong> The framebuffer has no idea that 64 of its pixels once came
         from a letter. Finally, the display controller streams all the colours to the monitor, 60 times a second.
       </p>
       <AChain />
@@ -420,11 +497,14 @@ export default function BitsMeaning() {
         Nothing about letters. A 1920 × 1080 monitor receives 3 bytes (red, green, blue) for each pixel, 60 times a
         second:
       </p>
-      <TeX block>{tex`1920 \times 1080 \times 3 \times 60 = 373{,}248{,}000 \text{ bytes per second} \approx 373 \text{ MB/s}`}</TeX>
+      <TeX block>{tex`\begin{gathered} 1920 \times 1080 \times 3 \times 60 = 373{,}248{,}000 \\ \text{bytes per second} \approx 373 \text{ MB/s} \end{gathered}`}</TeX>
       <p>
         That is all it ever gets: colours. (The framebuffer's fourth, unused byte per pixel is not sent.) A typed ‘A’
         and a photo of an ‘A’ arrive as the same kind of data. The monitor cannot tell them apart, and it doesn't
-        need to.
+        need to, because the shape was decided before anything reached it: the font table chose which 28 of the 64
+        dots are white. The monitor's only job is to make each pixel the colour it is given, in the right place. The
+        28 white dots become the letter ‘A’ again in only one place: your eyes and brain, just as five lit bars became
+        a “5” on the 7-segment display.
       </p>
       <p>You can prove this with things you do every day:</p>
       <ul>
@@ -449,6 +529,11 @@ export default function BitsMeaning() {
           shows colours. Each step is a simple lookup that people agreed on, and together they feel like magic.
         </p>
       </Callout>
+      <p>
+        Two questions are still open. How does the keyboard's chip notice which switch closed? And how do 373 MB of
+        colours every second travel down a cable and become light? Both are about how the computer talks to the world
+        outside it. That is the next chapter, <Link to="/input-output">Input, Output &amp; the Monitor</Link>.
+      </p>
 
       <GoDeeper title="Which byte comes first? (endianness)">
         <p>
@@ -484,12 +569,14 @@ export default function BitsMeaning() {
         <p>
           The fonts on your phone are not 8×8 grids. A modern font file (TrueType or OpenType) contains several
           tables. The <code>cmap</code> table maps a character code, like 65, to a glyph number. The glyph itself is
-          stored as points joined by curves, measured in “font units”, often 2,048 units for the full letter height.
+          stored as points joined by curves, measured in “font units”, often 2,048 units for the font's size box
+          (called the <strong>em</strong>, a little taller than a capital letter).
         </p>
         <p>
-          To draw at 16 pixels high, every point is scaled by <TeX>{"16 / 2048 = 1/128"}</TeX>, so a point at x =
-          1,024 units lands at x = 8 pixels. Then, for each pixel, the computer asks “is this pixel inside the
-          outline?”: the same inside test used for triangles in <Link to="/graphics">Graphics</Link>. A pixel that is
+          To draw text at a size of 16 pixels (the em box becomes 16 pixels tall), every point is scaled by{" "}
+          <TeX>{"16 / 2048 = 1/128"}</TeX>, so a point at x = 1,024 units lands at x = 8 pixels. Then, for each pixel,
+          the computer asks “is this pixel inside the outline?”: the same inside test that{" "}
+          <Link to="/graphics">Graphics</Link> uses for triangles, later in the book. A pixel that is
           half covered becomes 50% grey, which makes edges look smooth (<strong>anti-aliasing</strong>). The finished
           dots are kept in a cache and reused for every other ‘A’ of the same size.
         </p>

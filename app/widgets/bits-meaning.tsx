@@ -106,17 +106,7 @@ function SevenSeg({
 }
 
 /** An 8×8 glyph drawn as printed ink squares (a font table, not a screen). */
-function GlyphGrid({
-  rows,
-  cell = 18,
-  className,
-  highlightRow,
-}: {
-  rows: number[];
-  cell?: number;
-  className?: string;
-  highlightRow?: number;
-}) {
+function GlyphGrid({ rows, cell = 18, className }: { rows: number[]; cell?: number; className?: string }) {
   const grid = rowsToGrid(rows);
   return (
     <svg
@@ -126,9 +116,6 @@ function GlyphGrid({
       aria-label="8 by 8 pixel glyph"
     >
       <rect x={0} y={0} width={8 * cell} height={8 * cell} fill="var(--color-panel)" />
-      {highlightRow !== undefined && (
-        <rect x={0} y={highlightRow * cell} width={8 * cell} height={cell} fill="var(--color-highlight)" />
-      )}
       {grid.map((row, y) =>
         row.map((v, x) => (
           <rect
@@ -252,7 +239,7 @@ export function ByteLenses() {
   let letterRule: ReactNode;
   if (v >= 33 && v <= 126) {
     letter = <span className="font-mono text-3xl font-bold text-ink">{String.fromCharCode(v)}</span>;
-    letterRule = <>Row {v} of the ASCII table. The table was written by people in 1963.</>;
+    letterRule = <>Row {v} of the ASCII table, a list people agreed on in the 1960s.</>;
   } else if (v === 32) {
     letter = <span className="font-sans text-lg font-semibold text-ink">a space</span>;
     letterRule = <>Row 32 of the ASCII table: the empty space between words.</>;
@@ -261,16 +248,17 @@ export function ByteLenses() {
     letterRule = <>Rows 0–31 and 127 are commands for old printers and terminals, not visible letters.</>;
   } else {
     letter = <span className="font-sans text-lg font-semibold text-ink">no letter</span>;
-    letterRule =
-      v >= 160 ? (
-        <>
-          ASCII stops at 127. In UTF-8 this byte is only one piece of a longer letter. (An old European table,
-          Latin-1, says “{String.fromCharCode(v)}”.)
-        </>
-      ) : (
-        <>ASCII stops at 127. In UTF-8 this byte is only one piece of a longer letter.</>
-      );
+    // UTF-8 never uses C0, C1 or F5–FF; every other byte from 128 up is one piece of a longer letter.
+    const neverUtf8 = v === 0xc0 || v === 0xc1 || v >= 0xf5;
+    letterRule = (
+      <>
+        ASCII stops at 127.{" "}
+        {neverUtf8 ? <>UTF-8 never uses this byte at all.</> : <>In UTF-8 this byte is only one piece of a longer letter.</>}
+        {v >= 160 && <> (An old European table, Latin-1, says “{String.fromCharCode(v)}”.)</>}
+      </>
+    );
   }
+  const minus = (n: number) => (n < 0 ? `−${-n}` : String(n));
 
   return (
     <Widget
@@ -320,18 +308,18 @@ export function ByteLenses() {
           who="as a signed number"
           rule={
             <>
-              Two's complement: the left bit is worth −128 instead of +128.
+              Signed (it can be negative): the left bit is worth −128 instead of +128.
               {v >= 128 && (
                 <>
                   {" "}
-                  Here: −128 + {v - 128} = {signed}.
+                  Here: −128 + {v - 128} = {minus(signed)}.
                 </>
               )}
             </>
           }
         >
-          <span className={cx("font-mono text-3xl font-bold tabular-nums", signed < 0 ? "text-pink" : "text-ink")}>
-            {signed > 0 ? `+${signed}` : signed}
+          <span className="font-mono text-3xl font-bold text-ink tabular-nums">
+            {signed > 0 ? `+${signed}` : minus(signed)}
           </span>
         </Lens>
         <Lens n={3} who="as a letter" rule={letterRule}>
@@ -342,7 +330,8 @@ export function ByteLenses() {
           who="as a brightness"
           rule={
             <>
-              0 = black, 255 = full light: {v}/255 = {Math.round((v / 255) * 100)}%. One byte per colour in a photo.
+              0 = black, 255 = white: {v} is {Math.round((v / 255) * 100)}% of the way up the scale. A screen reads
+              photos this way, one byte per colour.
             </>
           }
         >
@@ -351,8 +340,9 @@ export function ByteLenses() {
             style={{ background: `rgb(${v} ${v} ${v})` }}
             aria-hidden
           />
-          <span className="font-mono text-lg font-semibold text-ink tabular-nums">
-            {Math.round((v / 255) * 100)}%
+          <span className="flex flex-col leading-tight">
+            <span className="font-mono text-lg font-semibold text-ink tabular-nums">{Math.round((v / 255) * 100)}%</span>
+            <span className="font-sans text-xs text-mute">of the scale</span>
           </span>
         </Lens>
         <Lens n={5} who="as 8 pixels" rule={<>Each bit is one dot: 1 = ink, 0 = paper. One row of a letter in a font.</>}>
@@ -370,9 +360,17 @@ export function ByteLenses() {
           who="as a SAP-8 instruction"
           rule={
             <>
-              Left 4 bits <span className="font-mono">{binStr(v >> 4, 4)}</span> pick the operation (
-              {op ? op.name : "none"}), right 4 bits <span className="font-mono">{binStr(v & 15, 4)}</span> are its
-              number. {op ? op.describe.replace(/\bn\b/g, String(v & 15)) : "SAP-8 has no instruction 1101."}
+              Read this way only when the program counter points here. Left 4 bits{" "}
+              <span className="font-mono">{binStr(v >> 4, 4)}</span>{" "}
+              {op ? (
+                <>
+                  pick the operation ({op.name}), right 4 bits <span className="font-mono">{binStr(v & 15, 4)}</span>{" "}
+                  {op.operand === "none" ? <>are ignored: {op.name} needs no number.</> : <>are its number.</>}{" "}
+                  {op.describe.replace(/\bn\b/g, String(v & 15))}
+                </>
+              ) : (
+                <>match no operation: SAP-8 has no instruction 1101, so the CPU skips it like a NOP.</>
+              )}
             </>
           }
         >
@@ -381,7 +379,7 @@ export function ByteLenses() {
         <Lens
           n={7}
           who="as a USB key code"
-          rule={<>The list every USB keyboard uses to say which key position went down.</>}
+          rule={<>How the keyboard reads it: the list every USB keyboard uses to say which key position went down.</>}
         >
           <span className="font-sans text-lg font-semibold text-ink">{key ?? "no key"}</span>
         </Lens>
@@ -537,7 +535,7 @@ function identify(b: number[]): Verdict {
       format: "PNG image",
       exts: ["png"],
       image: "image/png",
-      rule: <>starts with 89 50 4E 47 0D 0A 1A 0A (“.PNG” and some line-ending bytes)</>,
+      rule: <>starts with 89 50 4E 47 0D 0A 1A 0A (the byte 89, “PNG”, two kinds of line ending and the old end-of-file byte 1A)</>,
       marks: [magic(8)],
       facts: [],
     };
@@ -872,17 +870,22 @@ export function FileXray() {
         />
         {bytes.length > 64 && (
           <Btn variant="ghost" onClick={() => setMore((m) => !m)} className="text-xs">
-            {more ? "Show first 64 bytes" : `Show first ${Math.min(256, bytes.length)} bytes`}
+            {more ? "Show first 64 bytes" : bytes.length <= 256 ? `Show all ${bytes.length} bytes` : "Show first 256 bytes"}
           </Btn>
         )}
       </div>
 
       <div className="mt-2 rounded-md border border-line bg-bg/50 p-3">
         {readAs === "hex" && (
+          <>
+          <p className="mb-2 font-sans text-xs text-mute">
+            Each row: the position of its first byte (counting from 0), then 8 bytes in hex, then the same bytes as
+            text (· = no visible letter).
+          </p>
           <div className="flex flex-wrap gap-x-6 gap-y-1 font-mono text-[0.8125rem] leading-6 tabular-nums">
             {groups.map((g, gi) => (
               <div key={gi} className="flex gap-2.5 whitespace-nowrap">
-                <span className="text-dim">{hexStr(gi * 8, 4)}</span>
+                <span className="w-7 text-right text-dim">{gi * 8}</span>
                 <span className="flex gap-1">
                   {g.map((x, i) => {
                     const m = markAt(gi * 8 + i);
@@ -906,6 +909,7 @@ export function FileXray() {
               </div>
             ))}
           </div>
+          </>
         )}
         {readAs === "text" && (
           <>
@@ -951,8 +955,15 @@ export function FileXray() {
               ))}
             </div>
             <p className="mt-2 font-serif text-sm text-mute">
-              If SAP-8's program counter pointed at these bytes, it would run them as instructions. They are valid
-              instructions. They just do nothing useful.
+              If SAP-8's program counter pointed at these bytes, it would run them as instructions.{" "}
+              {shown.slice(0, 16).some((x) => !opByCode.get(x >> 4)) ? (
+                <>
+                  Almost every byte is a valid instruction. A byte that starts with 1101 (shown as ???) has no recipe,
+                  so the CPU skips it like a NOP. Either way, they do nothing useful.
+                </>
+              ) : (
+                <>Every one of them is a valid instruction. They just do nothing useful.</>
+              )}
             </p>
           </>
         )}
@@ -1017,6 +1028,8 @@ export function FileXray() {
 
 const SEG_DIGITS = [0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f];
 const SEG_HEX = [...SEG_DIGITS, 0x77, 0x7c, 0x39, 0x5e, 0x79, 0x71];
+/** What each hex pattern looks like on the display (b and d can only be drawn in lower case). */
+const SEG_SHOWS = "0123456789AbCdEF";
 
 export function SevenSegDecoder() {
   const [n, setN] = useState(5);
@@ -1102,14 +1115,24 @@ export function SevenSegDecoder() {
                     className={cx("cursor-pointer", i === n && "hl")}
                     onClick={() => setN(i)}
                   >
-                    <td className="text-center">{i}</td>
+                    <td className="text-center">
+                      <button
+                        type="button"
+                        aria-pressed={i === n}
+                        aria-label={`input ${i}`}
+                        className="rounded-sm px-1.5 hover:bg-panel-2"
+                        onClick={() => setN(i)}
+                      >
+                        {i}
+                      </button>
+                    </td>
                     <td className="text-center">{binStr(i, 4)}</td>
                     <td className="text-center">
                       <ByteBits v={p} width={7} />
                     </td>
                     <td className="text-center">{hx(p)}</td>
-                    <td className="text-center text-mute">
-                      {rom === "dec" && i > 9 ? "not used" : i.toString(16).toUpperCase()}
+                    <td className="text-center whitespace-nowrap text-mute">
+                      {rom === "dec" && i > 9 ? "not used" : SEG_SHOWS[i]}
                     </td>
                   </tr>
                 ))}
@@ -1134,7 +1157,9 @@ export function SevenSegDecoder() {
             </p>
             {rom === "dec" && (
               <div className="mt-2">
-                You can also build any one column of the table from gates. Segment e is lit only for 0, 2, 6 and 8:
+                You can also build any one column of the table from gates. Segment e is lit only for 0, 2, 6 and 8.
+                They are all even (so b0 = 0), but the even digit 4 must stay dark, and 4 is the only even digit with
+                b2 = 1 and b1 = 0:
                 <div className="mt-1 font-mono text-sm text-ink">
                   e = NOT b0 AND (NOT b2 OR b1)
                   <br />= {nb0} AND ({nb2} OR {b[1]}) ={" "}
@@ -1158,6 +1183,8 @@ export function OpcodeDecoder() {
   const op = opByCode.get(code);
   const bits = [7, 6, 5, 4].map((b, i) => ({ name: `b${b}`, v: (code >> (3 - i)) & 1 }));
   const terms = bits.map((x) => (x.v ? x.name : `NOT ${x.name}`));
+  // The STA gate (0100) is wired as NOT b7 AND b6 AND NOT b5 AND NOT b4; feed it the current bits.
+  const staIn = [1 - bits[0].v, bits[1].v, 1 - bits[2].v, 1 - bits[3].v];
   return (
     <Widget
       title="Inside the decoder: one AND gate per pattern"
@@ -1178,6 +1205,23 @@ export function OpcodeDecoder() {
               = {bits.map(() => "1").join(" AND ")} = <span className="font-bold text-on">1</span>
             </div>
           </div>
+          {code !== 0b0100 && (
+            <div className="mt-1 border-t border-line pt-2 text-center font-serif text-[0.9375rem] text-body">
+              Meanwhile the STA gate gets:
+              <div className="mt-1 font-mono text-sm text-ink">NOT b7 AND b6 AND NOT b5 AND NOT b4</div>
+              <div className="mt-1 font-mono text-sm text-mute">
+                ={" "}
+                {staIn.map((x, i) => (
+                  <span key={i}>
+                    {i > 0 && " AND "}
+                    <span className={x ? "font-bold text-ink" : "text-dim"}>{x}</span>
+                  </span>
+                ))}{" "}
+                = <span className="text-dim">0</span>
+              </div>
+              <div className="mt-1 text-sm text-mute">One wrong bit is enough to keep it dark.</div>
+            </div>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 font-mono text-sm @md:grid-cols-4 @xl:grid-cols-2">
           {Array.from({ length: 16 }, (_, i) => {
@@ -1187,6 +1231,7 @@ export function OpcodeDecoder() {
               <button
                 type="button"
                 key={i}
+                aria-pressed={on}
                 onClick={() => setCode(i)}
                 className={cx(
                   "flex items-center gap-2 rounded-sm px-1.5 py-0.5 text-left transition-colors hover:bg-panel-2",
@@ -1276,7 +1321,7 @@ function glyphFor(code: number, font: FontId): { rows: number[]; missing: boolea
 
 const STAGES = ["Key", "Layout", "Number", "Font", "Framebuffer", "Monitor"] as const;
 const SCREEN_W = 1920;
-/** The crop of the screen we draw: 48 × 24 pixels from the top-left corner. */
+/** The crop of the screen we draw: 40 × 24 pixels from the top-left corner. */
 const CROP_W = 40;
 const CROP_H = 24;
 const X0 = 32;
@@ -1306,8 +1351,7 @@ export function FollowTheA() {
   // The framebuffer crop: earlier text "Hello" on line 0 and "Hi! " + the new glyph on line 2.
   const fb = useMemo(() => {
     const px = Array.from({ length: CROP_H }, () => new Array<number>(CROP_W).fill(0));
-    const own = Array.from({ length: CROP_H }, () => new Array<boolean>(CROP_W).fill(false));
-    const put = (text: string, x0: number, y0: number, mine = false) =>
+    const put = (text: string, x0: number, y0: number) =>
       [...text].forEach((t, i) => {
         const g = glyphFor(t.codePointAt(0)!, font).rows;
         g.forEach((row, y) => {
@@ -1315,14 +1359,13 @@ export function FollowTheA() {
             const X = x0 + i * 8 + x;
             if (X >= CROP_W) continue;
             px[y0 + y][X] = (row >> (7 - x)) & 1;
-            own[y0 + y][X] = mine;
           }
         });
       });
     put("Hello", 0, 0);
     put(BEFORE, 0, Y0);
-    put(ch, X0, Y0, true);
-    return { px, own };
+    put(ch, X0, Y0);
+    return { px };
   }, [font, ch]);
 
   const firstLit = (() => {
@@ -1349,8 +1392,8 @@ export function FollowTheA() {
     >
       {/* controls that feed the whole chain */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <label className="flex items-center gap-2 text-sm text-mute">
-          Layout
+        <div role="group" aria-label="Keyboard layout" className="flex items-center gap-2 text-sm text-mute">
+          <span aria-hidden>Layout</span>
           <Segmented<LayoutId>
             size="sm"
             value={layout}
@@ -1360,12 +1403,12 @@ export function FollowTheA() {
             }}
             options={(Object.keys(LAYOUTS) as LayoutId[]).map((k) => ({ value: k, label: LAYOUTS[k].short }))}
           />
-        </label>
+        </div>
         <Btn active={shift} onClick={() => (setShift((s) => !s), setPick(null))} className="text-xs">
           ⇧ Shift {shift ? "held" : "not held"}
         </Btn>
-        <label className="flex items-center gap-2 text-sm text-mute">
-          Font
+        <div role="group" aria-label="Font" className="flex items-center gap-2 text-sm text-mute">
+          <span aria-hidden>Font</span>
           <Segmented<FontId>
             size="sm"
             value={font}
@@ -1379,7 +1422,7 @@ export function FollowTheA() {
               { value: "picture", label: "Picture" },
             ]}
           />
-        </label>
+        </div>
       </div>
 
       {/* stage strip */}
@@ -1423,6 +1466,7 @@ export function FollowTheA() {
                           type="button"
                           key={ci}
                           title={`usage ID 0x${hx(id)}`}
+                          aria-pressed={sel}
                           onClick={() => choose(ri, ci)}
                           className={cx(
                             "relative flex h-9 w-7 flex-col items-center justify-center rounded-md border font-sans text-sm leading-none font-semibold transition-colors @md:h-10 @md:w-10",
@@ -1529,7 +1573,8 @@ export function FollowTheA() {
               })}
             </div>
             <p className="font-serif text-[0.9375rem] text-body">
-              Saved in a file or sent in a chat message, UTF-8 packs these numbers into bytes:{" "}
+              Saved in a file or sent in a chat message, UTF-8 packs these numbers into bytes (written in hex, so the 72 of
+              “H” shows as 48):{" "}
               <span className="font-mono text-sm">
                 {beforeBytes.map(hx).join(" ")} <b className="text-amber">{utf8.map(hx).join(" ")}</b>
               </span>
@@ -1547,8 +1592,8 @@ export function FollowTheA() {
             <div className="space-y-3">
               {font === "picture" ? (
                 <p className="font-serif text-[0.9375rem] text-body">
-                  The app asks the font for glyph number {code}. This made-up <b>picture font</b> stores a picture in
-                  every row, so glyph {code} is a <b>{pictureFor(code).name}</b>. The real Wingdings font works like this:
+                  The app asks the font for glyph number {code}. This made-up <b>picture font</b> stores a picture for
+                  every code, so glyph {code} is a <b>{pictureFor(code).name}</b>. The real Wingdings font works like this:
                   it draws code 74 (“J”) as a smiley ☺.
                 </p>
               ) : (
@@ -1594,7 +1639,7 @@ export function FollowTheA() {
             </p>
             <div className="scroll-thin overflow-x-auto">
               <div className="surface-screen mx-auto max-w-[480px] rounded-md border border-bezel p-2">
-                <FramebufferCrop px={fb.px} own={fb.own} pick={[px, py]} onPick={(x, y) => setPick([x, y])} />
+                <FramebufferCrop px={fb.px} pick={[px, py]} onPick={(x, y) => setPick([x, y])} />
               </div>
             </div>
             <div className="grid gap-3 @2xl:grid-cols-[minmax(0,1fr)_auto]">
@@ -1613,11 +1658,13 @@ export function FollowTheA() {
                 ))}
               </div>
             </div>
-            <pre className="scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-3 py-2 font-mono text-[0.8125rem] leading-relaxed text-ink">
-              {`for row in 0..7:     bits = glyph[row]        (e.g. row 0 = ${binStr(rows[0], 8)})
-  for col in 0..7:   ink  = bit number (7 − col) of bits
-    address = ((${Y0} + row) × 1920 + (${X0} + col)) × 4
-    memory[address] = ink ? FF FF FF : 00 00 00`}
+            <pre className="scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-3 py-2 font-mono text-xs leading-relaxed text-ink @md:text-[0.8125rem]">
+              {`for row in 0..7:
+  bits = glyph[row]   (row 0 = ${binStr(rows[0], 8)})
+  for col in 0..7:
+    ink = bit (7 − col) of bits
+    addr = ((${Y0}+row)×1920 + (${X0}+col))×4
+    memory[addr] = ink ? FFFFFF : 000000`}
             </pre>
           </div>
         )}
@@ -1699,29 +1746,33 @@ export function FollowTheA() {
 
 function FramebufferCrop({
   px,
-  own,
   pick,
   onPick,
 }: {
   px: number[][];
-  own: boolean[][];
   pick: [number, number];
   onPick: (x: number, y: number) => void;
 }) {
   const cell = 10;
-  const ox = 26;
-  const oy = 22;
+  // Labels are 17 units so they stay at least 11 px tall even when the figure shrinks to ~280 px on a phone.
+  const ox = 30;
+  const oy = 24;
   const W = ox + CROP_W * cell;
   const H = oy + CROP_H * cell;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="framebuffer pixels">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="block w-full"
+      role="img"
+      aria-label={`Framebuffer pixels: the word “Hello” on top, then “Hi! ” and your new glyph. Click a pixel to see its address. Picked: x = ${pick[0]}, y = ${pick[1]}.`}
+    >
       {[0, 8, 16, 24, 32].map((x) => (
-        <text key={`x${x}`} x={ox + x * cell + 1} y={15} className="fill-mute font-mono" fontSize={15}>
+        <text key={`x${x}`} x={ox + x * cell + 1} y={17} className="fill-mute font-mono" fontSize={17}>
           {x}
         </text>
       ))}
       {[0, 8, 16].map((y) => (
-        <text key={`y${y}`} x={0} y={oy + y * cell + 12} className="fill-mute font-mono" fontSize={15}>
+        <text key={`y${y}`} x={0} y={oy + y * cell + 13} className="fill-mute font-mono" fontSize={17}>
           {y}
         </text>
       ))}
