@@ -158,6 +158,7 @@ export const glossary: Term[] = [
   },
   {
     term: "Threshold voltage",
+    aka: "threshold",
     def: "The gate voltage at which a transistor switches from off to on.",
     slug: "transistor",
   },
@@ -702,8 +703,9 @@ export const glossary: Term[] = [
     slug: "operating-system",
   },
   {
-    term: "Character encoding",
-    def: "An agreed table between numbers and characters, such as ASCII or UTF-8. The same bytes can mean different text under a different encoding.",
+    term: "Character code",
+    aka: "character encoding",
+    def: "An agreed table between numbers and characters, such as ASCII or Unicode. The same bytes read with a different table give different text.",
     slug: "bits-meaning",
   },
   {
@@ -857,6 +859,7 @@ export const glossary: Term[] = [
   },
   {
     term: "Virtual memory",
+    aka: "virtual address",
     def: "Giving each program its own private range of addresses. The hardware translates them to real RAM addresses using page tables.",
     slug: "operating-system",
   },
@@ -1051,6 +1054,106 @@ export const glossary: Term[] = [
     term: "Bandwidth",
     def: "How much data a link can carry per second.",
     slug: "network",
+  },
+  {
+    term: "Endianness",
+    aka: "byte order",
+    def: "The order in which the bytes of a bigger number are stored. Little-endian puts the smallest byte first; big-endian puts the biggest first. The bytes are the same, only the agreed order differs.",
+    slug: "bits-meaning",
+  },
+  {
+    term: "Mojibake",
+    def: "Garbled text you get when bytes are read with the wrong character code, such as “Ã©” instead of “é”.",
+    slug: "bits-meaning",
+  },
+  {
+    term: "TLB",
+    aka: "translation lookaside buffer",
+    def: "A small, fast table inside the CPU that remembers recent page-table lookups, so most memory accesses don't have to read the page table at all.",
+    slug: "operating-system",
+  },
+  {
+    term: "Heap",
+    def: "The area of memory where a program asks for blocks while it runs (for example with malloc) and gives them back later.",
+    slug: "operating-system",
+  },
+  {
+    term: "Race condition",
+    def: "A bug where the result depends on the exact timing of two things running at once, for example two threads updating the same number.",
+    slug: "operating-system",
+  },
+  {
+    term: "Segmentation fault",
+    aka: "segfault",
+    def: "What happens when a program touches memory it isn't allowed to use: the CPU raises a fault and the operating system stops the program.",
+    slug: "operating-system",
+  },
+  {
+    term: "Chiplet",
+    def: "One of several smaller dies packed together to act as one big chip. Small dies have a better yield than one giant die.",
+    slug: "chip-making",
+  },
+  {
+    term: "Binning",
+    def: "Testing finished chips and sorting them by how fast they run or which parts work, then selling them as different models.",
+    slug: "chip-making",
+  },
+  {
+    term: "Symbol table",
+    def: "The compiler's list of names and the addresses it chose for them, such as product → 14.",
+    slug: "machine-code",
+  },
+  {
+    term: "Addressing mode",
+    def: "The way an instruction says where its data is: the number itself (immediate), at an address (direct), or at an address stored somewhere else (indirect, a pointer).",
+    slug: "machine-code",
+  },
+  {
+    term: "Universal computer",
+    aka: "Turing complete",
+    def: "A machine that, given enough memory and time, can run any program any other computer can. Memory plus a conditional jump is enough.",
+    slug: "cpu",
+  },
+  {
+    term: "Halting problem",
+    def: "The proof that no program can look at every other program and always tell correctly whether it will ever stop.",
+    slug: "cpu",
+  },
+  {
+    term: "Aliasing",
+    def: "When a sound or signal is sampled too slowly, a high frequency shows up disguised as a lower one.",
+    slug: "input-output",
+  },
+  {
+    term: "Differential pair",
+    def: "Two wires carrying opposite signals; the receiver looks only at the difference, so noise that hits both wires cancels out.",
+    slug: "input-output",
+  },
+  {
+    term: "Interrupt handler",
+    aka: "handler",
+    def: "The small piece of code the CPU jumps to when an interrupt arrives. It ends with a return instruction that continues the interrupted program.",
+    slug: "functions",
+  },
+  {
+    term: "Buffer overflow",
+    def: "Writing past the end of a block of memory, for example a too-long input overwriting a return address on the stack. A classic security hole.",
+    slug: "functions",
+  },
+  {
+    term: "Verilog",
+    def: "A hardware description language: code that describes a circuit, which tools turn into gates and a chip layout.",
+    slug: "chip-making",
+  },
+  {
+    term: "TMDS",
+    def: "The way HDMI and DVI send pixel data: each 8-bit colour value becomes a 10-bit code that is easy to send fast and keeps the wire balanced.",
+    slug: "input-output",
+  },
+  {
+    term: "EDID",
+    def: "A small block of data inside every monitor that tells the computer which resolutions and refresh rates it supports.",
+    slug: "input-output",
   },
 ];
 
