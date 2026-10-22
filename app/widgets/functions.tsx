@@ -1250,8 +1250,8 @@ export function CallStackTower() {
             key={flight.key}
             className="pointer-events-none absolute top-0 left-0 z-10 rounded-md border border-cyan bg-bg px-1.5 py-0.5 font-mono text-xs font-bold whitespace-nowrap text-cyan halo-cyan"
             initial={{ x: flight.xs[0], y: flight.ys[0], opacity: 0 }}
-            animate={{ x: flight.xs, y: flight.ys, opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 0.85, ease: "easeInOut", opacity: { times: [0, 0.15, 0.8, 1], duration: 0.85 } }}
+            animate={{ x: flight.xs, y: flight.ys, opacity: [0, 1, 1, 1, 0] }}
+            transition={{ duration: 0.9, ease: "easeInOut" }}
             style={{ translateX: "-50%", translateY: "-50%" }}
           >
             ↩ {flight.text}
