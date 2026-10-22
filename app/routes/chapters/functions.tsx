@@ -549,7 +549,7 @@ export default function Functions() {
       </p>
       <InterruptDemo />
       <p>
-        Run it and press a key. The output goes 1, 2, 3, 65 (A), 4, 5…: the main program carries on counting as if
+        Run it and press a key. The output goes, for example, 1, 2, 3, 65 (A), 4, 5…: the main program carries on counting as if
         nothing happened. Now pick “forgets to save A” and try again. The handler loads the key code into A and never
         puts the old value back, so the main program now counts on from the key code. Real bugs like this are very
         hard to find, because they only appear when a key is pressed at exactly the wrong moment.
