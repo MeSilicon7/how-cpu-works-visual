@@ -60,6 +60,13 @@ app/
                             JPEG-style codec, procedural images, bitmap fonts, hooks
 ```
 
+## Writing and design docs
+
+- `docs/writing-guide.md`: the rules every chapter and widget follows (colour tokens, typography,
+  components, plain-English writing, how to check a page).
+- `docs/curriculum-plan.md`: the plan behind the 20 chapters, with detailed outlines and checked numbers.
+- `docs/theme.md`: the paper/night theme spec (palette, contrast numbers, fonts).
+
 ## Development
 
 ```bash
