@@ -1277,7 +1277,7 @@ function glyphFor(code: number, font: FontId): { rows: number[]; missing: boolea
 const STAGES = ["Key", "Layout", "Number", "Font", "Framebuffer", "Monitor"] as const;
 const SCREEN_W = 1920;
 /** The crop of the screen we draw: 48 × 24 pixels from the top-left corner. */
-const CROP_W = 48;
+const CROP_W = 40;
 const CROP_H = 24;
 const X0 = 32;
 const Y0 = 16;
@@ -1412,7 +1412,7 @@ export function FollowTheA() {
             <div className="scroll-thin overflow-x-auto pb-1">
               <div className="w-max space-y-1">
                 {KB.map((row, ri) => (
-                  <div key={ri} className="flex gap-1" style={{ paddingLeft: `${ri * 0.6}rem` }}>
+                  <div key={ri} className="flex gap-0.5 @md:gap-1" style={{ paddingLeft: `${ri * 0.6}rem` }}>
                     {row.map(([, id], ci) => {
                       const sel = ri === r && ci === c;
                       const up = charAt(layout, ri, ci, true);
@@ -1425,7 +1425,7 @@ export function FollowTheA() {
                           title={`usage ID 0x${hx(id)}`}
                           onClick={() => choose(ri, ci)}
                           className={cx(
-                            "relative flex h-9 w-8 flex-col items-center justify-center rounded-md border font-sans text-sm leading-none font-semibold transition-colors sm:h-10 sm:w-10",
+                            "relative flex h-9 w-7 flex-col items-center justify-center rounded-md border font-sans text-sm leading-none font-semibold transition-colors @md:h-10 @md:w-10",
                             sel
                               ? "border-ink bg-panel-2 text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.12)]"
                               : "border-line-2 bg-panel text-ink shadow-[inset_0_-2px_0_var(--color-line-2)] hover:bg-panel-2",
@@ -1593,7 +1593,7 @@ export function FollowTheA() {
               The new glyph goes at x = {X0}, y = {Y0}. Click any pixel.
             </p>
             <div className="scroll-thin overflow-x-auto">
-              <div className="surface-screen mx-auto w-fit rounded-md border border-bezel p-2">
+              <div className="surface-screen mx-auto max-w-[480px] rounded-md border border-bezel p-2">
                 <FramebufferCrop px={fb.px} own={fb.own} pick={[px, py]} onPick={(x, y) => setPick([x, y])} />
               </div>
             </div>
@@ -1644,7 +1644,7 @@ export function FollowTheA() {
                     className={cx("flex gap-px", gi === 1 && "rounded-[3px] p-0.5 outline-2 outline-amber outline-dashed")}
                   >
                     {fb.px[Y0].slice(a, z).map((v, x) => (
-                      <span key={x} className={cx("h-5 w-2.5 sm:w-3", v ? "bg-screen-ink" : "bg-screen-2")} />
+                      <span key={x} className={cx("h-5 w-1.5 @md:w-3", v ? "bg-screen-ink" : "bg-screen-2")} />
                     ))}
                   </span>
                 ))}
@@ -1652,7 +1652,7 @@ export function FollowTheA() {
               </div>
             </div>
             <div className="font-sans text-xs text-mute">
-              Pixels x = 0 to {CROP_W - 1} of row {Y0}; the dashed box is your glyph. The row goes on for 1,872 more
+              Pixels x = 0 to {CROP_W - 1} of row {Y0}; the dashed box is your glyph. The row goes on for {fmt(SCREEN_W - CROP_W)} more
               pixels (1920 in all).
             </div>
             <div className="font-mono text-xs break-words text-mute">
@@ -1709,19 +1709,19 @@ function FramebufferCrop({
   onPick: (x: number, y: number) => void;
 }) {
   const cell = 10;
-  const ox = 22;
-  const oy = 18;
+  const ox = 26;
+  const oy = 22;
   const W = ox + CROP_W * cell;
   const H = oy + CROP_H * cell;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block w-[460px] @2xl:w-[560px]" role="img" aria-label="framebuffer pixels">
-      {[0, 8, 16, 24, 32, 40].map((x) => (
-        <text key={`x${x}`} x={ox + x * cell + 1} y={12} className="fill-mute font-mono" fontSize={11}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full" role="img" aria-label="framebuffer pixels">
+      {[0, 8, 16, 24, 32].map((x) => (
+        <text key={`x${x}`} x={ox + x * cell + 1} y={15} className="fill-mute font-mono" fontSize={15}>
           {x}
         </text>
       ))}
       {[0, 8, 16].map((y) => (
-        <text key={`y${y}`} x={0} y={oy + y * cell + 9} className="fill-mute font-mono" fontSize={11}>
+        <text key={`y${y}`} x={0} y={oy + y * cell + 12} className="fill-mute font-mono" fontSize={15}>
           {y}
         </text>
       ))}

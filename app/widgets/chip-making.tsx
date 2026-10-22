@@ -1742,7 +1742,7 @@ export function MooresLaw() {
   return (
     <Widget
       title="Fifty years of doubling"
-      subtitle="Transistors on one chip, from 1971 to today. Each grid line up is 10 times more than the one below. Point at (or tap) a chip to see its numbers."
+      subtitle="Transistors on one chip, from 1971 to 2024. Each grid line up is 10 times more than the one below. Point at (or tap) a chip to see its numbers."
     >
       <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
         <span className="text-mute">Dashed line doubles every</span>

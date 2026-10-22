@@ -390,7 +390,7 @@ export default function ChipMaking() {
             ["1", <TeX>{"0.9^{1} = 0.9"}</TeX>],
             ["10", <TeX>{"0.99^{10} \\approx 0.90438"}</TeX>],
             ["1,000", <TeX>{"0.9999^{1000} \\approx 0.90483"}</TeX>],
-            ["e^(−0.1)", <TeX>{"\\approx 0.90484"}</TeX>],
+            ["n → ∞ (very many)", <TeX>{"e^{-0.1} \\approx 0.90484"}</TeX>],
           ]}
         />
         <p>
