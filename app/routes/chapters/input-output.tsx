@@ -41,7 +41,7 @@ export default function InputOutput() {
       <h2>The CPU has no “draw” instruction</h2>
       <p>
         Look at the instructions of any CPU, including the SAP-8 from <Link to="/cpu">The CPU</Link>: load, store,
-        add, jump, compare. There is no “draw a pixel”, no “beep”, no “read the keyboard”. A CPU can only do one thing
+        add, subtract, jump. There is no “draw a pixel”, no “beep”, no “read the keyboard”. A CPU can only do one thing
         with the outside world: <strong>read or write a byte at an address</strong>. So engineers use a trick. They
         make some addresses lead to a device instead of to RAM.
       </p>
@@ -153,13 +153,13 @@ export default function InputOutput() {
       </p>
       <p>
         <strong>Polling</strong> means asking again and again. The CPU runs a small loop: read the status mailbox; if
-        it is 0, go back and read it again; if it is 1, read the data mailbox. In the toy assembly language of{" "}
-        <Link to="/machine-code">Machine Code</Link> it looks like this:
+        it is 0, go back and read it again; if it is 1, read the data mailbox. In a toy assembly language like the one
+        in <Link to="/machine-code">Machine Code</Link> it looks like this:
       </p>
       <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
-        <code>{`wait: LDA 0xF001   ; read the keyboard status
-      JZ  wait     ; 0 means nothing yet: ask again
-      LDA 0xF000   ; 1 means a key is waiting: read its code`}</code>
+        <code>{`wait: LDA 0xF001   ; read the keyboard status (sets the zero flag if it is 0)
+      JZ  wait     ; it was 0: nothing yet, so ask again
+      LDA 0xF000   ; it was 1: a key is waiting, so read its code`}</code>
       </pre>
       <p>
         Polling is simple, but most of the questions get the answer “no”. <strong>Interrupts</strong> turn it around:
@@ -283,8 +283,8 @@ export default function InputOutput() {
       <p>
         A keyboard is a tiny computer of its own. Its chip scans a grid of key switches about 1,000 times a second (you
         can watch it in <Link to="/calculator">Scene: Pressing 2 + 3</Link>). When a key goes down, it sends a code for
-        the key's <em>position</em>, not a letter. The key in the A position sends USB code <code>0x04</code> on every
-        keyboard in the world. The operating system's layout table then turns 0x04 into “a”, or “A” with Shift, or “q”
+        the key's <em>position</em>, not a letter. The key in the place where a US keyboard has its A sends USB code{" "}
+        <code>0x04</code> on every USB keyboard, whatever is printed on it. The operating system's layout table then turns 0x04 into “a”, or “A” with Shift, or “q”
         on a French keyboard. The <Link to="/bits-meaning">previous chapter</Link> tells that part of the story.
       </p>
       <p>
@@ -296,7 +296,8 @@ export default function InputOutput() {
       <MouseSensor />
       <p>
         The movement is counted in <strong>counts</strong>. A mouse with 1,600 counts per inch (CPI) reports 1,600
-        counts when you move it 2.54 cm. About once every millisecond it sends a tiny <strong>report</strong> over USB:
+        counts when you move it 2.54 cm. Many times a second (every millisecond on many mice, every 8 ms on simple
+        ones) it sends a tiny <strong>report</strong> over USB:
         one byte for the buttons, then <strong>dx</strong> (how far right) and <strong>dy</strong> (how far toward
         you). Both are <strong>signed bytes</strong>: two's complement numbers from <Link to="/binary">Binary</Link>, so
         they can be negative.
@@ -305,7 +306,7 @@ export default function InputOutput() {
         <p>Counts per centimetre at 1,600 CPI:</p>
         <TeX block>{tex`\frac{1{,}600 \text{ counts}}{2.54 \text{ cm}} \approx 630 \text{ counts per cm}`}</TeX>
         <p>
-          You move the mouse a little to the left: 3 counts in one millisecond. In two's complement,{" "}
+          You move the mouse a little to the left: 3 counts since the last report. In two's complement,{" "}
           <TeX>{"-3"}</TeX> is <TeX>{"256 - 3 = 253"}</TeX> = <code>1111 1101</code> = <code>0xFD</code>. The operating
           system then moves the pointer, with a speed setting of 2 and a screen 1,920 pixels wide:
         </p>
