@@ -3,7 +3,15 @@ import { Link } from "react-router";
 import { tex, TeX } from "~/components/tex";
 import { Callout, DataTable, GoDeeper, KeyIdeas } from "~/components/ui";
 import { chapterMeta } from "~/lib/meta";
-import { CmosNand, GatePlayground, NandUniversal, SwitchGates, XorBuild } from "~/widgets/gates";
+import {
+  CmosNand,
+  GatePlayground,
+  NandUniversal,
+  PatternDetector,
+  SwitchGates,
+  TwoToFourDecoder,
+  XorBuild,
+} from "~/widgets/gates";
 
 export const meta = () => chapterMeta("logic-gates");
 
@@ -104,13 +112,90 @@ export default function LogicGates() {
         ends up limiting how fast a CPU can run (more in <Link to="/clock">The Clock</Link>).
       </p>
 
+      <h2>Decoders: recognising a pattern</h2>
+      <p>
+        Here is a question you may already have: how does a computer <em>know</em> what a pattern of bits means? Later
+        in this book, the CPU reads instructions from memory. When the first 4 bits of an instruction are{" "}
+        <code>0100</code>, it must store a number. Something inside the chip has to notice “this is 0100” and nothing
+        else. That something is just a few gates. No understanding is needed.
+      </p>
+      <p>Two facts from this chapter are enough:</p>
+      <ul>
+        <li>
+          An <strong>AND gate</strong> outputs 1 only when <em>all</em> of its inputs are 1.
+        </li>
+        <li>
+          A <strong>NOT gate</strong> turns a 0 into a 1.
+        </li>
+      </ul>
+      <p>
+        So take a 4-input AND gate, and put a NOT on every wire where the pattern has a 0. Now the AND gate sees four 1s
+        exactly when the input matches the pattern. For the pattern <code>0100</code> on bits <TeX>{"b_7"}</TeX> to{" "}
+        <TeX>{"b_4"}</TeX> (the top 4 bits of a byte), that is:
+      </p>
+      <TeX block>{tex`\text{out} = \overline{b_7} \cdot b_6 \cdot \overline{b_5} \cdot \overline{b_4}`}</TeX>
+      <p>
+        Read it aloud as “NOT <TeX>{"b_7"}</TeX> AND <TeX>{"b_6"}</TeX> AND NOT <TeX>{"b_5"}</TeX> AND NOT{" "}
+        <TeX>{"b_4"}</TeX>”. The bar over a bit means NOT, and the dot means AND.
+      </p>
+      <Callout kind="math" title="Check it with two inputs">
+        <p>
+          Input <code>0100</code>: the four wires into the AND gate carry <TeX>{"\\overline{0}, 1, \\overline{0}, \\overline{0}"}</TeX>, which is{" "}
+          <TeX>{"1 \\cdot 1 \\cdot 1 \\cdot 1 = 1"}</TeX>. It fires.
+        </p>
+        <p>
+          Input <code>0110</code>: now <TeX>{"b_5 = 1"}</TeX>, so its NOT gives 0. The AND gate gets{" "}
+          <TeX>{"1 \\cdot 1 \\cdot 0 \\cdot 1 = 0"}</TeX>. One wrong bit is enough to keep it off.
+        </p>
+        <p>
+          4 bits have <TeX>{"2^4 = 16"}</TeX> patterns, and this circuit outputs 1 for exactly one of them.
+        </p>
+      </Callout>
+      <PatternDetector />
+      <Callout kind="idea" title="So how does the chip “know”?">
+        <p>
+          It doesn't know anything. The detector is simply <em>wired</em> so that one pattern, and only that pattern,
+          turns its output wire on. The <em>meaning</em> (“0100 means store a number”) comes from the people who
+          designed the chip: they connected that output wire to the circuits that do the storing. Change the wiring and
+          the same pattern would mean something else.
+        </p>
+      </Callout>
+      <p>
+        A <strong>decoder</strong> takes this one step further: it has one detector for <em>every</em> pattern, each
+        with its own output wire. With 2 input bits there are <TeX>{"2^2 = 4"}</TeX> patterns, so a 2-to-4 decoder has 4
+        AND gates and 4 output wires. The NOT gates are shared: each input bit needs only one, and its two versions (the
+        bit and its opposite) run past all the AND gates.
+      </p>
+      <TwoToFourDecoder />
+      <p>
+        With <TeX>{"n"}</TeX> input bits a decoder has <TeX>{"2^n"}</TeX> outputs, and exactly one of them is on. You
+        will meet this circuit again and again:
+      </p>
+      <ul>
+        <li>
+          In <Link to="/memory">Memory</Link>, a decoder turns an address into “switch on row number 5” and so picks one
+          byte out of many.
+        </li>
+        <li>
+          In <Link to="/cpu">The CPU</Link>, a decoder recognises each instruction's opcode, such as{" "}
+          <code>0100</code>, and starts the right steps.
+        </li>
+        <li>
+          In <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>, a decoder lights the right segments of a
+          digital display, so the bits <code>0101</code> show up as the shape “5”.
+        </li>
+      </ul>
+
       <GoDeeper title="Any truth table → a circuit (sum of products)">
         <p>
           Here's a recipe that turns <em>any</em> truth table into gates, no cleverness needed:
         </p>
         <ol>
           <li>Find every row where the output is 1.</li>
-          <li>For each such row, AND the inputs together, putting a NOT on any input that is 0 in that row.</li>
+          <li>
+            For each such row, AND the inputs together, putting a NOT on any input that is 0 in that row. (That is
+            exactly a pattern detector from the Decoders section.)
+          </li>
           <li>OR all those terms together.</li>
         </ol>
         <p>For XOR, the output is 1 in rows (A=0, B=1) and (A=1, B=0), giving:</p>
@@ -119,6 +204,12 @@ export default function LogicGates() {
           This proves something huge: <strong>with AND, OR and NOT you can build any logic function at all</strong>.
           Addition, comparison, “is this pixel inside the triangle?”: if you can write down the truth table, you can
           build the circuit.
+        </p>
+        <p>
+          In plain words: “the output is 1 when the input is <em>this</em> pattern, or <em>that</em> pattern, or…”. You
+          can see a real example in the 7-segment display decoder of{" "}
+          <Link to="/bits-meaning">Who Decides What Bits Mean?</Link>, where each of the 7 bars of a digit has its own
+          small formula like this.
         </p>
       </GoDeeper>
 
@@ -148,6 +239,10 @@ export default function LogicGates() {
             circuit → NOT.
           </>,
           <>A truth table lists every input combination, so it completely describes a gate.</>,
+          <>
+            An AND gate with NOTs on some inputs fires for exactly one pattern. A <strong>decoder</strong> has one such
+            detector per pattern. That is how hardware “recognises” bits: by wiring, not by understanding.
+          </>,
           <>
             With AND, OR and NOT (or NAND alone) you can build <strong>any</strong> logic function.
           </>,

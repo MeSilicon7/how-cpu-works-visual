@@ -43,13 +43,14 @@ export default function Network() {
       <Callout kind="math" title="Why can't the eavesdropper just work it out?">
         <p>
           Going forward is easy: <TeX>{"5^{6} \\bmod 23"}</TeX> takes a few multiplications. Going backwards (“which
-          power of 5 gives 8?”) has no known shortcut; you basically have to try them all. With a 23 that's instant.
+          power of 5 gives 8?”) has no known fast method; for huge numbers every known trick is still
+          impossibly slow. With a 23 that's instant.
           Real systems use numbers hundreds of digits long (or elliptic curves), where trying them all would take longer
           than the age of the universe.
         </p>
         <TeX
           block
-        >{tex`\text{a 256-bit key: } 2^{256} \approx 1.2 \times 10^{77} \text{ possibilities} \qquad \text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years}`}</TeX>
+        >{tex`\begin{aligned} &\text{256-bit key: } 2^{256} \approx 1.2 \times 10^{77} \text{ keys} \\ &\text{at } 10^{12} \text{ guesses/s} \to \approx 10^{57} \text{ years} \end{aligned}`}</TeX>
       </Callout>
       <p>
         The actual scrambling uses a cipher like AES: rounds of XOR, substitutions and shifts, exactly the bitwise
@@ -84,7 +85,7 @@ export default function Network() {
       <Callout kind="math" title="How long is a Wi-Fi wave?">
         <TeX
           block
-        >{tex`\lambda = \frac{c}{f} = \frac{3 \times 10^8\ \text{m/s}}{2.4 \times 10^9\ \text{Hz}} = 0.125\ \text{m} = 12.5\ \text{cm}`}</TeX>
+        >{tex`\begin{aligned} \lambda = \frac{c}{f} &= \frac{3 \times 10^8\ \text{m/s}}{2.4 \times 10^9\ \text{Hz}} \\ &= 0.125\ \text{m} = 12.5\ \text{cm} \end{aligned}`}</TeX>
         <p>That's why Wi-Fi antennas are a few centimetres long, a fraction of the wavelength.</p>
       </Callout>
 
@@ -121,7 +122,7 @@ export default function Network() {
         </p>
         <TeX
           block
-        >{tex`142.250.74.46 = \underbrace{10001110\;11111010}_{\text{matches } 142.250.0.0/16}\;01001010\;00101110`}</TeX>
+        >{tex`\begin{aligned} &142.250.74.46 = \\ &\underbrace{10001110\;11111010}_{\text{matches } 142.250.0.0/16}\;01001010\;00101110 \end{aligned}`}</TeX>
         <p>
           Routers constantly tell their neighbours which addresses they can reach (using protocols like BGP), so when a
           cable breaks, traffic flows around it within seconds. That's the internet's original design goal: no single
@@ -136,11 +137,74 @@ export default function Network() {
         stores it until Sam's phone is reachable. Sam's phone keeps a quiet connection open to the server, so the server
         can immediately push the message down that connection, and the phone buzzes.
       </p>
+      <Callout kind="idea" title="Which app gets it? Ports">
+        <p>
+          An IP address only brings a packet to the right <em>device</em>. But Sam's phone runs dozens of apps that use
+          the network at the same time. So every packet also carries a 16-bit <strong>port number</strong>:{" "}
+          <TeX>{"2^{16} = 65{,}536"}</TeX> possible ports, numbered 0 to 65,535. Servers wait on well-known ports
+          (secure web pages use port 443). When the chat app opens its connection, the phone gives it a free port, say
+          51234, and writes “port 51234 → chat app” in a table.
+        </p>
+        <p>
+          <strong>The IP address finds the phone; the port finds the app.</strong> Keeping that table and handing each
+          arriving packet to the right app is one of the jobs of the{" "}
+          <Link to="/operating-system">operating system</Link>.
+        </p>
+      </Callout>
       <p>
         Then everything runs in reverse on Sam's phone: radio → bits → packets reassembled in order → decrypted with the
         shared secret → UTF-8 bytes → characters → glyphs from a font → pixels in the framebuffer → light from the
         screen, exactly like the end of <Link to="/calculator">the 2 + 3 scene</Link>.
       </p>
+
+      <GoDeeper title="And when you open a web page?">
+        <p>
+          A web page travels the same way, packet by packet. The browser asks DNS for the server's address, opens a
+          connection to port 443, agrees on a secret key, and then sends a request that is just plain text (encrypted on
+          the way):
+        </p>
+        <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+          {"GET /index.html HTTP/1.1\nHost: example.com"}
+        </pre>
+        <p>
+          The server answers with more text: <code>HTTP/1.1 200 OK</code>, a few lines of details, and then the page
+          itself, written in <strong>HTML</strong>. HTML is text with tags around each part:
+        </p>
+        <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+          {"<h1>Hello</h1>\n<p>Hi <b>Sam</b>!</p>"}
+        </pre>
+        <p>Then the browser, which is just a program, does four steps, each one only numbers and tables:</p>
+        <ol>
+          <li>
+            <strong>Parse:</strong> it reads the characters one by one and builds a tree: the page contains a heading
+            and a paragraph, the paragraph contains some text and a bold part. A compiler reads a program the same way.
+          </li>
+          <li>
+            <strong>Style:</strong> it matches style rules (CSS), like “headings are 32 pixels tall”, to every part of
+            the tree.
+          </li>
+          <li>
+            <strong>Layout:</strong> it works out a box for every part, as numbers: x, y, width and height. Text is cut
+            into lines that fit the width.
+          </li>
+          <li>
+            <strong>Paint:</strong> every letter is looked up in a font and drawn as pixels into the framebuffer, just
+            like the “5” in <Link to="/calculator">the 2 + 3 scene</Link>. The GPU combines everything into the final
+            picture.
+          </li>
+        </ol>
+        <Callout kind="math" title="How heavy is a web page?">
+          <p>
+            A typical web page today is about <strong>2 MB</strong>, fetched with about <strong>70</strong> separate
+            requests (the HTML, style sheets, scripts, pictures and fonts). On a 50 Mbit/s connection:
+          </p>
+          <TeX block>{tex`\frac{2 \text{ MB} \times 8\ \tfrac{\text{bits}}{\text{byte}}}{50 \text{ Mbit/s}} = \frac{16 \text{ Mbit}}{50 \text{ Mbit/s}} = 0.32 \text{ s}`}</TeX>
+          <p>
+            Plus a round trip of 50–100 ms for every new connection. That's why browsers reuse connections and fetch
+            many things at once.
+          </p>
+        </Callout>
+      </GoDeeper>
 
       <h2>How long did it take?</h2>
       <LatencyCalc />

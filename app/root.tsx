@@ -1,6 +1,9 @@
 import { isRouteErrorResponse, Link, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 
+import { MotionConfig } from "motion/react";
+
 import type { Route } from "./+types/root";
+import { themeBootScript } from "./components/theme-toggle";
 import "katex/dist/katex.min.css";
 import "./app.css";
 
@@ -13,22 +16,23 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..700&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400..700&family=Atkinson+Hyperlegible+Next:wght@400..700&family=Fraunces:opsz,wght@9..144,300..700&family=Literata:ital,wght@0,400..700;1,400..700&display=swap",
   },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#060a0f" />
+        <meta name="theme-color" content="#f5f0e6" />
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <Meta />
         <Links />
       </head>
-      <body className="min-h-screen font-sans">
-        {children}
+      <body className="min-h-screen bg-bg font-sans text-ink">
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -56,7 +60,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <main className="container mx-auto p-6 pt-20">
-      <h1 className="font-mono text-5xl font-bold text-on">{message}</h1>
+      <h1 className="font-display text-5xl font-semibold text-ink">{message}</h1>
       <p className="mt-4 text-mute">{details}</p>
       <Link to="/" className="mt-6 inline-block text-cyan underline">
         Back to the start

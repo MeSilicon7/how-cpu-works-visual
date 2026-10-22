@@ -20,16 +20,20 @@ export const meta = () => chapterMeta("calculator");
 
 function DigitPicker({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-1">
-      <span className="mr-1 w-4 font-mono text-sm text-mute">{label}</span>
+    <div role="radiogroup" aria-label={`Choose ${label}`} className="flex items-center gap-0.5 sm:gap-1">
+      <span className="mr-1 w-3 font-mono text-sm text-mute">{label}</span>
       {Array.from({ length: 10 }, (_, d) => (
         <button
           key={d}
           type="button"
+          role="radio"
+          aria-checked={d === value}
           onClick={() => onChange(d)}
           className={cx(
-            "h-8 w-8 rounded-lg border font-mono text-sm font-bold transition",
-            d === value ? "border-amber bg-amber/20 text-amber" : "border-line-2 text-mute hover:text-ink",
+            "h-7 w-7 rounded-md border font-mono text-sm tabular-nums transition-colors sm:h-8 sm:w-8",
+            d === value
+              ? "border-ink bg-panel-2 font-bold text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.08)]"
+              : "border-line-2 bg-panel text-mute hover:border-off hover:bg-panel-2 hover:text-ink",
           )}
         >
           {d}
@@ -53,11 +57,14 @@ export default function Calculator() {
         <em>every</em> chapter so far. Let's follow it from your fingertip to the light leaving the screen.
       </p>
 
-      <div className="not-prose sticky top-[4.6rem] z-30 my-6 rounded-2xl border border-amber/40 bg-panel/95 p-3 backdrop-blur">
-        <div className="mb-2 text-xs font-semibold tracking-wider text-amber uppercase">
-          Your calculation: {a} + {b} = {sum}
+      <div className="not-prose sticky top-[calc(var(--header-h)+0.5rem)] z-30 my-6 rounded-md border border-line-2 bg-panel px-3 py-2.5 font-sans shadow-[0_1px_0_var(--color-line-2),0_8px_18px_-14px_rgb(0_0_0/0.45)]">
+        <div className="mb-1.5 flex items-baseline justify-between gap-3 border-b border-line pb-1.5">
+          <span className="label-caps text-dim">Your calculation</span>
+          <span className="font-mono text-lg font-semibold text-ink tabular-nums" aria-live="polite">
+            {a} + {b} = {sum}
+          </span>
         </div>
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1">
           <DigitPicker label="a" value={a} onChange={setA} />
           <DigitPicker label="b" value={b} onChange={setB} />
         </div>
@@ -92,9 +99,15 @@ export default function Calculator() {
 
       <h2>3. Interrupt: the CPU drops everything</h2>
       <p>
-        Your CPU is busy doing a hundred other things. It doesn't constantly check the keyboard. Instead, the USB
-        controller raises an <strong>interrupt</strong>: a wire straight into the CPU's control unit. Between two
-        instructions, the CPU notices, saves its work, and jumps to a small piece of the operating system.
+        Your CPU is busy doing a hundred other things. It doesn't check the keyboard itself. A separate chip, the USB
+        controller, asks the keyboard about 1,000 times per second, and when a new key arrives it raises an{" "}
+        <strong>interrupt</strong>: a wire straight into the CPU's control unit. Between two instructions, the CPU
+        notices. It pushes its program counter and flags onto the <strong>stack</strong> in RAM, exactly like a
+        function call (see <Link to="/functions">Functions & the Stack</Link>), and jumps to a small piece of the
+        operating system called the <strong>interrupt handler</strong>. The handler pushes any other registers it is
+        going to use. When it is done, it pops them all back, and the interrupted program carries on as if nothing had
+        happened. (How devices get the CPU's attention, and the other ways they can talk to it, is in{" "}
+        <Link to="/input-output">Input, Output & the Monitor</Link>.)
       </p>
       <SoftwareStack />
       <p>
@@ -135,13 +148,18 @@ export default function Calculator() {
         any size. The app (with help from the graphics chip) writes the colour of every pixel of “{sum}” into the{" "}
         <strong>framebuffer</strong>, a region of memory where each pixel's colour is stored as numbers.
       </p>
+      <p>
+        The same lookup works for any letter. <Link to="/bits-meaning">Who Decides What Bits Mean?</Link> follows an
+        “A” through a font table, all the way from the key to the glass.
+      </p>
       <GlyphFramebuffer key={text} text={text} highlightFrom={text.indexOf("=") + 1} />
 
       <h2>8. Memory becomes light</h2>
       <p>
-        The screen doesn't know anything about calculators. Its controller simply copies the framebuffer to the panel,
-        over and over, 60 or more times per second. Each pixel is three tiny lights (red, green, blue), and the three
-        numbers set how bright each one glows. We'll dig into that in <Link to="/graphics">Graphics</Link>.
+        The screen doesn't know anything about calculators. The GPU's display controller reads the framebuffer 60 or more times
+        per second and sends every pixel's red, green and blue numbers down the cable. The monitor just receives those
+        colours and sets each pixel. Each pixel has three tiny parts (red, green, blue): little lights on an OLED
+        screen, or coloured shutters over a white backlight on an LCD. We'll dig into that in <Link to="/graphics">Graphics</Link>.
       </p>
       <ScanOut text={text} />
 
@@ -162,7 +180,7 @@ export default function Calculator() {
           <>A keypress is a switch closing in a row/column grid, found by scanning.</>,
           <>The key travels as a code over USB, then an interrupt hands it to the OS and the app.</>,
           <>Characters ≠ numbers: the app converts with “− 48” on the way in and “+ 48” on the way out.</>,
-          <>The maths is one ADD instruction: full adders rippling in a fraction of a nanosecond.</>,
+          <>The maths is one ADD instruction: a fast adder (with carry-lookahead) finishes in a fraction of a nanosecond.</>,
           <>A font turns characters into pixels; the framebuffer holds them; the display turns numbers into light.</>,
         ]}
       />

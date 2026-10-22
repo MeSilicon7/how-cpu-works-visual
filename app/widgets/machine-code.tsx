@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 
-import { Btn, cx, Pill, Widget } from "~/components/ui";
+import { Btn, cx, Pill, Segmented, Widget } from "~/components/ui";
 import { assemble, compileExpr, type Expr } from "~/lib/asm";
 import { binStr } from "~/lib/bits";
 import { disassemble, opByCode, programs, ramToHex } from "~/lib/cpu";
+import { useInterval } from "~/lib/hooks";
 
 /* ------------------------------------------------------------------ */
 /* One program, four levels                                              */
@@ -25,7 +26,7 @@ export function LayersView() {
   const [g, setG] = useState<Grp>("add");
   const sel = asmLines.find((l) => l.g === g)!;
   const hl = (x: Grp) =>
-    cx("rounded px-0.5 transition cursor-pointer", x === g ? "bg-amber/25 text-amber" : "hover:bg-panel-3");
+    cx("rounded px-0.5 transition cursor-pointer", x === g ? "bg-amber-tint text-amber" : "hover:bg-panel-3");
 
   const W = 320;
   const wave = (() => {
@@ -100,7 +101,7 @@ export function LayersView() {
               </text>
             ))}
           </svg>
-          <div className="mt-1 text-xs text-dim">8 wires: ~1 V for 1, 0 V for 0. Showing “{sel.text}”.</div>
+          <div className="mt-1 text-xs text-dim">The 8 bus wires, drawn side by side: ~1 V for 1, 0 V for 0. Showing “{sel.text}”.</div>
         </div>
       </div>
     </Widget>
@@ -177,7 +178,7 @@ export function TinyCompiler() {
                 )}
               >
                 {t.value}
-                <span className="ml-1 text-[0.6rem] text-dim">{t.type === "num" ? "number" : "op"}</span>
+                <span className="ml-1 text-[0.6875rem] text-dim">{t.type === "num" ? "number" : "op"}</span>
               </span>
             ))}
           </div>
@@ -274,7 +275,7 @@ export function TinyCompiler() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link
                   to={`/cpu?ram=${ramToHex(asm.ram)}`}
-                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg shadow-[0_0_16px_-2px_var(--color-on)] hover:bg-on-2"
+                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg halo-on hover:bg-on-2"
                 >
                   Run it on the CPU →
                 </Link>
@@ -390,7 +391,7 @@ export function AssemblerEditor() {
                 <Pill tone="on">{res.used.size} / 16 bytes used</Pill>
                 <Link
                   to={`/cpu?ram=${ramToHex(res.ram)}`}
-                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg shadow-[0_0_16px_-2px_var(--color-on)] hover:bg-on-2"
+                  className="rounded-lg bg-on px-3 py-1.5 text-sm font-semibold text-bg halo-on hover:bg-on-2"
                 >
                   Run it on the CPU →
                 </Link>
@@ -400,6 +401,229 @@ export function AssemblerEditor() {
           <div className="mt-2 font-mono text-[0.7rem] break-all text-dim">RAM image: {ramToHex(res.ram)}</div>
         </div>
       </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Walk the string: a pointer, a loop and base + i × size               */
+/* ------------------------------------------------------------------ */
+
+const WALK_TEXT = "hi Sam";
+/** Character codes of "hi Sam", then the 0 that marks the end. */
+const WALK_ITEMS = [...[...WALK_TEXT].map((c) => c.charCodeAt(0)), 0];
+const WALK_BASE = 1000;
+type ItemSize = 1 | 2 | 4;
+
+interface Walk {
+  i: number;
+  /** The line that runs next: 0, 1, 2, or 3 = stopped. */
+  line: number;
+  x: number | null;
+  shown: string;
+}
+const walkStart: Walk = { i: 0, line: 0, x: null, shown: "" };
+
+const showChar = (v: number) => (v === 32 ? "space" : `'${String.fromCharCode(v)}'`);
+
+export function WalkTheString() {
+  const [size, setSize] = useState<ItemSize>(1);
+  const [w, setW] = useState<Walk>(walkStart);
+  const [running, setRunning] = useState(false);
+  const p = WALK_BASE + w.i * size;
+  const done = w.line === 3;
+
+  const step = () =>
+    setW((s) => {
+      if (s.line === 0) return { ...s, x: WALK_ITEMS[s.i], line: 1 };
+      if (s.line === 1) return { ...s, line: s.x === 0 ? 3 : 2 };
+      if (s.line === 2) return { ...s, shown: s.shown + String.fromCharCode(s.x ?? 32), i: s.i + 1, line: 0 };
+      return s;
+    });
+  const reset = () => {
+    setW(walkStart);
+    setRunning(false);
+  };
+
+  useInterval(
+    () => {
+      if (done) setRunning(false);
+      else step();
+    },
+    running ? 650 : null,
+  );
+
+  const codeLines = [
+    <>
+      x = memory[{WALK_BASE} + i × {size}]
+    </>,
+    <>if x == 0: stop</>,
+    <>show x; i = i + 1; go to line 1</>,
+  ];
+  const lineNotes = ["read one item", "0 marks the end", "next item"];
+
+  return (
+    <Widget
+      title="Walk the string"
+      subtitle="The text “hi Sam” is stored at address 1000, one item per letter, with a 0 at the end. A 3-line loop walks along it. Step through it, then change how many bytes each item takes."
+      wide
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="label-caps text-dim">Bytes per item</span>
+        <Segmented<ItemSize>
+          size="sm"
+          value={size}
+          onChange={(v) => {
+            setSize(v);
+            reset();
+          }}
+          options={[
+            { value: 1, label: "1 byte" },
+            { value: 2, label: "2 bytes" },
+            { value: 4, label: "4 bytes" },
+          ]}
+        />
+        <span className="font-serif text-[0.9375rem] text-mute">
+          {size === 1 && "Like ASCII and UTF-8 text."}
+          {size === 2 && "Like text inside Windows, Java and JavaScript (UTF-16)."}
+          {size === 4 && "Like UTF-32 text, or a list of 32-bit whole numbers."}
+        </span>
+      </div>
+
+      {/* memory */}
+      <div className="mt-4 rounded-md border border-line bg-panel-2 px-3 pt-2 pb-3">
+        <div className="label-caps text-dim">Memory</div>
+        <div className="mt-1 flex flex-wrap gap-x-1.5 gap-y-2">
+          {WALK_ITEMS.map((v, k) => {
+            const bytes = Array.from({ length: size }, (_, j) => (v >> (8 * j)) & 255);
+            const cur = k === w.i && !done;
+            const stopHere = k === w.i && done;
+            const read = k < w.i;
+            return (
+              <div key={k} className="flex flex-col items-center">
+                <div className="h-5 font-mono text-xs leading-5 font-bold">
+                  {(cur || stopHere) && <span className={stopHere ? "text-violet" : "text-cyan"}>▼ p</span>}
+                </div>
+                <div
+                  className={cx(
+                    "flex gap-0.5 rounded-md border p-0.5 transition-colors duration-200",
+                    cur && "border-cyan bg-cyan-tint halo-cyan",
+                    stopHere && "border-violet bg-violet-tint halo-violet",
+                    !cur && !stopHere && (read ? "border-line bg-panel-3" : "border-line-2 bg-panel"),
+                  )}
+                >
+                  {bytes.map((b, j) => (
+                    <div key={j} className="flex w-8 flex-col items-center py-0.5 sm:w-10">
+                      <span className="font-mono text-[0.6875rem] text-dim tabular-nums">{WALK_BASE + k * size + j}</span>
+                      <span
+                        className={cx(
+                          "font-mono text-sm tabular-nums",
+                          j === 0 ? "font-semibold text-ink" : "text-dim",
+                        )}
+                      >
+                        {b}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-0.5 text-center font-mono text-xs leading-tight">
+                  <div className={v === 0 ? "font-semibold text-violet" : "text-ink"}>
+                    {v === 0 ? "end" : showChar(v)}
+                  </div>
+                  <div className="text-dim">i = {k}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        {/* the loop */}
+        <div className="rounded-md border border-line bg-panel px-3 py-2.5">
+          <div className="label-caps text-dim">The loop</div>
+          <div className="mt-1.5 space-y-1 font-mono text-sm">
+            {codeLines.map((c, n) => (
+              <div
+                key={n}
+                className={cx(
+                  "flex items-baseline gap-2 rounded px-1.5 py-1",
+                  w.line === n ? "bg-amber-tint text-ink" : "text-mute",
+                )}
+              >
+                <span className={cx("w-3 shrink-0", w.line === n ? "text-amber" : "text-transparent")} aria-hidden>
+                  ▶
+                </span>
+                <span className="w-3 shrink-0 text-dim">{n + 1}</span>
+                <span className="min-w-0 flex-1">{c}</span>
+                <span className="hidden shrink-0 font-sans text-xs text-dim sm:inline">{lineNotes[n]}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 font-serif text-[0.9375rem] text-mute">
+            {done ? (
+              <>
+                <strong className="text-violet">■ Stopped.</strong> x = 0, the end marker, so the loop is over.
+              </>
+            ) : w.line === 0 ? (
+              <>Next: read the item that p points at.</>
+            ) : w.line === 1 ? (
+              <>
+                Just read x = {w.x} ({showChar(w.x ?? 0)}). Is it 0?
+              </>
+            ) : (
+              <>Not 0, so show it and move to the next item.</>
+            )}
+          </div>
+        </div>
+
+        {/* the address math and the output */}
+        <div className="space-y-3">
+          <div className="rounded-md border border-line bg-panel px-3 py-2.5 font-mono text-sm leading-relaxed text-ink tabular-nums">
+            <div className="label-caps mb-1 font-sans text-dim">Where is item i?</div>
+            <div>
+              p = base + i × size
+            </div>
+            <div className="pl-[2ch]">
+              = {WALK_BASE} + {w.i} × {size}
+            </div>
+            <div className="pl-[2ch]">
+              = <span className="font-bold text-cyan">{p}</span>
+            </div>
+            {w.x !== null && w.line !== 0 && (
+              <div className="mt-1 text-mute">
+                x = {w.x}
+                {size > 1 && <span className="font-sans text-xs text-dim"> (all {size} bytes together)</span>}
+              </div>
+            )}
+          </div>
+          <div className="surface-screen rounded-md px-3 py-2.5">
+            <div className="label-caps text-dim">Screen</div>
+            <div className="mt-1 min-h-7 font-mono text-xl text-screen-ink">
+              {w.shown}
+              {!done && <span className="animate-pulse text-dim motion-reduce:animate-none">▏</span>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Btn variant="primary" onClick={step} disabled={done || running}>
+          Step one line
+        </Btn>
+        <Btn onClick={() => setRunning((r) => !r)} disabled={done} active={running}>
+          {running ? "Pause" : "Run"}
+        </Btn>
+        <Btn onClick={reset}>Reset</Btn>
+      </div>
+      {size > 1 && (
+        <p className="mt-3 max-w-[70ch] font-serif text-[0.9375rem] text-mute">
+          With {size} bytes per item, the letter 'h' (104) is stored as {[104, 0, 0, 0].slice(0, size).join(", ")}:
+          most CPUs put the low byte first. The loop reads all {size} bytes of an item as one number, so those extra 0s
+          are not mistaken for the end. A program that read this text 1 byte at a time would stop right after 'h'.
+          That's a real bug, and it happens when the reading code and the stored data disagree about the item size.
+        </p>
+      )}
     </Widget>
   );
 }

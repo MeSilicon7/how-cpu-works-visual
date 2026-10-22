@@ -27,10 +27,10 @@ export default function Video() {
       <Callout kind="math" title="One hour of 1080p at 30 fps, uncompressed">
         <TeX
           block
-        >{tex`\underbrace{1920 \times 1080}_{2{,}073{,}600 \text{ pixels}} \times \underbrace{3}_{\text{bytes}} = 6{,}220{,}800 \text{ bytes per frame} \approx 6.2\text{ MB}`}</TeX>
+        >{tex`\begin{aligned} &\underbrace{1920 \times 1080}_{2{,}073{,}600 \text{ pixels}} \times \underbrace{3}_{\text{bytes}} \\ &= 6{,}220{,}800 \text{ bytes per frame} \approx 6.2\text{ MB} \end{aligned}`}</TeX>
         <TeX
           block
-        >{tex`6{,}220{,}800 \times 30\ \tfrac{\text{frames}}{\text{s}} \times 3600\ \text{s} = 671{,}846{,}400{,}000 \text{ bytes} \approx 672\text{ GB}`}</TeX>
+        >{tex`\begin{aligned} &6{,}220{,}800 \times 30\ \tfrac{\text{frames}}{\text{s}} \times 3600\ \text{s} \\ &= 671{,}846{,}400{,}000 \text{ bytes} \\ &\approx 672\text{ GB} \end{aligned}`}</TeX>
         <p>
           To stream that live you'd need <TeX>{"6.2\\text{ MB} \\times 30 \\times 8 \\approx 1.5"}</TeX> gigabits per
           second, faster than almost any home internet. Yet a typical HD stream uses about 5 megabits per second: 300
@@ -50,7 +50,7 @@ export default function Video() {
         into one brightness value and two colour values:
       </p>
       <TeX block>{tex`Y = 0.299R + 0.587G + 0.114B`}</TeX>
-      <TeX block>{tex`C_b = 128 + 0.5B - 0.169R - 0.331G \qquad C_r = 128 + 0.5R - 0.419G - 0.081B`}</TeX>
+      <TeX block>{tex`\begin{aligned} C_b &= 128 + 0.5B - 0.169R - 0.331G \\ C_r &= 128 + 0.5R - 0.419G - 0.081B \end{aligned}`}</TeX>
       <p>
         (The weights in <TeX>{"Y"}</TeX> show that our eyes are most sensitive to green and least to blue.) Then it
         keeps brightness at full resolution but stores colour only once per 2 × 2 block of pixels:
@@ -59,7 +59,7 @@ export default function Video() {
       <Callout kind="math" title="Saving: 50%, almost invisibly">
         <TeX
           block
-        >{tex`\underbrace{1}_{Y} + \underbrace{\tfrac{1}{4} + \tfrac{1}{4}}_{C_b,\ C_r \text{ shared by 4 pixels}} = 1.5 \text{ bytes per pixel, instead of } 3`}</TeX>
+        >{tex`\begin{aligned} &\underbrace{1}_{Y} + \underbrace{\tfrac{1}{4} + \tfrac{1}{4}}_{C_b,\ C_r \text{ shared by 4}} \\ &= 1.5 \text{ bytes per pixel, not } 3 \end{aligned}`}</TeX>
       </Callout>
 
       <h2>Trick 2: describe patterns, not pixels</h2>
@@ -82,9 +82,9 @@ export default function Video() {
         <p>Say a wave amount is 37 and the table says 16:</p>
         <TeX
           block
-        >{tex`37 \div 16 = 2.31 \to \text{round} \to 2 \qquad\text{decode: } 2 \times 16 = 32 \quad (\text{error } 5)`}</TeX>
+        >{tex`\begin{aligned} &37 \div 16 = 2.31 \to \text{round} \to 2 \\ &\text{decode: } 2 \times 16 = 32 \quad (\text{error } 5) \end{aligned}`}</TeX>
         <p>A fine-detail amount of 9 with a table value of 99:</p>
-        <TeX block>{tex`9 \div 99 = 0.09 \to 0 \qquad\text{decode: } 0 \quad (\text{gone, but you can't see it})`}</TeX>
+        <TeX block>{tex`\begin{aligned} &9 \div 99 = 0.09 \to 0 \\ &\text{decode: } 0 \quad (\text{gone, but invisible}) \end{aligned}`}</TeX>
         <p>
           Zeros are nearly free to store. Reading the block in <strong>zig-zag</strong> order (smooth patterns first)
           bunches the zeros at the end, so “and the remaining 50 are zero” costs a few bits. Turn the quality slider
@@ -120,6 +120,72 @@ export default function Video() {
         short bit patterns, rare ones get long ones. It's the same idea as Morse code, where the most common letter, E,
         is a single dot. (The “≈ bits” estimate in the explorer above assumes this step.)
       </p>
+      <GoDeeper title="Huffman codes, and how the decoder knows where a code ends">
+        <p>
+          The classic way to give common values short codes is <strong>Huffman coding</strong>, invented in 1952 by
+          David Huffman, then a student. Try it on the word ABRACADABRA: 11 letters, but only 5 different ones, and A
+          appears 5 times.
+        </p>
+        <DataTable
+          head={["letter", "count", "fixed 3-bit code", "Huffman code"]}
+          rows={[
+            ["A", "5", "000", "0"],
+            ["B", "2", "001", "110"],
+            ["R", "2", "010", "111"],
+            ["C", "1", "011", "100"],
+            ["D", "1", "100", "101"],
+          ]}
+        />
+        <p>
+          (A fixed code needs 3 bits per letter, because 2 bits give only 4 patterns and we have 5 letters.) Count the
+          bits for the whole word (count × code length, for A, B, R, C and D):
+        </p>
+        <TeX block>{tex`\begin{aligned} \text{Huffman: }& 5 \times 1 + 2 \times 3 + 2 \times 3 \\ & + 1 \times 3 + 1 \times 3 = 23 \text{ bits} \end{aligned}`}</TeX>
+        <TeX block>{tex`\text{fixed: } 11 \times 3 = 33 \text{ bits}`}</TeX>
+        <TeX block>{tex`\text{ASCII: } 11 \times 8 = 88 \text{ bits}`}</TeX>
+        <p>
+          <strong>How the codes are chosen.</strong> Huffman's recipe: keep joining the two rarest items into one group.
+          C (1) + D (1) make a group of 2. B (2) + R (2) make 4. Those two groups make 6. Finally 6 + A (5) = 11. Now
+          undo the joins from the last one: at each split, one side gets a 0 and the other a 1. A was joined last, so it
+          gets the shortest code, a single 0; everything else starts with 1. Rare letters were joined early, so they end
+          up with longer codes.
+        </p>
+        <p>
+          <strong>How the decoder knows where a code ends.</strong> Here is the word encoded:
+        </p>
+        <div className="not-prose flex flex-wrap gap-x-2.5 gap-y-1 font-mono text-[0.9em]">
+          {"ABRACADABRA".split("").map((ch, i) => (
+            <span key={i} className="flex flex-col items-center">
+              <span className="font-sans text-dim">{ch}</span>
+              <span className="text-ink">{({ A: "0", B: "110", R: "111", C: "100", D: "101" } as Record<string, string>)[ch]}</span>
+            </span>
+          ))}
+        </div>
+        <p>
+          Stored, it is just <code>01101110100010101101110</code>: 23 bits in a row.
+        </p>
+        <p>
+          The real data has no spaces. The trick is that no code is the beginning of another code (the codes are{" "}
+          <strong>prefix-free</strong>). The decoder reads one bit at a time: “0” is a complete code, so that's an A.
+          “1” is not a code yet, “11” is not a code yet, “110” is B. And so on. It never needs a separator. Morse code is
+          different: E is · and A is ·−, so ·− could mean “A” or “E then T” (T is −). That's why Morse needs a pause
+          between letters.
+        </p>
+        <p>
+          <strong>Could any code do better?</strong> Claude Shannon showed in 1948 that a value that appears with
+          chance <TeX>{"p"}</TeX> needs about <TeX>{"\\log_2(1/p)"}</TeX> bits on average, and no code can beat that.
+          For A (5 of 11) that's <TeX>{"\\log_2(11/5) \\approx 1.14"}</TeX> bits; for C (1 of 11) it's{" "}
+          <TeX>{"\\log_2 11 \\approx 3.46"}</TeX> bits. Adding it up for the whole word gives about{" "}
+          <strong>22.4 bits</strong>, so Huffman's 23 is very close to perfect.
+        </p>
+        <p>
+          The decoder must use the same table as the encoder: video standards fix their tables in advance, and other
+          formats send the table at the start. Modern codecs also use a cleverer cousin, <em>arithmetic coding</em>,
+          which can spend less than one bit on a very common value. And the files on your computer use the same idea:
+          ZIP and PNG first replace repeats with short notes like “go back 7 letters and copy 4” (the second ABRA), then
+          Huffman-code what's left.
+        </p>
+      </GoDeeper>
 
       <h2>All the tricks together</h2>
       <DataTable
@@ -172,7 +238,7 @@ export default function Video() {
         </p>
         <TeX
           block
-        >{tex`F(u,v) = \tfrac{1}{4}\, C(u)\, C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \cos\!\left[\frac{(2x+1)u\pi}{16}\right] \cos\!\left[\frac{(2y+1)v\pi}{16}\right]`}</TeX>
+        >{tex`\begin{aligned} F(u,v) = \;&\tfrac{1}{4}\, C(u)\, C(v) \sum_{x=0}^{7} \sum_{y=0}^{7} f(x,y) \\ &\times \cos\!\left[\frac{(2x+1)u\pi}{16}\right] \\ &\times \cos\!\left[\frac{(2y+1)v\pi}{16}\right] \end{aligned}`}</TeX>
         <p>
           where <TeX>{"C(0) = 1/\\sqrt{2}"}</TeX> and <TeX>{"C(k) = 1"}</TeX> otherwise. In words: for each pattern{" "}
           <TeX>{"(u, v)"}</TeX>, multiply every pixel by that pattern's value at the same spot and add everything up. If
@@ -193,11 +259,15 @@ export default function Video() {
         </p>
         <TeX
           block
-        >{tex`48{,}000 \times 16 \text{ bits} \times 2 \text{ channels} = 1{,}536{,}000 \text{ bits/s} \approx 1.5\text{ Mbit/s}`}</TeX>
+        >{tex`\begin{aligned} &48{,}000 \times 16 \text{ bits} \times 2 \text{ channels} \\ &= 1{,}536{,}000 \text{ bits/s} \approx 1.5\text{ Mbit/s} \end{aligned}`}</TeX>
         <p>
           Audio codecs like AAC use the same playbook: transform into frequencies, then drop what your ears can't hear
           (quiet sounds right next to loud ones in pitch are masked). Result: about 128 kbit/s, 12× smaller. Every audio
           and video chunk carries timestamps so the player keeps lips and voices in sync.
+        </p>
+        <p>
+          How a microphone's voltage becomes those 48,000 numbers a second, and how numbers move a speaker again, is
+          explained in <Link to="/input-output">Input, Output & the Monitor</Link>.
         </p>
       </GoDeeper>
 

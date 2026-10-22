@@ -80,7 +80,7 @@ export function NoiseDemo() {
           return (
             <g key={k}>
               <line x1={pad.l} x2={W - pad.r} y1={y(v)} y2={y(v)} stroke="var(--color-line)" strokeDasharray="3 5" />
-              <text x={pad.l - 6} y={y(v) + 4} textAnchor="end" className="fill-dim font-mono text-[10px]">
+              <text x={pad.l - 6} y={y(v) + 4} textAnchor="end" className="fill-dim font-mono text-[11px]">
                 {v.toFixed(levels === 2 ? 0 : 2)}V
               </text>
             </g>
@@ -142,6 +142,207 @@ export function NoiseDemo() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Logic levels: what a 3.3 V output promises and an input accepts.    */
+/* ------------------------------------------------------------------ */
+
+const SUPPLY = 3.3;
+const V_IL = 0.8; // input reads 0 at or below this
+const V_IH = 2.0; // input reads 1 at or above this
+const V_OL = 0.4; // a 0 output is at most this
+const V_OH = 2.4; // a 1 output is at least this
+
+export function LogicLevels() {
+  const [bit, setBit] = useState<0 | 1>(1);
+  const [noise, setNoise] = useState(-0.3);
+  const sent = bit ? V_OH : V_OL;
+  // Round to whole hundredths so 2.4 − 0.4 is exactly 2.0, not 1.9999999.
+  const got = Math.round(Math.min(SUPPLY, Math.max(0, sent + noise)) * 100) / 100;
+  const read: 0 | 1 | null = got <= V_IL ? 0 : got >= V_IH ? 1 : null;
+  const ok = read === bit;
+
+  const W = 360;
+  const H = 262;
+  const top = 34;
+  const bottom = 244;
+  const y = (v: number) => bottom - (v / SUPPLY) * (bottom - top);
+  const colA = { x: 56, w: 78 };
+  const colB = { x: 248, w: 100 };
+  const midL = colA.x + colA.w;
+  const midR = colB.x;
+
+  // A slightly wobbly wire from the sent voltage to the received voltage.
+  const wire = Array.from({ length: 25 }, (_, i) => {
+    const t = i / 24;
+    const xx = midL + t * (midR - midL);
+    const base = sent + (got - sent) * t;
+    const wob = i === 0 || i === 24 ? 0 : Math.sin(i * 1.9) * 0.07;
+    return `${i ? "L" : "M"}${xx.toFixed(1)} ${y(base + wob).toFixed(1)}`;
+  }).join(" ");
+
+  const band = (x: number, w: number, lo: number, hi: number, fill: string, key: string) => (
+    <rect key={key} x={x} y={y(hi)} width={w} height={y(lo) - y(hi)} fill={fill} stroke="var(--color-line-2)" />
+  );
+  const fmtV = (v: number) => `${v.toFixed(2)} V`;
+
+  return (
+    <Widget
+      title="Logic levels: the safety gap"
+      subtitle="Gate A sends a bit to gate B down a wire. Gate A sends its weakest legal voltage. Add noise and see what gate B reads."
+    >
+      <div className="mb-4 flex flex-wrap items-end gap-x-6 gap-y-3">
+        <Segmented
+          value={bit}
+          onChange={(v) => setBit(v)}
+          options={[
+            { value: 1, label: "Send a 1" },
+            { value: 0, label: "Send a 0" },
+          ]}
+        />
+        <Slider
+          className="w-full max-w-72"
+          label="Noise on the wire"
+          min={-1.8}
+          max={1.8}
+          step={0.05}
+          value={noise}
+          onChange={setNoise}
+          format={(v) => `${v > 0 ? "+" : v < 0 ? "−" : "±"}${Math.abs(v).toFixed(2)} V`}
+        />
+      </div>
+      <div className="grid items-center gap-5 md:grid-cols-[minmax(0,380px)_1fr]">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Voltage bands for output and input">
+          <defs>
+            <pattern id="ll-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line y2="6" stroke="var(--color-pink)" strokeOpacity={0.45} strokeWidth="1.2" />
+            </pattern>
+          </defs>
+          <text x={colA.x + colA.w / 2} y={18} textAnchor="middle" className="fill-ink font-sans text-[13px] font-semibold">
+            A sends
+          </text>
+          <text x={colB.x + colB.w / 2} y={18} textAnchor="middle" className="fill-ink font-sans text-[13px] font-semibold">
+            B reads
+          </text>
+          {/* Gate A: what an output may send */}
+          {band(colA.x, colA.w, V_OH, SUPPLY, "var(--color-on-tint)", "a1")}
+          {band(colA.x, colA.w, V_OL, V_OH, "var(--color-panel-2)", "am")}
+          {band(colA.x, colA.w, 0, V_OL, "var(--color-panel-3)", "a0")}
+          <text x={colA.x + colA.w / 2} y={y(2.85) + 5} textAnchor="middle" className="fill-on font-mono text-[15px] font-bold">
+            1
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(1.5) - 2} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+            never
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(1.5) + 13} textAnchor="middle" className="fill-dim font-sans text-[12px]">
+            sent
+          </text>
+          <text x={colA.x + colA.w / 2} y={y(0.2) + 5} textAnchor="middle" className="fill-dim font-mono text-[15px]">
+            0
+          </text>
+          {/* Gate B: how an input reads */}
+          {band(colB.x, colB.w, V_IH, SUPPLY, "var(--color-on-tint)", "b1")}
+          {band(colB.x, colB.w, V_IL, V_IH, "url(#ll-hatch)", "bm")}
+          {band(colB.x, colB.w, 0, V_IL, "var(--color-panel-3)", "b0")}
+          <text x={colB.x + colB.w / 2} y={y(2.65) + 5} textAnchor="middle" className="fill-on font-sans text-[13px] font-bold">
+            reads 1
+          </text>
+          <rect
+            x={colB.x + 10}
+            y={y(1.4) - 13}
+            width={colB.w - 20}
+            height={22}
+            rx={4}
+            fill="var(--color-panel)"
+            stroke="var(--color-pink)"
+            strokeOpacity={0.5}
+          />
+          <text x={colB.x + colB.w / 2} y={y(1.4) + 3} textAnchor="middle" className="fill-pink font-sans text-[12px] font-semibold">
+            undefined
+          </text>
+          <text x={colB.x + colB.w / 2} y={y(0.4) + 5} textAnchor="middle" className="fill-mute font-sans text-[13px] font-bold">
+            reads 0
+          </text>
+          {/* Voltage scale */}
+          {[0, V_OL, V_IL, V_IH, V_OH, SUPPLY].map((v) => (
+            <text key={v} x={colA.x - 6} y={y(v) + 4} textAnchor="end" className="fill-mute font-mono text-[12px]">
+              {v.toFixed(1)}
+            </text>
+          ))}
+          <text x={colA.x - 6} y={top - 16} textAnchor="end" className="fill-dim font-mono text-[12px]">
+            volts
+          </text>
+          {/* Noise margins: the gap between a promise and a rule */}
+          {[
+            [V_IH, V_OH],
+            [V_OL, V_IL],
+          ].map(([lo, hi]) => (
+            <g key={lo}>
+              <rect
+                x={midL}
+                y={y(hi)}
+                width={midR - midL}
+                height={y(lo) - y(hi)}
+                fill="var(--color-amber)"
+                opacity={0.12}
+              />
+              <line x1={midL} x2={midR} y1={y(hi)} y2={y(hi)} stroke="var(--color-amber)" strokeDasharray="3 3" />
+              <line x1={midL} x2={midR} y1={y(lo)} y2={y(lo)} stroke="var(--color-amber)" strokeDasharray="3 3" />
+            </g>
+          ))}
+          <text x={(midL + midR) / 2} y={y(V_IH) + 16} textAnchor="middle" className="fill-amber font-sans text-[12px] font-semibold">
+            0.4 V safety gap
+          </text>
+          <text x={(midL + midR) / 2} y={y(V_IL) - 7} textAnchor="middle" className="fill-amber font-sans text-[12px] font-semibold">
+            0.4 V safety gap
+          </text>
+          {/* The signal */}
+          <path d={wire} fill="none" stroke="var(--color-cyan)" strokeWidth={2.2} />
+          <circle cx={midL} cy={y(sent)} r={5} fill="var(--color-cyan)" />
+          <circle
+            cx={midR}
+            cy={y(got)}
+            r={6.5}
+            fill={ok ? "var(--color-on)" : "var(--color-pink)"}
+            stroke="var(--color-panel)"
+            strokeWidth={2}
+          />
+        </svg>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Stat label="A sends" value={fmtV(sent)} sub={bit ? "weakest legal 1" : "weakest legal 0"} tone="cyan" />
+            <Stat label="B receives" value={fmtV(got)} sub={`after ${noise >= 0 ? "+" : "−"}${Math.abs(noise).toFixed(2)} V noise`} />
+          </div>
+          <div
+            className={cx(
+              "rounded-md border px-3 py-2 font-sans text-sm font-semibold",
+              ok ? "border-on bg-on-tint text-on" : "border-pink bg-pink-tint text-pink",
+            )}
+          >
+            {read === null
+              ? `✗ Undefined. ${fmtV(got)} is between 0.8 V and 2.0 V, so B might read 0 or 1.`
+              : ok
+                ? `✓ B reads ${read}, which is correct.`
+                : `✗ B reads ${read}, but A sent ${bit}. The bit flipped.`}
+          </div>
+          <p className="font-serif text-[0.9375rem] leading-normal text-mute">
+            {ok ? (
+              <>
+                Now gate B drives its <em>own</em> output from its own supply: close to {bit ? "3.3 V" : "0 V"}, not the
+                tired {fmtV(got)} it received. The noise does not travel any further.
+              </>
+            ) : (
+              <>
+                Any noise up to 0.4 V is always safe, because a legal output is at least 0.4 V away from the
+                undefined zone. Here the noise is {Math.abs(noise).toFixed(2)} V.
+              </>
+            )}
+          </p>
+        </div>
+      </div>
+    </Widget>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* The MOSFET cross-section.                                           */
 /* ------------------------------------------------------------------ */
 
@@ -192,12 +393,11 @@ export function MosfetWidget() {
             <line x1={278} y1={26} x2={278} y2={54} stroke="var(--color-ink)" strokeWidth={3} />
             <line x1={288} y1={32} x2={288} y2={48} stroke="var(--color-ink)" strokeWidth={5} />
             <line x1={250} y1={40} x2={258} y2={40} stroke="var(--color-off)" strokeWidth={3} />
-            <text x={270} y={20} textAnchor="middle" className="fill-mute font-mono text-[10px]">
+            <text x={270} y={20} textAnchor="middle" className="fill-mute font-mono text-[11px]">
               battery
             </text>
           </g>
-          <Lamp x={400} y={40} on={on} r={16} />
-          {current > 0 && <circle cx={400} cy={40} r={16 + 22 * current} fill="url(#lamp-glow)" />}
+          <Lamp x={400} y={40} on={on} r={16} intensity={current} />
 
           {/* gate lead */}
           <line
@@ -223,18 +423,30 @@ export function MosfetWidget() {
           </text>
 
           {/* substrate */}
-          <rect x={60} y={200} width={520} height={128} rx={8} fill="#1a1530" stroke="#3b2f63" />
+          <rect
+            x={60}
+            y={200}
+            width={520}
+            height={128}
+            rx={8}
+            fill="var(--color-si-p)"
+            stroke="var(--color-si-p-edge)"
+          />
           {holes.map((h, i) => (
-            <circle key={i} cx={h.x} cy={h.y} r={3} fill="none" stroke="#8b7bd8" strokeOpacity={0.6} />
+            <circle key={i} cx={h.x} cy={h.y} r={3} fill="none" stroke="var(--color-si-hole)" strokeWidth={1.2} />
           ))}
-          <text x={320} y={318} textAnchor="middle" className="fill-violet font-mono text-[11px]" opacity={0.85}>
+          <text x={320} y={318} textAnchor="middle" className="fill-violet font-mono text-[11px]">
             p-type silicon: almost no free electrons, so it blocks current
           </text>
 
           {/* source / drain wells */}
           {[90, 420].map((x, k) => (
             <g key={x}>
-              <path d={`M${x} 200 h130 v40 q0 22 -22 22 h-86 q-22 0 -22 -22 z`} fill="#0d2a3d" stroke="#1f5f86" />
+              <path
+                d={`M${x} 200 h130 v40 q0 22 -22 22 h-86 q-22 0 -22 -22 z`}
+                fill="var(--color-si-n)"
+                stroke="var(--color-si-n-edge)"
+              />
               {srcElectrons.map((e, i) => (
                 <circle key={i} cx={x + 10 + e.dx} cy={208 + e.dy} r={3} fill="var(--color-cyan)" />
               ))}
@@ -244,29 +456,50 @@ export function MosfetWidget() {
             </g>
           ))}
           {/* metal contacts */}
-          <rect x={125} y={182} width={60} height={18} rx={3} fill="#5b6b7d" />
-          <rect x={455} y={182} width={60} height={18} rx={3} fill="#5b6b7d" />
+          <rect x={125} y={182} width={60} height={18} rx={3} fill="var(--color-metal)" />
+          <rect x={455} y={182} width={60} height={18} rx={3} fill="var(--color-metal)" />
 
           {/* oxide + gate */}
-          <rect x={205} y={186} width={230} height={14} fill="#41505f" />
+          <rect
+            x={205}
+            y={186}
+            width={230}
+            height={14}
+            fill="var(--color-oxide)"
+            stroke="var(--color-off)"
+            strokeWidth={0.75}
+          />
+          <rect x={205} y={186} width={230} height={14} fill="url(#hatch)" opacity={0.6} />
           <rect
             x={212}
             y={160}
             width={216}
             height={26}
             rx={4}
-            fill={vg > 0 ? `rgb(255 181 71 / ${0.25 + 0.6 * (vg / VMAX)})` : "#4a5868"}
-            stroke="var(--color-amber)"
-            strokeOpacity={vg > 0 ? 0.9 : 0.2}
+            style={{
+              fill:
+                vg > 0
+                  ? `color-mix(in oklab, var(--color-amber) ${Math.round(20 + 55 * (vg / VMAX))}%, var(--color-si-gate))`
+                  : "var(--color-si-gate)",
+            }}
+            stroke={vg > 0 ? "var(--color-amber)" : "var(--color-off)"}
             className={vg > 0.05 ? "glow-amber" : undefined}
           />
           {Array.from({ length: Math.round((vg / VMAX) * 10) }, (_, i) => (
-            <text key={i} x={226 + i * 20} y={178} className="fill-bg font-mono text-[13px] font-bold">
+            <text
+              key={i}
+              x={226 + i * 20}
+              y={178}
+              className="fill-bg font-mono text-[13px] font-bold"
+              stroke="var(--color-amber)"
+              strokeWidth={0.75}
+              paintOrder="stroke"
+            >
               +
             </text>
           ))}
-          <text x={320} y={156} textAnchor="middle" className="fill-mute font-mono text-[10px]">
-            GATE (metal) on a glass-thin insulator
+          <text x={320} y={156} textAnchor="middle" className="fill-mute font-mono text-[11px]">
+            GATE (metal) on thin glass
           </text>
 
           {/* channel electrons */}
@@ -302,7 +535,7 @@ export function MosfetWidget() {
             />
           )}
           {on && (
-            <text x={320} y={244} textAnchor="middle" className="fill-cyan font-mono text-[10px]">
+            <text x={320} y={244} textAnchor="middle" className="fill-cyan font-mono text-[11px]">
               electrons flow →
             </text>
           )}
@@ -324,7 +557,7 @@ export function MosfetWidget() {
             onChange={setVg}
             format={(v) => `${v.toFixed(2)} V`}
           />
-          <div className="relative mt-1 h-3 font-mono text-[10px] text-amber">
+          <div className="relative mt-1 h-3 font-mono text-[11px] text-amber">
             <span className="absolute -translate-x-1/2" style={{ left: `${(VTH / VMAX) * 100}%` }}>
               ▲ {VTH} V
             </span>
@@ -407,11 +640,11 @@ export function MosSymbol({
         stroke={ch}
         strokeWidth={3}
         strokeDasharray={conducting ? undefined : "5 4"}
-        style={{ filter: conducting ? "drop-shadow(0 0 4px var(--color-on))" : undefined }}
+        className={conducting ? "glow-on" : undefined}
       />
       <path d={`M${x - 6} ${y - 14} H${x + 12} V${y - 32}`} fill="none" stroke={ch} strokeWidth={2.5} />
       <path d={`M${x - 6} ${y + 14} H${x + 12} V${y + 32}`} fill="none" stroke={ch} strokeWidth={2.5} />
-      <text x={x + 20} y={y + 4} className="fill-dim font-mono text-[10px]">
+      <text x={x + 20} y={y + 4} className="fill-dim font-mono text-[11px]">
         {type}MOS
       </text>
     </g>
@@ -444,7 +677,7 @@ export function NmosPmosWidget() {
               <div className="mb-1 text-sm font-semibold text-ink">{type}MOS</div>
               <svg viewBox="0 0 160 110" className="w-full">
                 <MosSymbol x={86} y={55} type={type} conducting={conducting} gateOn={input} />
-                <text x={20} y={50} className="fill-mute font-mono text-[10px]">
+                <text x={20} y={50} className="fill-mute font-mono text-[11px]">
                   in={input ? 1 : 0}
                 </text>
               </svg>
@@ -468,7 +701,7 @@ function CmosInverter({ input }: { input: boolean }) {
         CMOS inverter <span className="font-normal text-mute">(a NOT gate)</span>
       </div>
       <svg viewBox="0 0 210 222" className="w-full">
-        <text x={110} y={14} textAnchor="middle" className="fill-on font-mono text-[10px]">
+        <text x={110} y={14} textAnchor="middle" className="fill-on font-mono text-[11px]">
           supply = 1
         </text>
         <line x1={80} y1={20} x2={140} y2={20} stroke="var(--color-on)" strokeWidth={3} />
@@ -478,12 +711,12 @@ function CmosInverter({ input }: { input: boolean }) {
         <MosSymbol x={98} y={170} type="n" conducting={input} gateOn={input} />
         <Wire d="M110 202 V206" on={false} flow={false} />
         <line x1={84} y1={206} x2={136} y2={206} stroke="var(--color-dim)" strokeWidth={3} />
-        <text x={110} y={220} textAnchor="middle" className="fill-dim font-mono text-[10px]">
+        <text x={110} y={220} textAnchor="middle" className="fill-dim font-mono text-[11px]">
           ground = 0
         </text>
         {/* input wire joining both gates */}
         <Wire d="M52 72 V170 M20 121 H52" on={input} flow={false} />
-        <text x={14} y={113} className="fill-mute font-mono text-[10px]">
+        <text x={14} y={113} className="fill-mute font-mono text-[11px]">
           in
         </text>
         {/* output */}
@@ -496,7 +729,7 @@ function CmosInverter({ input }: { input: boolean }) {
           stroke={out ? "var(--color-on)" : "var(--color-dim)"}
           strokeWidth={2}
         />
-        <text x={178} y={142} textAnchor="middle" className="fill-mute font-mono text-[10px]">
+        <text x={178} y={142} textAnchor="middle" className="fill-mute font-mono text-[11px]">
           out={out ? 1 : 0}
         </text>
       </svg>
@@ -554,7 +787,7 @@ export function SizeRuler() {
                 x={px}
                 y={132}
                 textAnchor={i === 0 ? "start" : i === hi - lo ? "end" : "middle"}
-                className="fill-dim font-mono text-[10px]"
+                className="fill-dim font-mono text-[11px]"
               >
                 {label}
               </text>
@@ -572,7 +805,7 @@ export function SizeRuler() {
                 x={px}
                 y={18 + row * 26}
                 textAnchor={px < 90 ? "start" : px > W - 90 ? "end" : "middle"}
-                className="font-mono text-[10px]"
+                className="font-mono text-[11px]"
                 fill={s.tone}
                 fontWeight={i === sel ? 700 : 400}
               >

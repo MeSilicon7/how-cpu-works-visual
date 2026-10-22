@@ -1,21 +1,25 @@
-import { useId, type ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 
 export function cx(...parts: Array<string | number | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
 }
 
+/** Accent colours that every component understands. */
+export type Tone = "on" | "amber" | "cyan" | "pink" | "violet";
+
 /* ---------------- Text blocks ---------------- */
 
 type CalloutKind = "idea" | "analogy" | "math" | "warn" | "fact";
 
-const calloutStyles: Record<CalloutKind, { border: string; label: string; icon: string; text: string }> = {
-  idea: { border: "border-cyan/40", label: "Key idea", icon: "◆", text: "text-cyan" },
-  analogy: { border: "border-violet/40", label: "Think of it like", icon: "≈", text: "text-violet" },
-  math: { border: "border-amber/40", label: "The math", icon: "∑", text: "text-amber" },
-  warn: { border: "border-pink/40", label: "Watch out", icon: "!", text: "text-pink" },
-  fact: { border: "border-on/40", label: "Real numbers", icon: "#", text: "text-on" },
+const calloutStyles: Record<CalloutKind, { label: string; icon: string }> = {
+  idea: { label: "Key idea", icon: "◆" },
+  analogy: { label: "Think of it like", icon: "≈" },
+  math: { label: "The math", icon: "∑" },
+  warn: { label: "Watch out", icon: "!" },
+  fact: { label: "Real numbers", icon: "#" },
 };
 
+/** A margin note in the text: a coloured rule, a small-caps label and the note. */
 export function Callout({
   kind = "idea",
   title,
@@ -27,53 +31,56 @@ export function Callout({
 }) {
   const s = calloutStyles[kind];
   return (
-    <aside className={cx("rounded-xl border bg-panel/80 px-5 py-4 text-[0.98rem] leading-relaxed", s.border)}>
-      <div className={cx("mb-1.5 flex items-center gap-2 text-xs font-semibold tracking-wider uppercase", s.text)}>
-        <span aria-hidden className="font-mono">
-          {s.icon}
-        </span>
+    <aside className={cx("callout", `callout-${kind}`)}>
+      <div className="callout-label">
+        <span aria-hidden>{s.icon}</span>
         {title ?? s.label}
       </div>
-      <div className="space-y-2.5 text-ink/85 [&_strong]:text-ink">{children}</div>
+      <div className="space-y-2.5">{children}</div>
     </aside>
   );
 }
 
+/** An optional section, closed by default, set between two rules. */
 export function GoDeeper({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
-    <details className="group rounded-xl border border-line-2 bg-panel/70 open:bg-panel">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-3.5 select-none [&::-webkit-details-marker]:hidden">
-        <span className="rounded-md border border-amber/40 bg-amber/10 px-2 py-0.5 font-mono text-[0.7rem] font-semibold tracking-wider text-amber uppercase">
-          Go deeper
-        </span>
-        <span className="font-medium text-ink">{title}</span>
-        <span aria-hidden className="ml-auto font-mono text-dim transition-transform group-open:rotate-90">
-          ▸
+    <details className="group go-deeper my-8 border-y border-line-2">
+      <summary className="flex cursor-pointer list-none items-baseline gap-3 px-1 py-3.5 select-none hover:bg-panel [&::-webkit-details-marker]:hidden">
+        <span className="label-caps shrink-0 text-amber">Go deeper</span>
+        <span className="font-serif font-semibold text-ink">{title}</span>
+        <span className="ml-auto shrink-0 font-sans text-xs text-dim">optional</span>
+        <span aria-hidden className="w-4 shrink-0 text-center font-sans text-lg leading-none text-dim">
+          <span className="group-open:hidden">+</span>
+          <span className="hidden group-open:inline">−</span>
         </span>
       </summary>
-      <div className="prose-cpu border-t border-line px-5 pt-1 pb-5 text-[0.98rem]">{children}</div>
+      <div className="prose-book border-t border-dashed border-line-2 px-1 pt-3 pb-5 text-[0.9444em]">{children}</div>
     </details>
   );
 }
 
+/** "Remember this": the chapter's numbered summary. */
 export function KeyIdeas({ items }: { items: ReactNode[] }) {
   return (
-    <div className="not-prose mt-14 rounded-2xl border border-on/30 bg-gradient-to-br from-on/[0.07] to-transparent p-6">
-      <div className="mb-3 font-mono text-xs font-semibold tracking-widest text-on uppercase">Remember this</div>
-      <ul className="space-y-2.5">
+    <div className="not-prose mt-14 border-t-4 border-b border-double border-t-on border-b-line-2 bg-panel px-6 py-5">
+      <div className="label-caps mb-3 text-on">Remember this</div>
+      <ol className="space-y-2.5">
         {items.map((item, i) => (
-          <li key={i} className="flex gap-3 text-ink/90">
-            <span className="mt-[0.45em] h-1.5 w-1.5 shrink-0 rounded-full bg-on shadow-[0_0_8px_var(--color-on)]" />
-            <span>{item}</span>
+          <li key={i} className="flex gap-3 font-serif text-body">
+            <span className="w-6 shrink-0 text-right font-display text-lg leading-[1.45] font-semibold text-on tabular-nums">
+              {i + 1}
+            </span>
+            <span className="min-w-0 leading-relaxed [&_strong]:font-semibold [&_strong]:text-ink">{item}</span>
           </li>
         ))}
-      </ul>
+      </ol>
     </div>
   );
 }
 
-/* ---------------- Interactive frame ---------------- */
+/* ---------------- Interactive figure ---------------- */
 
+/** An interactive figure, drawn like a plate in a printed book. */
 export function Widget({
   title,
   subtitle,
@@ -85,25 +92,22 @@ export function Widget({
   subtitle?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** Lets the widget extend past the text column on large screens. */
+  /** Lets the figure extend past the text column on large screens. */
   wide?: boolean;
 }) {
   return (
-    <section
-      className={cx(
-        "not-prose relative my-8 rounded-2xl border border-line-2 bg-panel shadow-[0_0_0_1px_rgb(0_0_0/0.4),0_20px_60px_-30px_rgb(0_0_0/0.8)]",
-        wide && "lg:-mx-24 xl:-mx-40",
-        className,
-      )}
-    >
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-line px-4 py-3 sm:px-5">
-        <span className="rounded bg-on/10 px-1.5 py-0.5 font-mono text-[0.65rem] font-bold tracking-widest text-on uppercase">
-          Try it
-        </span>
-        <h4 className="font-semibold text-ink">{title}</h4>
-        {subtitle && <p className="w-full text-sm text-mute">{subtitle}</p>}
+    <section className={cx("not-prose fig plate relative font-sans text-ink", wide && "fig-wide", className)}>
+      <header className="border-b border-line px-4 pt-3.5 pb-3 sm:px-5">
+        <div className="label-caps text-[0.6875rem] text-dim">
+          <span className="fig-num" />
+          <span className="text-ink">Try it</span>
+        </div>
+        <h4 className="mt-1 font-serif text-[1.0625rem] leading-snug font-semibold text-ink">{title}</h4>
+        {subtitle && (
+          <p className="mt-1 max-w-[62ch] font-serif text-[0.9375rem] leading-normal text-mute">{subtitle}</p>
+        )}
       </header>
-      <div className="p-4 sm:p-5">{children}</div>
+      <div className="@container p-4 sm:p-5">{children}</div>
     </section>
   );
 }
@@ -135,15 +139,16 @@ export function Btn({
       title={title}
       disabled={disabled}
       onClick={onClick}
+      aria-pressed={variant === "default" && active !== undefined ? active : undefined}
       className={cx(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition select-none",
-        "focus-visible:ring-2 focus-visible:ring-cyan focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40",
-        variant === "primary" && "bg-on text-bg shadow-[0_0_16px_-2px_var(--color-on)] hover:bg-on-2",
+        "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 font-sans text-sm font-semibold transition-colors duration-150 select-none pointer-coarse:min-h-11",
+        "active:translate-y-px disabled:cursor-not-allowed disabled:opacity-45",
+        variant === "primary" && "border-on bg-on text-bg hover:border-on-2 hover:bg-on-2",
         variant === "default" &&
           (active
-            ? "border border-on/60 bg-on/15 text-on"
-            : "border border-line-2 bg-panel-2 text-ink hover:border-dim hover:bg-panel-3"),
-        variant === "ghost" && "text-mute hover:bg-panel-2 hover:text-ink",
+            ? "border-ink bg-panel-2 text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.08)]"
+            : "border-line-2 bg-panel text-ink shadow-[inset_0_-1px_0_var(--color-line-2)] hover:border-off hover:bg-panel-2"),
+        variant === "ghost" && "border-transparent text-mute hover:bg-panel-2 hover:text-ink",
         className,
       )}
     >
@@ -172,9 +177,10 @@ export function Slider({
   className?: string;
 }) {
   const id = useId();
+  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0;
   return (
     <div className={cx("min-w-0", className)}>
-      <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
+      <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
         <label htmlFor={id} className="text-mute">
           {label}
         </label>
@@ -188,6 +194,7 @@ export function Slider({
         max={max}
         step={step}
         value={value}
+        style={{ "--fill": `${fill}%` } as CSSProperties}
         onChange={(e) => onChange(Number(e.target.value))}
       />
     </div>
@@ -210,7 +217,7 @@ export function Segmented<T extends string | number>({
   return (
     <div
       role="radiogroup"
-      className={cx("inline-flex flex-wrap gap-1 rounded-xl border border-line bg-bg/60 p-1", className)}
+      className={cx("inline-flex flex-wrap gap-0.5 rounded-lg border border-line bg-panel-2 p-0.5", className)}
     >
       {options.map((o) => (
         <button
@@ -221,11 +228,11 @@ export function Segmented<T extends string | number>({
           title={o.title}
           onClick={() => onChange(o.value)}
           className={cx(
-            "rounded-lg font-medium transition focus-visible:ring-2 focus-visible:ring-cyan focus-visible:outline-none",
-            size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
+            "rounded-md font-sans font-semibold transition-colors",
+            size === "sm" ? "px-2.5 py-1 text-xs pointer-coarse:py-2" : "px-3 py-1.5 text-sm pointer-coarse:py-2.5",
             o.value === value
-              ? "bg-on/15 text-on shadow-[inset_0_0_0_1px_rgb(61_255_160/0.5)]"
-              : "text-mute hover:bg-panel-2 hover:text-ink",
+              ? "bg-panel text-ink shadow-[0_0_0_1px_var(--color-line-2),0_1px_0_var(--color-line-2)]"
+              : "text-mute hover:bg-panel-3/60 hover:text-ink",
           )}
         >
           {o.label}
@@ -235,7 +242,15 @@ export function Segmented<T extends string | number>({
   );
 }
 
-/** A clickable bit: a glowing square that shows 1 or 0. */
+const toneOn: Record<Tone, string> = {
+  on: "border-on bg-on-tint text-on halo-on",
+  cyan: "border-cyan bg-cyan-tint text-cyan halo-cyan",
+  amber: "border-amber bg-amber-tint text-amber halo-amber",
+  violet: "border-violet bg-violet-tint text-violet halo-violet",
+  pink: "border-pink bg-pink-tint text-pink halo-pink",
+};
+
+/** A clickable bit: a small inked square that shows 1 or 0. */
 export function BitButton({
   on,
   onClick,
@@ -249,18 +264,12 @@ export function BitButton({
   onClick?: () => void;
   label?: ReactNode;
   size?: "sm" | "md" | "lg";
-  color?: "on" | "cyan" | "amber" | "violet" | "pink";
+  color?: Tone;
   disabled?: boolean;
   title?: string;
 }) {
   const dims = size === "sm" ? "h-7 w-7 text-sm" : size === "lg" ? "h-12 w-12 text-xl" : "h-9 w-9 text-base";
-  const onCls: Record<string, string> = {
-    on: "border-on bg-on/20 text-on shadow-[0_0_14px_-2px_var(--color-on)]",
-    cyan: "border-cyan bg-cyan/20 text-cyan shadow-[0_0_14px_-2px_var(--color-cyan)]",
-    amber: "border-amber bg-amber/20 text-amber shadow-[0_0_14px_-2px_var(--color-amber)]",
-    violet: "border-violet bg-violet/20 text-violet shadow-[0_0_14px_-2px_var(--color-violet)]",
-    pink: "border-pink bg-pink/20 text-pink shadow-[0_0_14px_-2px_var(--color-pink)]",
-  };
+  const clickable = !!onClick && !disabled;
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -270,16 +279,18 @@ export function BitButton({
         title={title}
         aria-pressed={on}
         className={cx(
-          "rounded-lg border font-mono font-bold tabular-nums transition select-none",
-          "focus-visible:ring-2 focus-visible:ring-cyan focus-visible:outline-none",
-          onClick && !disabled ? "cursor-pointer hover:brightness-125" : "cursor-default",
+          "relative rounded-md font-mono tabular-nums transition-colors select-none",
+          size === "sm" && "after:absolute after:-inset-1.5",
+          clickable ? "cursor-pointer" : "cursor-default",
           dims,
-          on ? onCls[color] : "border-line-2 bg-bg/70 text-dim",
+          on
+            ? cx("border-[1.5px] font-bold", toneOn[color])
+            : cx("border border-line-2 bg-panel font-normal text-dim", clickable && "hover:border-off hover:text-mute"),
         )}
       >
         {on ? 1 : 0}
       </button>
-      {label !== undefined && <span className="font-mono text-[0.65rem] text-dim">{label}</span>}
+      {label !== undefined && <span className="font-mono text-[0.6875rem] text-dim">{label}</span>}
     </div>
   );
 }
@@ -305,7 +316,10 @@ export function Bits({
       {bits.map((b, i) => (
         <span
           key={i}
-          className={cx(b ? onColor : "text-dim", groups && i > 0 && (width - i) % groups === 0 && "ml-[0.35em]")}
+          className={cx(
+            b ? cx(onColor, "font-bold") : "font-normal text-dim",
+            groups && i > 0 && (width - i) % groups === 0 && "ml-[0.35em]",
+          )}
         >
           {b}
         </span>
@@ -314,6 +328,24 @@ export function Bits({
   );
 }
 
+const statBorder: Record<string, string> = {
+  ink: "border-line-2",
+  on: "border-on",
+  amber: "border-amber",
+  cyan: "border-cyan",
+  pink: "border-pink",
+  violet: "border-violet",
+};
+const statText: Record<string, string> = {
+  ink: "text-ink",
+  on: "text-on",
+  amber: "text-amber",
+  cyan: "text-cyan",
+  pink: "text-pink",
+  violet: "text-violet",
+};
+
+/** A labelled number, set off by a thin rule. */
 export function Stat({
   label,
   value,
@@ -323,24 +355,25 @@ export function Stat({
   label: ReactNode;
   value: ReactNode;
   sub?: ReactNode;
-  tone?: "ink" | "on" | "amber" | "cyan" | "pink" | "violet";
+  tone?: "ink" | Tone;
 }) {
-  const toneCls = {
-    ink: "text-ink",
-    on: "text-on",
-    amber: "text-amber",
-    cyan: "text-cyan",
-    pink: "text-pink",
-    violet: "text-violet",
-  }[tone];
   return (
-    <div className="rounded-xl border border-line bg-bg/50 px-3.5 py-2.5">
-      <div className="text-[0.7rem] font-medium tracking-wider text-dim uppercase">{label}</div>
-      <div className={cx("mt-0.5 font-mono text-lg font-semibold tabular-nums", toneCls)}>{value}</div>
+    <div className={cx("min-w-0 border-l-2 py-0.5 pl-3", statBorder[tone])}>
+      <div className="label-caps text-[0.6875rem] text-dim">{label}</div>
+      <div className={cx("mt-1 font-mono text-lg font-semibold tabular-nums", statText[tone])}>{value}</div>
       {sub && <div className="text-xs text-mute">{sub}</div>}
     </div>
   );
 }
+
+const pillTone: Record<string, string> = {
+  mute: "border-line-2 text-mute",
+  on: "border-on/40 bg-on-tint text-on",
+  amber: "border-amber/40 bg-amber-tint text-amber",
+  cyan: "border-cyan/40 bg-cyan-tint text-cyan",
+  pink: "border-pink/40 bg-pink-tint text-pink",
+  violet: "border-violet/40 bg-violet-tint text-violet",
+};
 
 export function Pill({
   children,
@@ -348,22 +381,14 @@ export function Pill({
   className,
 }: {
   children: ReactNode;
-  tone?: "mute" | "on" | "amber" | "cyan" | "pink" | "violet";
+  tone?: "mute" | Tone;
   className?: string;
 }) {
-  const toneCls = {
-    mute: "border-line-2 text-mute",
-    on: "border-on/50 text-on bg-on/10",
-    amber: "border-amber/50 text-amber bg-amber/10",
-    cyan: "border-cyan/50 text-cyan bg-cyan/10",
-    pink: "border-pink/50 text-pink bg-pink/10",
-    violet: "border-violet/50 text-violet bg-violet/10",
-  }[tone];
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-mono text-[0.7rem] font-semibold",
-        toneCls,
+        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 font-sans text-xs font-semibold",
+        pillTone[tone],
         className,
       )}
     >
@@ -372,16 +397,22 @@ export function Pill({
   );
 }
 
+/** A static (non-interactive) figure with a caption. */
 export function Figure({ children, caption }: { children: ReactNode; caption?: ReactNode }) {
   return (
-    <figure className="not-prose my-8">
-      <div className="overflow-x-auto rounded-2xl border border-line bg-panel/60 p-4">{children}</div>
-      {caption && <figcaption className="mt-2 text-center text-sm text-mute">{caption}</figcaption>}
+    <figure className="not-prose fig my-8">
+      <div className="plate overflow-x-auto p-4">{children}</div>
+      {caption && (
+        <figcaption className="mt-2.5 font-serif text-[0.9375rem] text-mute italic">
+          <span className="fig-num label-caps text-[0.6875rem] text-dim not-italic" />
+          {caption}
+        </figcaption>
+      )}
     </figure>
   );
 }
 
-/** A small table for truth tables, data tables etc. */
+/** A book-style table: rules above and below, no boxes. */
 export function DataTable({
   head,
   rows,
@@ -397,18 +428,12 @@ export function DataTable({
 }) {
   const hl = Array.isArray(highlight) ? highlight : highlight === undefined ? [] : [highlight];
   return (
-    <div className={cx("overflow-x-auto scroll-thin", className)}>
-      <table className="w-full border-collapse font-mono text-sm tabular-nums">
+    <div className={cx("not-prose scroll-thin overflow-x-auto", className)}>
+      <table className="booktabs">
         <thead>
           <tr>
             {head.map((h, i) => (
-              <th
-                key={i}
-                className={cx(
-                  "border-b border-line-2 px-3 py-1.5 font-semibold text-mute",
-                  align === "left" ? "text-left" : "text-center",
-                )}
-              >
+              <th key={i} className={align === "left" ? "text-left" : "text-center"}>
                 {h}
               </th>
             ))}
@@ -416,12 +441,9 @@ export function DataTable({
         </thead>
         <tbody>
           {rows.map((r, ri) => (
-            <tr key={ri} className={cx("transition-colors", hl.includes(ri) ? "bg-on/10 text-on" : "text-ink/85")}>
+            <tr key={ri} className={cx("transition-colors", hl.includes(ri) && "hl")}>
               {r.map((c, ci) => (
-                <td
-                  key={ci}
-                  className={cx("border-b border-line px-3 py-1.5", align === "left" ? "text-left" : "text-center")}
-                >
+                <td key={ci} className={align === "left" ? "text-left" : "text-center"}>
                   {c}
                 </td>
               ))}
@@ -439,10 +461,10 @@ export function Steps({ children }: { children: ReactNode[] }) {
     <ol className="not-prose space-y-2.5">
       {children.map((c, i) => (
         <li key={i} className="flex gap-3">
-          <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line-2 font-mono text-xs text-mute">
+          <span className="w-6 shrink-0 text-right font-display text-lg leading-[1.45] font-semibold text-amber tabular-nums">
             {i + 1}
           </span>
-          <div className="min-w-0 flex-1 text-ink/90">{c}</div>
+          <div className="min-w-0 flex-1 text-body">{c}</div>
         </li>
       ))}
     </ol>

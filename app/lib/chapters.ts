@@ -1,4 +1,4 @@
-export type PartId = "switch" | "machine" | "storage" | "scenes";
+export type PartId = "switch" | "machine" | "system" | "scenes";
 
 export interface Part {
   id: PartId;
@@ -21,17 +21,17 @@ export const parts: Part[] = [
   {
     id: "switch",
     title: "The Switch",
-    blurb: "From one transistor to a circuit that can do arithmetic.",
+    blurb: "From electricity and one transistor to a circuit that does arithmetic.",
   },
   {
     id: "machine",
     title: "The Machine",
-    blurb: "Memory, a heartbeat, and a real working CPU you can step through.",
+    blurb: "Memory, a heartbeat, a CPU you can step through, how it is printed in silicon, and the code it runs.",
   },
   {
-    id: "storage",
-    title: "Storage",
-    blurb: "Where your photos, apps and files actually live.",
+    id: "system",
+    title: "The System",
+    blurb: "Storage, meaning, devices and the operating system: how a CPU becomes a computer you can use.",
   },
   {
     id: "scenes",
@@ -41,6 +41,18 @@ export const parts: Part[] = [
 ];
 
 export const chapters: Chapter[] = [
+  {
+    slug: "electricity",
+    part: "switch",
+    title: "Electricity Basics",
+    tagline: "What actually flows in a wire, and why it needs a loop.",
+    learn: [
+      "What moves in a wire, and why it needs a loop",
+      "Volts, amps, ohms and watts with real numbers",
+      "Capacitors: why every switch takes time",
+    ],
+    scale: "1 amp ≈ 6 billion billion electrons per second",
+  },
   {
     slug: "transistor",
     part: "switch",
@@ -126,6 +138,18 @@ export const chapters: Chapter[] = [
     scale: "a working 8-bit computer",
   },
   {
+    slug: "chip-making",
+    part: "machine",
+    title: "Making a Chip",
+    tagline: "Printing 20 billion switches with light.",
+    learn: [
+      "From sand to a 300 mm wafer",
+      "Printing patterns with light",
+      "How engineers design billions of transistors without drawing them",
+    ],
+    scale: "300 mm wafer, 13.5 nm light",
+  },
+  {
     slug: "machine-code",
     part: "machine",
     title: "Machine Code",
@@ -134,8 +158,20 @@ export const chapters: Chapter[] = [
     scale: "1 line of code → bytes",
   },
   {
+    slug: "functions",
+    part: "machine",
+    title: "Functions & the Stack",
+    tagline: "How a program jumps away and always finds its way back.",
+    learn: [
+      "Why a jump can't come back on its own",
+      "The stack: a pile of notes in RAM",
+      "Recursion, stack overflow, and how interrupts return",
+    ],
+    scale: "1 return address = 1 byte",
+  },
+  {
     slug: "storage",
-    part: "storage",
+    part: "system",
     title: "Storage",
     tagline: "Cache, RAM, SSD and hard drives, and why speed costs size.",
     learn: [
@@ -144,6 +180,42 @@ export const chapters: Chapter[] = [
       "Why a hard drive is a spinning record player",
     ],
     scale: "bytes → terabytes",
+  },
+  {
+    slug: "bits-meaning",
+    part: "system",
+    title: "Who Decides What Bits Mean?",
+    tagline: "01000001 is 65, “A”, a colour or an instruction. Who chooses?",
+    learn: [
+      "Why a byte has no meaning on its own",
+      "The same byte as a number, a letter, a colour and an instruction",
+      "How an “A” gets from your key to the glass, and why the monitor never knows it was an “A”",
+    ],
+    scale: "1 byte, many meanings",
+  },
+  {
+    slug: "input-output",
+    part: "system",
+    title: "Input, Output & the Monitor",
+    tagline: "How the CPU talks to keyboards, screens and speakers using only addresses.",
+    learn: [
+      "Devices are just addresses: memory-mapped I/O",
+      "How the monitor knows where each colour goes",
+      "How touch, mouse and sound become numbers, and back",
+    ],
+    scale: "148.5 million pixels per second",
+  },
+  {
+    slug: "operating-system",
+    part: "system",
+    title: "The Operating System",
+    tagline: "The program that runs all the other programs.",
+    learn: [
+      "From power button to desktop (booting)",
+      "How many apps share one CPU and one RAM",
+      "Why apps can't touch the hardware: kernel mode and system calls",
+    ],
+    scale: "250 app switches per second",
   },
   {
     slug: "calculator",
@@ -177,7 +249,7 @@ export const chapters: Chapter[] = [
     slug: "network",
     part: "scenes",
     title: "Scene: Sending a Message",
-    tagline: "How “hi 👋” crosses the planet and only your friend can read it.",
+    tagline: "How a message crosses the planet and only your friend can read it.",
     learn: ["Text → bytes → packets", "Bits as voltage, light and radio", "Routing, lost packets and encryption math"],
     scale: "10,000 km in ~0.1 s",
   },
@@ -190,3 +262,13 @@ export function chapterIndex(slug: string) {
 export function partOf(chapter: Chapter) {
   return parts.find((p) => p.id === chapter.part)!;
 }
+
+/** Each part's accent colour, as a CSS value. */
+export const partVar: Record<PartId, string> = {
+  switch: "var(--color-on)",
+  machine: "var(--color-cyan)",
+  system: "var(--color-violet)",
+  scenes: "var(--color-amber)",
+};
+
+export const roman = ["I", "II", "III", "IV", "V", "VI"];

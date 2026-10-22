@@ -26,14 +26,14 @@ export default function Graphics() {
 
       <h2>Colour is three numbers</h2>
       <p>
-        Your eyes have three kinds of colour sensors (cone cells), most sensitive to red, green and blue. So a screen
-        only needs three lights per pixel to fool them into seeing any colour. Each light's brightness is stored as one
+        Your eyes have three kinds of colour sensors (cone cells), most sensitive to reddish, greenish and bluish light. So
+        a screen only needs three lights per pixel to fool them into seeing most colours. Each light's brightness is stored as one
         byte, 0 to 255:
       </p>
       <RgbMixer />
       <TeX
         block
-      >{tex`256 \times 256 \times 256 = 2^{8} \times 2^{8} \times 2^{8} = 2^{24} = 16{,}777{,}216 \text{ colours}`}</TeX>
+      >{tex`\begin{aligned} &256 \times 256 \times 256 \\ &= 2^{8} \times 2^{8} \times 2^{8} = 2^{24} \\ &= 16{,}777{,}216 \text{ colours} \end{aligned}`}</TeX>
       <Callout kind="idea">
         <p>
           The hex colour codes in web design are exactly these bytes. <code>#FF8800</code> is <code>FF</code> = 255 red,{" "}
@@ -52,7 +52,7 @@ export default function Graphics() {
       <Callout kind="math" title="How big is a framebuffer?">
         <TeX
           block
-        >{tex`1920 \times 1080 \text{ pixels} \times 4 \tfrac{\text{bytes}}{\text{pixel}} = 8{,}294{,}400 \text{ bytes} \approx 8.3\text{ MB}`}</TeX>
+        >{tex`\begin{aligned} &1920 \times 1080 \text{ pixels} \times 4 \tfrac{\text{bytes}}{\text{pixel}} \\ &= 8{,}294{,}400 \text{ bytes} \approx 8.3\text{ MB} \end{aligned}`}</TeX>
         <p>Refreshing it 60 times per second means reading</p>
         <TeX block>{tex`8.3\text{ MB} \times 60 \approx 500\ \text{MB every second}`}</TeX>
         <p>
@@ -82,7 +82,8 @@ export default function Graphics() {
         </p>
         <TeX
           block
-        >{tex`\text{colour}(P) = w_A \cdot \text{colour}_A + w_B \cdot \text{colour}_B + w_C \cdot \text{colour}_C, \qquad w_A + w_B + w_C = 1`}</TeX>
+        >{tex`\begin{aligned} \text{colour}(P) = \;& w_A \cdot \text{colour}_A \\ +\;& w_B \cdot \text{colour}_B \\ +\;& w_C \cdot \text{colour}_C \end{aligned}`}</TeX>
+        <TeX block>{tex`w_A + w_B + w_C = 1`}</TeX>
       </Callout>
 
       <h2>From 3D to a flat screen</h2>
@@ -122,6 +123,48 @@ export default function Graphics() {
         AI models is mostly multiplying huge grids of numbers, which is why AI runs on GPUs.
       </p>
 
+      <GoDeeper title="How AI runs on this: a neuron is multiply, add, compare">
+        <p>
+          An AI model is built from millions or billions of tiny units called <strong>neurons</strong>. A neuron is not
+          clever at all. It takes a few input numbers, multiplies each one by its own stored number (a{" "}
+          <strong>weight</strong>), adds everything up plus one more stored number (the <strong>bias</strong>), and then
+          compares: if the total is below zero, it outputs 0; otherwise it outputs the total.
+        </p>
+        <p>Example: inputs 1 and 0.5, weights 0.8 and −0.4, bias 0.1:</p>
+        <TeX block>{tex`\begin{aligned} &1 \times 0.8 + 0.5 \times (-0.4) + 0.1 \\ &= 0.8 - 0.2 + 0.1 = 0.7 \end{aligned}`}</TeX>
+        <TeX block>{tex`0.7 \ge 0 \;\Rightarrow\; \text{output } 0.7`}</TeX>
+        <p>
+          That's an ALU's multiply, add and compare, nothing more. A <strong>layer</strong> is thousands of neurons that
+          all read the same inputs, so its weights form a grid: one row per neuron. A layer with 4,096 inputs and 4,096
+          neurons has <TeX>{"4096 \\times 4096 \\approx 16.8"}</TeX> million weights, and every neuron's sum is
+          independent of the others. That is exactly the “same maths on millions of numbers” a GPU is built for.
+        </p>
+        <Callout kind="math" title="Why a chatbot types at the speed it does">
+          <p>
+            A chatbot writes one <strong>token</strong> (a word or a piece of a word) at a time. Take a model with 7
+            billion weights, each stored in 2 bytes:
+          </p>
+          <TeX block>{tex`7 \times 10^{9} \text{ weights} \times 2\ \tfrac{\text{bytes}}{\text{weight}} = 14 \text{ GB}`}</TeX>
+          <p>
+            To produce one token, every weight is used once: 7 billion multiply-adds, which is{" "}
+            <TeX>{"1.4 \\times 10^{10}"}</TeX> separate operations. A GPU doing 100 trillion operations per second
+            needs only about 0.14 ms for that. The slow part is <em>reading</em> all 14 GB of weights from memory. At 1
+            TB/s:
+          </p>
+          <TeX block>{tex`\frac{14 \text{ GB}}{1{,}000\ \text{GB/s}} = 14 \text{ ms per token}`}</TeX>
+          <p>
+            That's about 1 ÷ 0.014 s ≈ <strong>70 tokens per second</strong>. So the GPU spends most of its time
+            waiting for weights to arrive: the same “memory is slow” problem as in <Link to="/storage">Storage</Link>.
+          </p>
+        </Callout>
+        <p>
+          Where do the weights come from? <strong>Training.</strong> The model is shown an example, its output is
+          compared with the right answer, and then every weight is nudged a tiny amount in the direction that would
+          have made the answer a little less wrong. Repeat that billions of times, and the weights slowly come to hold
+          useful patterns. The finished model file is just those numbers.
+        </p>
+      </GoDeeper>
+
       <h2>The graphics pipeline, all together</h2>
       <ol>
         <li>
@@ -140,7 +183,8 @@ export default function Graphics() {
           <strong>Write</strong> the colours into the framebuffer.
         </li>
         <li>
-          <strong>Display</strong>: the screen controller sends the framebuffer to the panel, 60–240 times a second.
+          <strong>Display</strong>: the GPU's display controller reads the framebuffer and sends the pixel colours over
+          the cable to the screen, 60–240 times a second.
         </li>
       </ol>
 
@@ -157,7 +201,7 @@ export default function Graphics() {
       <GoDeeper title="How does a pixel actually make light?">
         <ul>
           <li>
-            <strong>LCD</strong>: a white backlight shines through liquid crystals. A voltage twists each crystal, which
+            <strong>LCD</strong>: a white backlight shines through liquid crystals. A voltage turns (re-aligns) each crystal, which
             changes how much light passes through a polarising filter, then through a red, green or blue colour filter.
           </li>
           <li>
@@ -168,6 +212,11 @@ export default function Graphics() {
         <p>
           Either way, a transistor sits behind every single subpixel, controlling it. A 4K screen has{" "}
           <TeX>{"3840 \\times 2160 \\times 3 \\approx 25"}</TeX> million of them, spread across the glass.
+        </p>
+        <p>
+          How does each of those transistors get the right voltage on every refresh? The chapter{" "}
+          <Link to="/input-output">Input, Output & the Monitor</Link> opens up the panel: the cable, the row and column
+          drivers, and the tiny capacitor that holds each subpixel's brightness until the next refresh.
         </p>
       </GoDeeper>
 

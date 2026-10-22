@@ -1,9 +1,16 @@
 /**
- * SVG building blocks for circuit diagrams. Everything is drawn in user units
- * inside a parent <svg>, so diagrams scale with their container.
+ * SVG building blocks for circuit diagrams, drawn like figures in a printed
+ * book. Everything is in user units inside a parent <svg>, so diagrams scale
+ * with their container. Colours come from theme tokens, so the same drawing
+ * works on paper and at night.
  */
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
+/**
+ * A wire. "On" is a heavier ink line with small beads flowing along it;
+ * "off" is a thin warm-grey line. Pass `color` (a CSS colour, e.g.
+ * "var(--color-cyan)") to ink an on-wire in another colour.
+ */
 export function Wire({
   d,
   on,
@@ -17,42 +24,79 @@ export function Wire({
   width?: number;
   color?: string;
 }) {
+  const style = {
+    ...(width !== undefined && { "--wire-w": width }),
+    ...(color && { "--wire-c": color }),
+  } as CSSProperties;
   return (
-    <g>
-      <path
-        d={d}
-        className={on ? "wire wire-on" : "wire"}
-        style={{
-          strokeWidth: width,
-          ...(color && on ? { stroke: color, filter: `drop-shadow(0 0 3px ${color})` } : {}),
-        }}
-      />
+    <g style={style}>
+      <path d={d} className={on ? "wire wire-on" : "wire"} />
       {on && flow && <path d={d} className="wire-flow" />}
     </g>
   );
 }
 
 export function Junction({ x, y, on }: { x: number; y: number; on: boolean }) {
-  return <circle cx={x} cy={y} r={4} fill={on ? "var(--color-on)" : "var(--color-off)"} />;
+  return <circle cx={x} cy={y} r={3.5} fill={on ? "var(--color-on)" : "var(--color-off)"} />;
 }
 
-export function Lamp({ x, y, on, r = 18, label }: { x: number; y: number; on: boolean; r?: number; label?: string }) {
+/**
+ * A light bulb. When lit it gets printed rays; `intensity` (0–1) sets how
+ * long the rays are and how strongly the glass is filled.
+ */
+export function Lamp({
+  x,
+  y,
+  on,
+  r = 18,
+  label,
+  intensity = 1,
+}: {
+  x: number;
+  y: number;
+  on: boolean;
+  r?: number;
+  label?: string;
+  intensity?: number;
+}) {
+  const k = on ? Math.max(0, Math.min(1, intensity)) : 0;
   return (
     <g>
       {on && <circle cx={x} cy={y} r={r * 2.2} fill="url(#lamp-glow)" />}
+      {on &&
+        Array.from({ length: 8 }, (_, i) => {
+          // Offset by 22.5° so rays never sit on top of horizontal/vertical wires.
+          const a = (i * Math.PI) / 4 + Math.PI / 8;
+          return (
+            <line
+              key={i}
+              x1={x + Math.cos(a) * (r + 5)}
+              y1={y + Math.sin(a) * (r + 5)}
+              x2={x + Math.cos(a) * (r + 7 + 6 * k)}
+              y2={y + Math.sin(a) * (r + 7 + 6 * k)}
+              stroke="var(--color-amber)"
+              strokeWidth={1.75}
+              strokeLinecap="round"
+            />
+          );
+        })}
       <circle
         cx={x}
         cy={y}
         r={r}
-        fill={on ? "#fff3c4" : "var(--color-panel-2)"}
-        stroke={on ? "var(--color-amber)" : "var(--color-line-2)"}
-        strokeWidth={2.5}
-        style={{ transition: "fill .2s" }}
+        strokeWidth={2}
+        stroke={on ? "var(--color-amber)" : "var(--color-off)"}
+        style={{
+          fill: on
+            ? `color-mix(in oklab, var(--color-lamp) ${Math.round(30 + 70 * k)}%, var(--color-panel-2))`
+            : "var(--color-panel-2)",
+          transition: "fill .2s",
+        }}
       />
       <path
         d={`M${x - r * 0.45} ${y + r * 0.2} q${r * 0.15} -${r * 0.7} ${r * 0.3} 0 q${r * 0.15} -${r * 0.7} ${r * 0.3} 0 q${r * 0.15} -${r * 0.7} ${r * 0.3} 0`}
         fill="none"
-        stroke={on ? "#ff9d00" : "var(--color-dim)"}
+        stroke={on ? "var(--color-lamp-filament)" : "var(--color-dim)"}
         strokeWidth={1.6}
       />
       {label && (
@@ -64,47 +108,30 @@ export function Lamp({ x, y, on, r = 18, label }: { x: number; y: number; on: bo
   );
 }
 
-/** Put once inside any <svg> that uses <Lamp>. */
+function Arrow({ id, color }: { id: string; color: string }) {
+  return (
+    <marker id={id} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill={color} />
+    </marker>
+  );
+}
+
+/** Put once inside any <svg> that uses <Lamp> or the arrow markers. */
 export function CircuitDefs() {
   return (
     <defs>
       <radialGradient id="lamp-glow">
-        <stop offset="0%" stopColor="#ffd56b" stopOpacity="0.55" />
-        <stop offset="100%" stopColor="#ffd56b" stopOpacity="0" />
+        <stop offset="0%" style={{ stopColor: "var(--color-lamp-glow)", stopOpacity: "var(--lamp-glow-alpha)" }} />
+        <stop offset="100%" style={{ stopColor: "var(--color-lamp-glow)", stopOpacity: 0 }} />
       </radialGradient>
-      <marker
-        id="arrow-on"
-        viewBox="0 0 10 10"
-        refX="8"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
-        orient="auto-start-reverse"
-      >
-        <path d="M0 0 L10 5 L0 10 z" fill="var(--color-on)" />
-      </marker>
-      <marker
-        id="arrow-cyan"
-        viewBox="0 0 10 10"
-        refX="8"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
-        orient="auto-start-reverse"
-      >
-        <path d="M0 0 L10 5 L0 10 z" fill="var(--color-cyan)" />
-      </marker>
-      <marker
-        id="arrow-dim"
-        viewBox="0 0 10 10"
-        refX="8"
-        refY="5"
-        markerWidth="6"
-        markerHeight="6"
-        orient="auto-start-reverse"
-      >
-        <path d="M0 0 L10 5 L0 10 z" fill="var(--color-dim)" />
-      </marker>
+      <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <line y2="5" stroke="var(--color-off)" strokeWidth="1" />
+      </pattern>
+      <Arrow id="arrow-on" color="var(--color-on)" />
+      <Arrow id="arrow-cyan" color="var(--color-cyan)" />
+      <Arrow id="arrow-dim" color="var(--color-dim)" />
+      <Arrow id="arrow-ink" color="var(--color-ink)" />
+      <Arrow id="arrow-amber" color="var(--color-amber)" />
     </defs>
   );
 }
@@ -131,8 +158,8 @@ export function Gate({
   label?: boolean;
   scale?: number;
 }) {
-  const stroke = out ? "var(--color-on)" : "var(--color-line-2)";
-  const fill = out ? "rgb(61 255 160 / 0.08)" : "var(--color-panel-2)";
+  const stroke = out ? "var(--color-on)" : "var(--color-dim)";
+  const fill = out ? "var(--color-on-tint)" : "var(--color-panel)";
   const bubble = kind === "NAND" || kind === "NOR" || kind === "NOT" || kind === "XNOR";
   let body: ReactNode;
   if (kind === "AND" || kind === "NAND") {
@@ -153,12 +180,10 @@ export function Gate({
     <g
       transform={`translate(${x} ${y}) scale(${scale})`}
       stroke={stroke}
-      strokeWidth={2}
+      strokeWidth={1.75}
       fill={fill}
-      style={{
-        transition: "stroke .2s, fill .2s",
-        filter: out ? "drop-shadow(0 0 4px rgb(61 255 160 / 0.45))" : undefined,
-      }}
+      className={out ? "glow-on" : undefined}
+      style={{ transition: "stroke .2s, fill .2s" }}
     >
       {body}
       {bubble && <circle cx={bubbleX} cy={20} r={4} />}
@@ -168,7 +193,7 @@ export function Gate({
           y={24}
           textAnchor="middle"
           stroke="none"
-          className="font-mono text-[9px] font-bold"
+          className="font-mono text-[10px] font-bold"
           fill={out ? "var(--color-on)" : "var(--color-mute)"}
         >
           {name}
@@ -230,9 +255,9 @@ export function SignalTag({ x, y, on, text }: { x: number; y: number; on: boolea
         y={y - 9}
         width={w}
         height={18}
-        rx={5}
-        fill="var(--color-bg)"
-        stroke={on ? "var(--color-on)" : "var(--color-line-2)"}
+        rx={4}
+        fill="var(--color-panel)"
+        stroke={on ? "var(--color-on)" : "var(--color-off)"}
       />
       <text
         x={x}
@@ -267,6 +292,7 @@ export function InputPin({
       className={onToggle ? "cursor-pointer" : undefined}
       role={onToggle ? "button" : undefined}
       aria-label={onToggle ? `Toggle ${label}` : undefined}
+      aria-pressed={onToggle ? on : undefined}
       tabIndex={onToggle ? 0 : undefined}
       onKeyDown={(e) => {
         if (onToggle && (e.key === "Enter" || e.key === " ")) {
@@ -280,17 +306,17 @@ export function InputPin({
         y={y - 15}
         width={30}
         height={30}
-        rx={7}
-        fill={on ? "rgb(61 255 160 / 0.18)" : "var(--color-bg)"}
-        stroke={on ? "var(--color-on)" : "var(--color-line-2)"}
+        rx={6}
+        fill={on ? "var(--color-on-tint)" : "var(--color-panel)"}
+        stroke={on ? "var(--color-on)" : "var(--color-off)"}
         strokeWidth={2}
-        style={{ filter: on ? "drop-shadow(0 0 6px rgb(61 255 160 / .6))" : undefined }}
+        className={on ? "glow-on" : undefined}
       />
       <text
         x={x}
         y={y + 5}
         textAnchor="middle"
-        className="font-mono text-[14px] font-bold"
+        className={on ? "font-mono text-[14px] font-bold" : "font-mono text-[14px]"}
         fill={on ? "var(--color-on)" : "var(--color-dim)"}
       >
         {on ? 1 : 0}
@@ -310,16 +336,16 @@ export function OutputPin({ x, y, on, label }: { x: number; y: number; on: boole
         cx={x}
         cy={y}
         r={14}
-        fill={on ? "var(--color-on)" : "var(--color-bg)"}
-        stroke={on ? "var(--color-on)" : "var(--color-line-2)"}
+        fill={on ? "var(--color-on)" : "var(--color-panel)"}
+        stroke={on ? "var(--color-on)" : "var(--color-off)"}
         strokeWidth={2}
-        style={{ filter: on ? "drop-shadow(0 0 8px var(--color-on))" : undefined }}
+        className={on ? "glow-on" : undefined}
       />
       <text
         x={x}
         y={y + 5}
         textAnchor="middle"
-        className="font-mono text-[13px] font-bold"
+        className={on ? "font-mono text-[13px] font-bold" : "font-mono text-[13px]"}
         fill={on ? "var(--color-bg)" : "var(--color-dim)"}
       >
         {on ? 1 : 0}
