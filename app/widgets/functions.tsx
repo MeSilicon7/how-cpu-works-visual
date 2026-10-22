@@ -1635,7 +1635,7 @@ export function FrameAnatomy() {
   const parts: Array<{ label: string; bytes: number; kind: CellKind | "saved"; sub: string }> = [
     { label: "local variables", bytes: 32, kind: "local", sub: "4 numbers × 8 bytes" },
     { label: "arguments", bytes: 16, kind: "arg", sub: "2 numbers × 8 bytes" },
-    { label: "saved register", bytes: 8, kind: "saved", sub: "the caller's value, kept safe" },
+    { label: "saved register", bytes: 8, kind: "saved", sub: "the caller's value" },
     { label: "return address", bytes: 8, kind: "ret", sub: "the way back" },
   ];
   const tone: Record<string, string> = {
@@ -1658,7 +1658,7 @@ export function FrameAnatomy() {
                 backgroundImage: `repeating-linear-gradient(to bottom, transparent 0 ${SLOT_H - 1}px, var(--color-line-2) ${SLOT_H - 1}px ${SLOT_H}px)`,
               }}
             >
-              <div className="min-w-0 leading-tight">
+              <div className="min-w-0 truncate leading-tight">
                 <span className="text-sm font-semibold">{p.label}</span>{" "}
                 <span className="text-[0.6875rem] text-mute">· {p.sub}</span>
               </div>

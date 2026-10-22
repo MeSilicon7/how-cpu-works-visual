@@ -95,7 +95,7 @@ function SevenSeg({
             y={SEG_LABEL_POS[s][1]}
             textAnchor="middle"
             dominantBaseline="middle"
-            className="fill-screen-dim font-mono"
+            className="fill-dim font-mono"
             fontSize={9}
           >
             {s}
@@ -280,7 +280,7 @@ export function ByteLenses() {
     >
       <div className="flex flex-col items-center gap-3">
         <div className="scroll-thin max-w-full overflow-x-auto pb-1">
-          <div className="grid w-max grid-cols-8 gap-x-1.5 gap-y-1 sm:gap-x-2.5">
+          <div className="grid w-max grid-cols-8 gap-x-1.5 gap-y-1 @md:gap-x-3">
             {bits.map((_, i) => (
               <div key={`p${i}`} className="text-center font-mono text-[0.6875rem] text-dim">
                 {2 ** (7 - i)}
@@ -290,7 +290,7 @@ export function ByteLenses() {
               <div key={`b${i}`} className="flex justify-center">
                 <BitButton
                   on={!!b}
-                  size="lg"
+                  size="md"
                   onClick={() => setV((x) => x ^ (1 << (7 - i)))}
                   title={`bit ${7 - i}`}
                 />
@@ -452,7 +452,7 @@ function buildSamples(): Sample[] {
     {
       id: "gif",
       name: "funny.gif",
-      bytes: [...latin1("GIF89a"), ...fromHex("2c01c8 00f7 0000 000000 ffffff 21ff0b"), ...latin1("NETSCAPE2.0")],
+      bytes: [...latin1("GIF89a"), ...fromHex("2c01c8 0080 0000 000000 ffffff 21ff0b"), ...latin1("NETSCAPE2.0")],
     },
     {
       id: "pdf",
@@ -1593,7 +1593,7 @@ export function FollowTheA() {
               The new glyph goes at x = {X0}, y = {Y0}. Click any pixel.
             </p>
             <div className="scroll-thin overflow-x-auto">
-              <div className="surface-screen w-max min-w-full rounded-md border border-bezel p-2">
+              <div className="surface-screen mx-auto w-fit rounded-md border border-bezel p-2">
                 <FramebufferCrop px={fb.px} own={fb.own} pick={[px, py]} onPick={(x, y) => setPick([x, y])} />
               </div>
             </div>
@@ -1630,19 +1630,30 @@ export function FollowTheA() {
               leaves:
             </p>
             <div className="scroll-thin overflow-x-auto">
-              <div className="flex w-max gap-px" aria-label={`row ${Y0} of the screen`}>
-                {fb.px[Y0].map((v, x) => (
+              <div
+                className="surface-screen flex w-max items-center gap-px rounded-md border border-bezel p-2"
+                aria-label={`row ${Y0} of the screen`}
+              >
+                {[
+                  [0, X0],
+                  [X0, X0 + 8],
+                  [X0 + 8, CROP_W],
+                ].map(([a, z], gi) => (
                   <span
-                    key={x}
-                    className={cx(
-                      "h-5 w-2.5 sm:w-3",
-                      v ? "bg-screen-ink" : "bg-screen-2",
-                      fb.own[Y0][x] && "outline outline-1 outline-amber",
-                    )}
-                  />
+                    key={gi}
+                    className={cx("flex gap-px", gi === 1 && "rounded-[3px] p-0.5 outline-2 outline-amber outline-dashed")}
+                  >
+                    {fb.px[Y0].slice(a, z).map((v, x) => (
+                      <span key={x} className={cx("h-5 w-2.5 sm:w-3", v ? "bg-screen-ink" : "bg-screen-2")} />
+                    ))}
+                  </span>
                 ))}
-                <span className="ml-2 self-center font-mono text-xs text-dim">… 1,872 more pixels in this row</span>
+                <span className="ml-1 font-mono text-xs text-mute">…</span>
               </div>
+            </div>
+            <div className="font-sans text-xs text-mute">
+              Pixels x = 0 to {CROP_W - 1} of row {Y0}; the dashed box is your glyph. The row goes on for 1,872 more
+              pixels (1920 in all).
             </div>
             <div className="font-mono text-xs break-words text-mute">
               {fb.px[Y0].slice(X0, X0 + 8).map((v, i) => (
@@ -1656,7 +1667,7 @@ export function FollowTheA() {
               <Stat label="Pixels in your glyph" value="64" sub="8 × 8 colours" />
               <Stat label="White ones" value={lit} sub={`and ${64 - lit} black`} />
               <Stat label="Pixels per frame" value="2,073,600" sub="1920 × 1080" />
-              <Stat label="Letters the monitor knows" value="0" tone="pink" sub="it only gets colours" />
+              <Stat label="Letters it knows" value="0" tone="pink" sub="it only gets colours" />
             </div>
             <p className="font-serif text-[0.9375rem] text-body">
               The monitor gets colours and nothing else. No 0x{hx(usage)}, no {code}, no “{ch}”. It cannot tell your
@@ -1703,14 +1714,14 @@ function FramebufferCrop({
   const W = ox + CROP_W * cell;
   const H = oy + CROP_H * cell;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="block w-full max-w-[600px] min-w-[460px]" role="img" aria-label="framebuffer pixels">
+    <svg viewBox={`0 0 ${W} ${H}`} className="block w-[460px] @2xl:w-[560px]" role="img" aria-label="framebuffer pixels">
       {[0, 8, 16, 24, 32, 40].map((x) => (
-        <text key={`x${x}`} x={ox + x * cell + 1} y={12} className="fill-screen-dim font-mono" fontSize={11}>
+        <text key={`x${x}`} x={ox + x * cell + 1} y={12} className="fill-mute font-mono" fontSize={11}>
           {x}
         </text>
       ))}
       {[0, 8, 16].map((y) => (
-        <text key={`y${y}`} x={0} y={oy + y * cell + 9} className="fill-screen-dim font-mono" fontSize={11}>
+        <text key={`y${y}`} x={0} y={oy + y * cell + 9} className="fill-mute font-mono" fontSize={11}>
           {y}
         </text>
       ))}
@@ -1722,7 +1733,7 @@ function FramebufferCrop({
             y={oy + y * cell + 0.5}
             width={cell - 1}
             height={cell - 1}
-            fill={v ? "var(--color-screen-ink)" : own[y][x] ? "var(--color-screen-dim)" : "var(--color-screen-2)"}
+            fill={v ? "var(--color-screen-ink)" : "var(--color-screen-2)"}
             className="cursor-pointer"
             onClick={() => onPick(x, y)}
           />

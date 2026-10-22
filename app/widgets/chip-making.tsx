@@ -1265,8 +1265,8 @@ export function CodeToCells() {
   const captions: Record<Stage, ReactNode> = {
     code: (
       <>
-        An engineer writes what the circuit should <em>do</em>. <code>^</code> means XOR, <code>&amp;</code> means AND,{" "}
-        <code>|</code> means OR. These two lines are the full adder from The Adder chapter.
+        An engineer writes what the circuit should <em>do</em>, not how to build it. The grey lines at the bottom show
+        the code working on the inputs you chose above.
       </>
     ),
     gates: (
@@ -1640,7 +1640,7 @@ export function WaferYield() {
 
           <div className="rounded-md border border-line bg-bg px-4 py-2">
             <TeX block>
-              {`Y = e^{-D\\cdot A} = e^{-${density.toFixed(2)}\\,\\times\\,${A.toFixed(2)}} = e^{-${lambda.toFixed(3)}} \\approx ${fmtSmall(Y)} = ${fmtPct(Y)}\\%`}
+              {`\\begin{aligned} Y &= e^{-D\\cdot A} = e^{-${density.toFixed(2)}\\,\\times\\,${A.toFixed(2)}} \\\\ &= e^{-${lambda.toFixed(3)}} \\approx ${fmtSmall(Y)} = ${fmtPct(Y)}\\% \\end{aligned}`}
             </TeX>
             <p className="pb-2 font-serif text-[0.9375rem] text-mute">
               <span className="font-mono text-ink">D·A = {lambda.toFixed(3)}</span> is the average number of defects that

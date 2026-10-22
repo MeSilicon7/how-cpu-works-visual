@@ -262,10 +262,17 @@ export default function ChipMaking() {
         should do, in a <strong>hardware description language</strong> (HDL) such as Verilog. Here is the whole full
         adder from <Link to="/adder">The Adder</Link>:
       </p>
-      <pre>
-        <code>{`assign sum  = a ^ b ^ cin;
-assign cout = (a & b) | (cin & (a ^ b));`}</code>
+      <pre className="not-prose scroll-thin overflow-x-auto rounded-md border border-line bg-panel px-4 py-3 font-mono text-sm leading-relaxed text-ink">
+        <span className="text-violet">assign</span>
+        {" sum  = a ^ b ^ cin;\n"}
+        <span className="text-violet">assign</span>
+        {" cout = (a & b) | (cin & (a ^ b));"}
       </pre>
+      <p>
+        In Verilog, <code>^</code> means XOR, <code>&amp;</code> means AND and <code>|</code> means OR. So the first
+        line says “sum is a XOR b XOR cin”, and the second says “carry out if a AND b, or if cin AND (a XOR b)”: exactly
+        the gates you wired by hand in The Adder.
+      </p>
       <p>Then a chain of design programs turns the code into masks:</p>
       <ol>
         <li>
